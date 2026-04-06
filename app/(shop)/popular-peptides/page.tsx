@@ -136,6 +136,7 @@ export default async function PopularPeptidesPage() {
                   fill
                   className="object-cover brightness-[0.35]"
                   sizes="(max-width:768px) 100vw, 33vw"
+                  unoptimized
                 />
                 <div className="relative z-10">
                   <h3 className={`text-xl font-bold md:text-2xl ${heading}`}>{f.title}</h3>
@@ -200,6 +201,7 @@ export default async function PopularPeptidesPage() {
               className="object-cover"
               sizes="(max-width:1024px) 100vw, 50vw"
               priority={false}
+              unoptimized
             />
           </div>
           <div>
