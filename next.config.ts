@@ -1,6 +1,20 @@
 import type { NextConfig } from "next";
+import { RAILWAY_API_ORIGIN } from "./lib/api/production-api-origin";
+
+const LOCAL_API_ORIGIN = "http://localhost:3001";
+
+/** Production builds default to Railway; local dev defaults to localhost unless .env sets NEXT_PUBLIC_API_URL. */
+const defaultNextPublicApiUrl =
+  process.env.NODE_ENV === "production" ? RAILWAY_API_ORIGIN : LOCAL_API_ORIGIN;
+
+const nextPublicApiUrl = (
+  process.env.NEXT_PUBLIC_API_URL?.trim() || defaultNextPublicApiUrl
+).replace(/\/+$/, "");
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_API_URL: nextPublicApiUrl,
+  },
   async headers() {
     return [
       {

@@ -1,10 +1,9 @@
 /**
- * NestJS API origin for server-side fetch (RSC, route handlers).
- * Paths are joined as `${base}/auth/...`, `/products`, etc. — no `/api` segment unless you put it in the env base.
+ * Store API origin (Fastify on Railway) for server-side fetch (RSC, route handlers).
+ * Paths join as `${base}/auth/...`, `/products`, etc. — add `/api` in env only if your server uses that prefix.
  */
 
-/** Public production API (Railway). Used on Vercel when env points at localhost or is unset. */
-const SQSPEPTIDES_PRODUCTION_API = "https://sqspeptides-backend-production.up.railway.app";
+import { RAILWAY_API_ORIGIN } from "@/lib/api/production-api-origin";
 
 function stripTrailingSlashes(s: string): string {
   return s.replace(/\/+$/, "");
@@ -19,26 +18,52 @@ function isLocalhostOrigin(url: string): boolean {
   }
 }
 
-/**
- * Resolves Nest base URL. On Vercel, `API_URL=http://localhost:3001` from templates is ignored so
- * `NEXT_PUBLIC_API_URL` (Railway) or the production default is used instead.
- */
-export function getNestBaseUrl(): string {
-  const onVercel = process.env.VERCEL === "1";
-  const candidates = [process.env.API_URL?.trim(), process.env.NEXT_PUBLIC_API_URL?.trim()].filter(
-    (v): v is string => Boolean(v),
+/** Hosted deploy (Vercel, etc.) — not `next dev` on a laptop. */
+function isCloudDeploy(): boolean {
+  return (
+    process.env.VERCEL === "1" ||
+    Boolean(process.env.VERCEL_URL) ||
+    process.env.CF_PAGES === "1" ||
+    process.env.NETLIFY === "true" ||
+    Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
+    Boolean(process.env.RAILWAY_ENVIRONMENT)
   );
+}
 
-  for (const raw of candidates) {
+/**
+ * Read at runtime so Vercel env changes are not lost to build-time inlining of empty values.
+ */
+function readNextPublicApiUrl(): string | undefined {
+  const key = "NEXT_PUBLIC_" + "API_URL";
+  return process.env[key]?.trim();
+}
+
+export function getNestBaseUrl(): string {
+  const rawApi = process.env.API_URL?.trim();
+  const rawPublic = readNextPublicApiUrl();
+  const candidates = [rawApi, rawPublic].filter((v): v is string => Boolean(v));
+
+  const deployed = isCloudDeploy();
+
+  const ordered = deployed
+    ? [...candidates].sort((a, b) => {
+        const sa = stripTrailingSlashes(a);
+        const sb = stripTrailingSlashes(b);
+        return (isLocalhostOrigin(sa) ? 1 : 0) - (isLocalhostOrigin(sb) ? 1 : 0);
+      })
+    : candidates;
+
+  for (const raw of ordered) {
     const normalized = stripTrailingSlashes(raw);
-    if (onVercel && isLocalhostOrigin(normalized)) {
-      continue;
+    if (!normalized) continue;
+    if (deployed && isLocalhostOrigin(normalized)) continue;
+    if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
+      return normalized;
     }
-    return normalized;
   }
 
-  if (onVercel) {
-    return stripTrailingSlashes(SQSPEPTIDES_PRODUCTION_API);
+  if (deployed) {
+    return stripTrailingSlashes(RAILWAY_API_ORIGIN);
   }
 
   return "http://localhost:3001";

@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { CUSTOMER_TOKEN_COOKIE } from "@/lib/auth/cookies";
-import { getBackendUrl } from "@/lib/server/api-url";
+import { bffFetch } from "@/lib/server/nest-bff-fetch";
 
 export async function GET() {
   const token = (await cookies()).get(CUSTOMER_TOKEN_COOKIE)?.value;
@@ -10,11 +10,11 @@ export async function GET() {
   }
   let res: Response;
   try {
-    res = await fetch(`${getBackendUrl()}/auth/customer/me`, {
+    res = await bffFetch("/auth/customer/me", {
       headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
     });
-  } catch {
+  } catch (err) {
+    console.error("[api/auth/customer/me] Nest unreachable", err);
     return NextResponse.json({ message: "API unreachable" }, { status: 502 });
   }
   const data = await res.json().catch(() => ({}));
