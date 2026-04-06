@@ -1,0 +1,294 @@
+/* Scoped layout helpers for Bootstrap admin (minimal; utilities cover most UI). */
+.admin-bs-root.admin-dashboard-canvas {
+  background-color: #f1f5f9;
+}
+
+.admin-bs-root .admin-header-elevated {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06), 0 8px 22px -6px rgba(15, 23, 42, 0.12);
+}
+
+.admin-bs-root .admin-sidebar {
+  width: 252px;
+  z-index: 1035;
+  background-color: #0c1222;
+}
+
+@media (min-width: 992px) {
+  .admin-bs-root .admin-main-wrap {
+    margin-left: 252px;
+  }
+}
+
+/* Soft elevation — matches premium dashboard cards (not flat, not heavy border). */
+.admin-bs-root .admin-card-elevated {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06), 0 14px 36px -8px rgba(15, 23, 42, 0.16);
+}
+
+.admin-bs-root .admin-stat-metric-card:hover {
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.06), 0 8px 20px rgba(15, 23, 42, 0.07);
+}
+
+/* Slim left accent (inside card) — reference style without wrapping the whole card in a thick border */
+.admin-bs-root .admin-stat-strip {
+  width: 4px;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.admin-bs-root .admin-stat-strip--primary {
+  background-color: #0d6efd;
+}
+
+.admin-bs-root .admin-stat-strip--success {
+  background-color: #198754;
+}
+
+.admin-bs-root .admin-stat-strip--violet {
+  background-color: #7c3aed;
+}
+
+.admin-bs-root .admin-stat-strip--warning {
+  background-color: #f0ad4e;
+}
+
+.admin-bs-root .admin-stat-strip--danger {
+  background-color: #dc3545;
+}
+
+.admin-bs-root .admin-stat-strip--orange {
+  background-color: #fd7e14;
+}
+
+.admin-bs-root .admin-stat-strip--dark {
+  background-color: #212529;
+}
+
+.admin-bs-root .admin-sidebar .nav-link {
+  color: rgba(255, 255, 255, 0.65);
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.admin-bs-root .admin-sidebar .nav-link:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.admin-bs-root .admin-sidebar .nav-link.active {
+  color: #fff !important;
+  background-color: #0d6efd;
+}
+
+.admin-bs-root .admin-sidebar .nav-link-sub {
+  font-size: 0.875rem;
+  padding: 0.45rem 0.85rem 0.45rem 2rem;
+}
+
+.admin-bs-root .icon-soft-primary {
+  background-color: rgba(13, 110, 253, 0.12);
+  color: #0d6efd;
+}
+
+.admin-bs-root .icon-soft-success {
+  background-color: rgba(25, 135, 84, 0.12);
+  color: #198754;
+}
+
+.admin-bs-root .icon-soft-violet {
+  background-color: rgba(124, 58, 237, 0.15);
+  color: #7c3aed;
+}
+
+.admin-bs-root .icon-soft-warning {
+  background-color: rgba(255, 193, 7, 0.18);
+  color: #997404;
+}
+
+.admin-bs-root .icon-soft-danger {
+  background-color: rgba(220, 53, 69, 0.12);
+  color: #dc3545;
+}
+
+.admin-bs-root .icon-soft-info {
+  background-color: rgba(13, 202, 240, 0.15);
+  color: #0dcaf0;
+}
+
+.admin-bs-root .icon-soft-orange {
+  background-color: rgba(253, 126, 20, 0.15);
+  color: #fd7e14;
+}
+
+.admin-bs-root .badge-status-pending {
+  background-color: #fff3cd;
+  color: #664d03;
+}
+
+.admin-bs-root .badge-status-shipped {
+  background-color: #ede9fe;
+  color: #5b21b6;
+}
+
+.admin-bs-root .badge-status-completed {
+  background-color: #d1e7dd;
+  color: #0a3622;
+}
+
+.admin-bs-root .table-admin thead th {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #6c757d;
+  border-bottom-width: 1px;
+}
+
+.admin-bs-root .admin-stat-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+
+.admin-bs-root .admin-logo-title {
+  font-size: 0.95rem;
+}
+
+.admin-bs-root .admin-logo-sub {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+}
+
+.admin-bs-root .admin-nav-section-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+}
+
+.admin-bs-root .admin-search-max {
+  max-width: 34rem;
+}
+
+.admin-bs-root .admin-search-shell {
+  border-radius: 50rem;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05), 0 8px 20px -6px rgba(15, 23, 42, 0.1);
+}
+
+.admin-bs-root .admin-search-shell:focus-within {
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 3px rgba(13, 110, 253, 0.15);
+}
+
+.admin-bs-root .admin-search-icon {
+  padding-left: 1rem;
+  padding-right: 0.35rem;
+  background-color: #fff;
+  border: none;
+  color: #94a3b8;
+}
+
+.admin-bs-root .admin-search-input {
+  border: none;
+  background-color: #fff;
+  padding-left: 0.25rem;
+  padding-right: 1rem;
+}
+
+.admin-bs-root .admin-search-input:focus {
+  box-shadow: none;
+}
+
+.admin-bs-root .admin-mobile-search {
+  min-width: 10.5rem;
+  max-width: 12rem;
+}
+
+.admin-bs-root .admin-notif-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 20rem;
+  max-width: calc(100vw - 2rem);
+  z-index: 1050;
+}
+
+.admin-bs-root .admin-notif-list {
+  max-height: 16rem;
+}
+
+.admin-bs-root .admin-avatar-sm {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.75rem;
+}
+
+.admin-bs-root .admin-unread-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+}
+
+.admin-bs-root .admin-role-sub {
+  font-size: 0.75rem;
+}
+
+.admin-bs-root .admin-notif-time {
+  font-size: 0.7rem;
+}
+
+.admin-bs-root .admin-items-col {
+  max-width: 12rem;
+}
+
+.admin-bs-root .admin-notif-trigger {
+  position: relative;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.admin-bs-root .admin-notif-count-badge {
+  position: absolute;
+  top: 0.125rem;
+  right: 0.125rem;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.3rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1rem;
+  color: #fff;
+  background-color: #dc3545;
+  border: 2px solid #fff;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.admin-bs-root .admin-user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 12rem;
+  z-index: 1050;
+}
+
+.admin-bs-root .admin-offcanvas-backdrop-fix {
+  z-index: 1040;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.admin-bs-root .admin-offcanvas-panel {
+  z-index: 1045;
+  width: 252px;
+  visibility: visible;
+}
+
+.admin-bs-root .admin-main-inner {
+  max-width: 1600px;
+}

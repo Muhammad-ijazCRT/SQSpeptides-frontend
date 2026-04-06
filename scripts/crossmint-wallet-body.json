@@ -1,0 +1,11 @@
+{
+  "chainType": "solana",
+  "type": "smart",
+  "config": {
+    "adminSigner": {
+      "type": "email",
+      "email": "YOUR_EMAIL_HERE"
+    }
+  },
+  "owner": "email:YOUR_EMAIL_HERE"
+}
