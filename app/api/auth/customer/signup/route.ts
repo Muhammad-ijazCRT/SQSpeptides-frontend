@@ -13,12 +13,30 @@ function authCookieOptions() {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const res = await fetch(`${getBackendUrl()}/auth/customer/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(`${getBackendUrl()}/auth/customer/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return NextResponse.json(
+      {
+        message:
+          "Could not reach the API. Set API_URL and NEXT_PUBLIC_API_URL on Vercel to your Railway backend origin (no trailing slash).",
+      },
+      { status: 502 },
+    );
+  }
+
   const data = (await res.json().catch(() => ({}))) as { accessToken?: string; message?: string | string[] };
   if (!res.ok) {
     const msg = Array.isArray(data.message) ? data.message.join(", ") : data.message ?? "Signup failed";

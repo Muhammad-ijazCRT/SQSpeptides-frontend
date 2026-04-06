@@ -8,10 +8,15 @@ export async function GET() {
   if (!token) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
-  const res = await fetch(`${getBackendUrl()}/auth/customer/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${getBackendUrl()}/auth/customer/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+  } catch {
+    return NextResponse.json({ message: "API unreachable" }, { status: 502 });
+  }
   const data = await res.json().catch(() => ({}));
   return NextResponse.json(data, { status: res.status });
 }
