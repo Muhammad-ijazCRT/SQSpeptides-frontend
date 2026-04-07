@@ -7,16 +7,24 @@ export function catalogDummyImage(_seed: string): string {
 }
 
 /**
- * Older seeds used `/images/N.jpg` while assets live under `public/products/images/`.
+ * Map legacy `/images/...` to files under `public/products/images/` (full path after `/images/`, including spaces/parens).
  */
 function normalizeStoredImageUrl(raw: string): string | null {
   const s = raw.trim();
   if (!s) return null;
-  const legacy = /^\/images\/([^/]+\.(?:jpg|jpeg|png|webp|gif|svg))$/i.exec(s);
-  if (legacy) {
-    return `/products/images/${legacy[1]}`;
+  if (s.startsWith("/images/")) {
+    return `/products/images/${s.slice("/images/".length)}`;
   }
   return s;
+}
+
+/** Encode each path segment so spaces, parentheses, etc. work in `next/image` and `<img src>`. */
+function encodeLocalPath(path: string): string {
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  if (!path.startsWith("/")) return path;
+  const segments = path.split("/").filter(Boolean);
+  if (segments.length === 0) return path;
+  return `/${segments.map((seg) => encodeURIComponent(seg)).join("/")}`;
 }
 
 function isAllowedImageUrl(s: string): boolean {
@@ -35,7 +43,7 @@ export function resolveProductImage(product: { slug: string; imageUrl: string | 
   }
   const normalized = normalizeStoredImageUrl(raw);
   if (normalized && isAllowedImageUrl(normalized)) {
-    return normalized;
+    return encodeLocalPath(normalized);
   }
   return DEFAULT_PRODUCT_IMAGE;
 }
