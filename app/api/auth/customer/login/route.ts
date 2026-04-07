@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { COOKIE_MAX_AGE_SEC, CUSTOMER_TOKEN_COOKIE } from "@/lib/auth/cookies";
-import { bffFetch } from "@/lib/server/nest-bff-fetch";
+import { getBackendUrl } from "@/lib/server/api-url";
 
 function authCookieOptions() {
   return {
@@ -13,31 +13,12 @@ function authCookieOptions() {
 }
 
 export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
-  }
-
-  let res: Response;
-  try {
-    res = await bffFetch("/auth/customer/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-  } catch (err) {
-    console.error("[api/auth/customer/login] Nest unreachable", err);
-    return NextResponse.json(
-      {
-        message:
-          "Could not reach the peptide API from the server. In Vercel → Environment Variables, set NEXT_PUBLIC_API_URL to https://sqspeptides-backend-production.up.railway.app (and remove API_URL if it still says localhost), then redeploy. Check Vercel function logs for details.",
-      },
-      { status: 502 },
-    );
-  }
-
+  const body = await request.json();
+  const res = await fetch(`${getBackendUrl()}/auth/customer/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
   const data = (await res.json().catch(() => ({}))) as { accessToken?: string; message?: string | string[] };
   if (!res.ok) {
     const msg = Array.isArray(data.message) ? data.message.join(", ") : data.message ?? "Login failed";

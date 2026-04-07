@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { catalogDummyImage } from "@/lib/store/catalog-image";
+import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 import type { WishlistRow } from "@/lib/api/customer-portal";
 import { fetchWishlist, removeWishlistProduct } from "@/lib/api/customer-portal";
 
@@ -44,14 +44,24 @@ export default function WishlistPage() {
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map((w) => {
-            const img = w.product.imageUrl || catalogDummyImage(w.product.slug);
+            const img = resolveProductImage({
+              slug: w.product.slug,
+              imageUrl: w.product.imageUrl ?? null,
+            });
             return (
               <li
                 key={w.id}
                 className="flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm"
               >
                 <Link href={`/products-catalog/${w.product.slug}`} className="relative aspect-square bg-neutral-100">
-                  <Image src={img} alt="" fill className="object-cover" sizes="(max-width:768px) 100vw, 33vw" />
+                  <Image
+                    src={img}
+                    alt=""
+                    fill
+                    unoptimized
+                    className={productImageBoxClassName(img)}
+                    sizes="(max-width:768px) 100vw, 33vw"
+                  />
                 </Link>
                 <div className="flex flex-1 flex-col p-4">
                   <Link href={`/products-catalog/${w.product.slug}`} className="font-semibold hover:text-blue-600">

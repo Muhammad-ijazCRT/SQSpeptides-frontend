@@ -99,7 +99,14 @@ export function SiteFooter() {
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between text-sm text-white/50">
           <p className="flex flex-wrap items-center gap-1.5 text-white/50">
             <span>© {new Date().getFullYear()}</span>
-            <BrandWordmark variant="onDark" className="text-sm" />
+            <a
+              href="https://dowhf.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-white/80 underline decoration-white/30 underline-offset-2 transition hover:text-[#D4AF37] hover:decoration-[#D4AF37]"
+            >
+              SQSpeptides
+            </a>
             <span>. All rights reserved.</span>
           </p>
           <div className="flex flex-wrap gap-2 opacity-70">

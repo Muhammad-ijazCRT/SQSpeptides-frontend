@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/store/types";
-import { resolveProductImage } from "@/lib/store/catalog-image";
+import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 import { normalizeProduct } from "@/lib/store/normalize-product";
 import { useCart } from "@/components/store/cart-context";
 import { useToast } from "@/components/store/toast-context";
@@ -40,7 +40,7 @@ export function ProductCard({ product }: Props) {
           alt={safe.name}
           fill
           unoptimized
-          className="object-cover transition group-hover:scale-[1.02]"
+          className={productImageBoxClassName(img, "transition group-hover:scale-[1.02]")}
           sizes="(max-width:768px) 100vw, 25vw"
         />
       </Link>

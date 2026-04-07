@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/store/types";
-import { resolveProductImage } from "@/lib/store/catalog-image";
+import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 import { normalizeProduct } from "@/lib/store/normalize-product";
 import { useCart } from "@/components/store/cart-context";
 import { useToast } from "@/components/store/toast-context";
@@ -22,7 +22,7 @@ export function CatalogGridItem({ product }: { product: Product }) {
             src={src}
             alt={safe.name}
             fill
-            className="object-cover transition hover:opacity-95"
+            className={productImageBoxClassName(src, "transition hover:opacity-95")}
             sizes="(max-width:768px) 100vw, 280px"
             unoptimized
           />

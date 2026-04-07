@@ -2,16 +2,35 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Product } from "@/lib/store/types";
-import { resolveProductImage } from "@/lib/store/catalog-image";
+import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 import { normalizeProduct } from "@/lib/store/normalize-product";
 import { useCart } from "@/components/store/cart-context";
 import { useToast } from "@/components/store/toast-context";
-import { CATALOG_CATEGORIES, FILTER_SIZES, type SortKey } from "@/components/store/catalog/catalog-constants";
+import { FILTER_SIZES, type SortKey } from "@/components/store/catalog/catalog-constants";
+import {
+  CATALOG_NAV,
+  countProductsWithSize,
+  isCatalogCategoryId,
+  productMatchesCatalogCategory,
+  productMatchesSizeLabel,
+  type CatalogCategoryId,
+} from "@/lib/store/catalog-filters";
 import { CatalogFaq } from "@/components/store/catalog/catalog-faq";
 
 const PER_PAGE = 12;
+
+function productMatchesQuery(product: Product, raw: string): boolean {
+  const q = raw.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    product.name.toLowerCase().includes(q) ||
+    product.slug.toLowerCase().includes(q) ||
+    (product.description ?? "").toLowerCase().includes(q)
+  );
+}
 
 function sortProducts(list: Product[], key: SortKey): Product[] {
   const next = [...list];
@@ -49,7 +68,7 @@ function CatalogGridCard({ product }: { product: Product }) {
               src={img}
               alt={safe.name}
               fill
-              className="object-cover transition duration-500 ease-out group-hover:scale-[1.04]"
+              className={productImageBoxClassName(img, "transition duration-500 ease-out group-hover:scale-[1.04]")}
               sizes={mainGridImageSizes}
               unoptimized
             />
@@ -110,7 +129,7 @@ function RelatedProductCard({ product }: { product: Product }) {
               src={img}
               alt={safe.name}
               fill
-              className="object-cover transition duration-500 group-hover:scale-[1.03]"
+              className={productImageBoxClassName(img, "transition duration-500 group-hover:scale-[1.03]")}
               sizes={relatedImageSizes}
               unoptimized
             />
@@ -159,14 +178,43 @@ export function ProductCatalogClient({
   products: Product[];
   apiError: boolean;
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const qParam = searchParams.get("q")?.trim() ?? "";
+  const catRaw = searchParams.get("cat");
+  const activeCategory: CatalogCategoryId = isCatalogCategoryId(catRaw) ? catRaw : "all";
+
   const [sort, setSort] = useState<SortKey>("default");
   const [maxPrice, setMaxPrice] = useState(5000);
   const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState(qParam);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSearchInput(qParam);
+  }, [qParam]);
+
+  const sizesKey = selectedSizes.slice().sort().join(",");
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeCategory, qParam, sizesKey]);
+
+  const afterCategory = useMemo(
+    () => products.filter((p) => productMatchesCatalogCategory(p, activeCategory)),
+    [products, activeCategory],
+  );
+
+  const afterSizes = useMemo(() => {
+    if (selectedSizes.length === 0) return afterCategory;
+    return afterCategory.filter((p) => selectedSizes.some((sz) => productMatchesSizeLabel(p, sz)));
+  }, [afterCategory, selectedSizes]);
 
   const filteredSorted = useMemo(() => {
-    const priced = products.filter((p) => p.price <= maxPrice);
-    return sortProducts(priced, sort);
-  }, [products, maxPrice, sort]);
+    const priced = afterSizes.filter((p) => p.price <= maxPrice);
+    const matched = qParam ? priced.filter((p) => productMatchesQuery(p, qParam)) : priced;
+    return sortProducts(matched, sort);
+  }, [afterSizes, maxPrice, sort, qParam]);
 
   const total = filteredSorted.length;
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
@@ -183,6 +231,40 @@ export function ProductCatalogClient({
 
   const related = useMemo(() => products.slice(0, 6), [products]);
 
+  function submitCatalogSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const v = searchInput.trim();
+    setPage(1);
+    const params = new URLSearchParams();
+    if (v) params.set("q", v);
+    if (activeCategory !== "all") params.set("cat", activeCategory);
+    const qs = params.toString();
+    router.push(qs ? `/products-catalog?${qs}` : "/products-catalog");
+  }
+
+  function clearCatalogSearch() {
+    setSearchInput("");
+    setPage(1);
+    const params = new URLSearchParams();
+    if (activeCategory !== "all") params.set("cat", activeCategory);
+    const qs = params.toString();
+    router.push(qs ? `/products-catalog?${qs}` : "/products-catalog");
+  }
+
+  function categoryHref(id: CatalogCategoryId): string {
+    const params = new URLSearchParams();
+    if (qParam) params.set("q", qParam);
+    if (id !== "all") params.set("cat", id);
+    const qs = params.toString();
+    return qs ? `/products-catalog?${qs}` : "/products-catalog";
+  }
+
+  function toggleSizeFilter(label: string) {
+    setSelectedSizes((prev) =>
+      prev.includes(label) ? prev.filter((x) => x !== label) : [...prev, label],
+    );
+  }
+
   return (
     <div className="bg-white text-black">
       <div className="border-b border-[#c9a227] bg-[#c9a227] py-2 text-center text-xs font-bold uppercase tracking-widest text-white">
@@ -190,111 +272,203 @@ export function ProductCatalogClient({
       </div>
 
       <div className="mx-auto max-w-[1480px] px-4 py-10 sm:px-6 lg:px-10 lg:py-16">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-tight">
-          All Research Peptides
-        </h1>
-        <p className="mt-5 max-w-4xl text-base leading-relaxed text-neutral-600 lg:text-lg lg:leading-relaxed">
-          A comprehensive collection of research-grade compounds supplied for non-clinical, in-vitro laboratory research and
-          development. Designed to support analytical testing, molecular investigation, cellular studies, formulation research,
-          and exploratory R&amp;D across multiple scientific disciplines.
-        </p>
+        <div className="hidden text-center md:block">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-tight">
+            All Research Peptides
+          </h1>
+          <p className="mx-auto mt-5 max-w-4xl text-base leading-relaxed text-neutral-600 lg:text-lg lg:leading-relaxed">
+            A comprehensive collection of research-grade compounds supplied for non-clinical, in-vitro laboratory research and
+            development. Designed to support analytical testing, molecular investigation, cellular studies, formulation research,
+            and exploratory R&amp;D across multiple scientific disciplines.
+          </p>
+        </div>
 
         {apiError && (
-          <p className="mt-6 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="mt-6 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 md:mt-8">
             Catalog API unavailable. Start the NestJS backend and set <code className="text-xs">NEXT_PUBLIC_API_URL</code>.
           </p>
         )}
 
-        <div className="mt-12 flex flex-col gap-12 lg:flex-row lg:items-start lg:gap-14 xl:gap-16">
-          <aside className="w-full shrink-0 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 p-5 shadow-sm sm:p-6 lg:sticky lg:top-28 lg:z-10 lg:max-h-[min(calc(100vh-7rem),52rem)] lg:w-72 lg:overflow-y-auto lg:overscroll-contain lg:self-start xl:w-80">
-            <h2 className="border-b border-black/90 pb-3 text-xs font-bold uppercase tracking-[0.12em] text-black sm:text-sm">
-              Product categories
-            </h2>
-            <ul className="mt-5 space-y-2.5 text-sm text-neutral-700 sm:text-[15px]">
-              {CATALOG_CATEGORIES.map((c) => (
-                <li key={c}>
-                  <Link
-                    href={c === "Product Catalog" ? "/products-catalog" : "#"}
-                    className="block rounded-md py-0.5 transition hover:text-black hover:underline"
-                  >
-                    {c}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+        <div className="mt-8 flex flex-col gap-10 lg:mt-12 lg:flex-row lg:items-start lg:gap-14 xl:gap-16">
+          <aside className="w-full shrink-0 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 shadow-sm lg:sticky lg:top-24 lg:z-20 lg:flex lg:h-[calc(100dvh-5.5rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:w-72 lg:flex-col lg:overflow-hidden lg:self-start xl:w-80">
+            <div className="flex max-h-[min(28rem,70vh)] flex-col overflow-y-auto overscroll-contain p-5 sm:p-6 lg:max-h-none lg:flex-1 lg:pr-2">
+              <h2 className="border-b border-black/90 pb-3 text-xs font-bold uppercase tracking-[0.12em] text-black sm:text-sm">
+                Product categories
+              </h2>
+              <ul className="mt-5 space-y-1 text-sm text-neutral-700 sm:text-[15px]">
+                {CATALOG_NAV.map((c) => {
+                  const active = activeCategory === c.id;
+                  return (
+                    <li key={c.id}>
+                      <Link
+                        href={categoryHref(c.id)}
+                        scroll={false}
+                        className={`block rounded-md px-2 py-1.5 transition ${
+                          active
+                            ? "bg-black font-semibold text-white"
+                            : "hover:bg-neutral-200/80 hover:text-black"
+                        }`}
+                      >
+                        {c.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
 
-            <h2 className="mt-10 border-b border-black/90 pb-3 text-xs font-bold uppercase tracking-[0.12em] text-black sm:text-sm">
-              Filter by
-            </h2>
-            <ul className="mt-5 max-h-48 space-y-2.5 overflow-y-auto overscroll-contain pr-1 text-sm sm:max-h-56">
-              {FILTER_SIZES.map((f) => (
-                <li key={f.label} className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id={`f-${f.label}`}
-                    className="h-4 w-4 shrink-0 rounded border-neutral-400 text-black focus:ring-black"
-                    title="Filter UI (connect to attributes later)"
-                  />
-                  <label htmlFor={`f-${f.label}`} className="cursor-pointer text-neutral-600">
-                    {f.label}{" "}
-                    <span className="text-neutral-400">({f.count})</span>
-                  </label>
-                </li>
-              ))}
-            </ul>
+              <h2 className="mt-8 border-b border-black/90 pb-3 text-xs font-bold uppercase tracking-[0.12em] text-black sm:text-sm">
+                Filter by
+              </h2>
+              <p className="mt-3 text-xs text-neutral-500">Size / concentration (matches name or slug)</p>
+              <ul className="mt-4 space-y-2.5 pr-1 text-sm">
+                {FILTER_SIZES.map((f) => {
+                  const count = countProductsWithSize(afterCategory, f.label);
+                  const id = `f-${f.label.replace(/\s+/g, "-")}`;
+                  return (
+                    <li key={f.label} className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id={id}
+                        checked={selectedSizes.includes(f.label)}
+                        onChange={() => toggleSizeFilter(f.label)}
+                        disabled={count === 0}
+                        className="h-4 w-4 shrink-0 rounded border-neutral-400 text-black focus:ring-black disabled:opacity-40"
+                      />
+                      <label htmlFor={id} className={`cursor-pointer text-neutral-600 ${count === 0 ? "opacity-50" : ""}`}>
+                        {f.label}{" "}
+                        <span className="text-neutral-400">({count})</span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+              {selectedSizes.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedSizes([])}
+                  className="mt-3 text-xs font-semibold text-black underline decoration-neutral-400 underline-offset-2 hover:decoration-black"
+                >
+                  Clear size filters
+                </button>
+              ) : null}
 
-            <div className="mt-8 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <h3 className="text-sm font-bold text-black">Max price</h3>
-              <p className="mt-1 text-xs text-neutral-500">Drag to filter the catalog</p>
-              <input
-                type="range"
-                min={0}
-                max={5000}
-                step={50}
-                value={Math.min(maxPrice, 5000)}
-                onChange={(e) => {
-                  setMaxPrice(Number(e.target.value));
-                  setPage(1);
-                }}
-                className="mt-4 h-2 w-full cursor-pointer accent-black"
-              />
-              <p className="mt-3 text-base font-semibold tabular-nums text-black">
-                ${maxPrice >= 5000 ? "5000+" : maxPrice.toFixed(0)}
-              </p>
+              <div className="mt-8 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-bold text-black">Max price</h3>
+                <p className="mt-1 text-xs text-neutral-500">Drag to filter the catalog</p>
+                <input
+                  type="range"
+                  min={0}
+                  max={5000}
+                  step={50}
+                  value={Math.min(maxPrice, 5000)}
+                  onChange={(e) => {
+                    setMaxPrice(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="mt-4 h-2 w-full cursor-pointer accent-black"
+                />
+                <p className="mt-3 text-base font-semibold tabular-nums text-black">
+                  ${maxPrice >= 5000 ? "5000+" : maxPrice.toFixed(0)}
+                </p>
+              </div>
             </div>
           </aside>
 
           <div className="min-w-0 flex-1">
-            <div className="flex flex-col gap-4 rounded-xl border border-neutral-200/80 bg-neutral-50/40 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-              <p className="text-sm font-medium text-neutral-700 sm:text-base">
-                Showing <span className="tabular-nums text-black">{showingFrom}</span>–
-                <span className="tabular-nums text-black">{showingTo}</span> of{" "}
-                <span className="tabular-nums text-black">{total}</span> results
-              </p>
-              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
-                <label htmlFor="catalog-sort" className="text-sm font-medium text-neutral-600 sm:shrink-0">
-                  Sort
-                </label>
-                <select
-                  id="catalog-sort"
-                  value={sort}
-                  onChange={(e) => {
-                    setSort(e.target.value as SortKey);
-                    setPage(1);
-                  }}
-                  className="min-h-11 w-full min-w-0 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium outline-none transition focus:border-black focus:ring-1 focus:ring-black sm:w-auto sm:min-w-[12rem]"
-                >
-                  <option value="default">Default sorting</option>
-                  <option value="popularity">Sort by popularity</option>
-                  <option value="latest">Sort by latest</option>
-                  <option value="price-asc">Sort by price: low to high</option>
-                  <option value="price-desc">Sort by price: high to low</option>
-                </select>
+            <div className="flex flex-col gap-4 rounded-xl border border-neutral-200/80 bg-neutral-50/40 px-4 py-4 sm:px-5">
+              <form onSubmit={submitCatalogSearch} className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-3" role="search">
+                <div className="min-w-0 flex-1">
+                  <label htmlFor="catalog-search" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-neutral-600">
+                    Search products
+                  </label>
+                  <input
+                    id="catalog-search"
+                    type="search"
+                    name="q"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Name, keyword, or URL slug…"
+                    autoComplete="off"
+                    className="min-h-11 w-full rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-black focus:ring-1 focus:ring-black"
+                  />
+                </div>
+                <div className="flex shrink-0 gap-2 sm:items-end sm:pt-5">
+                  <button
+                    type="submit"
+                    className="min-h-11 rounded-lg bg-black px-5 text-sm font-semibold text-white hover:bg-neutral-800"
+                  >
+                    Search
+                  </button>
+                  {qParam ? (
+                    <button
+                      type="button"
+                      onClick={clearCatalogSearch}
+                      className="min-h-11 rounded-lg border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-800 hover:bg-neutral-50"
+                    >
+                      Clear
+                    </button>
+                  ) : null}
+                </div>
+              </form>
+
+              <div className="flex flex-col gap-4 border-t border-neutral-200/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm font-medium text-neutral-700 sm:text-base">
+                  Showing <span className="tabular-nums text-black">{showingFrom}</span>–
+                  <span className="tabular-nums text-black">{showingTo}</span> of{" "}
+                  <span className="tabular-nums text-black">{total}</span> results
+                  {activeCategory !== "all" ? (
+                    <>
+                      {" "}
+                      ·{" "}
+                      <span className="font-semibold text-black">
+                        {CATALOG_NAV.find((c) => c.id === activeCategory)?.label}
+                      </span>
+                    </>
+                  ) : null}
+                  {qParam ? (
+                    <>
+                      {" "}
+                      for <span className="font-semibold text-black">&ldquo;{qParam}&rdquo;</span>
+                    </>
+                  ) : null}
+                </p>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
+                  <label htmlFor="catalog-sort" className="text-sm font-medium text-neutral-600 sm:shrink-0">
+                    Sort
+                  </label>
+                  <select
+                    id="catalog-sort"
+                    value={sort}
+                    onChange={(e) => {
+                      setSort(e.target.value as SortKey);
+                      setPage(1);
+                    }}
+                    className="min-h-11 w-full min-w-0 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium outline-none transition focus:border-black focus:ring-1 focus:ring-black sm:w-auto sm:min-w-[12rem]"
+                  >
+                    <option value="default">Default sorting</option>
+                    <option value="popularity">Sort by popularity</option>
+                    <option value="latest">Sort by latest</option>
+                    <option value="price-asc">Sort by price: low to high</option>
+                    <option value="price-desc">Sort by price: high to low</option>
+                  </select>
+                </div>
               </div>
             </div>
 
             {total === 0 ? (
-              <p className="mt-12 text-center text-base text-neutral-500">No products match this filter.</p>
+              <p className="mt-12 text-center text-base text-neutral-500">
+                {qParam ? (
+                  <>
+                    No products match &ldquo;{qParam}&rdquo;. Try another term, adjust the price filter, or{" "}
+                    <button type="button" onClick={clearCatalogSearch} className="font-semibold text-black underline">
+                      clear search
+                    </button>
+                    .
+                  </>
+                ) : (
+                  "No products match this filter."
+                )}
+              </p>
             ) : (
               <ul className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-9 lg:mt-12 lg:gap-11 xl:grid-cols-3">
                 {slice.map((p) => (

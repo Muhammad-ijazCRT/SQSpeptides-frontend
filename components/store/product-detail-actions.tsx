@@ -12,26 +12,23 @@ export function ProductDetailActions({ product }: { product: Product }) {
   const { showToast } = useToast();
   const safe = normalizeProduct(product) ?? product;
   const [qty, setQty] = useState(1);
-  const [wishMsg, setWishMsg] = useState<string | null>(null);
 
   async function addWish() {
-    setWishMsg(null);
     try {
       await addWishlistProduct(safe.id);
-      setWishMsg("Saved to wishlist.");
+      showToast(`${safe.name} saved to wishlist`, "success");
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Could not add";
+      const msg = e instanceof Error ? e.message : "Could not add to wishlist";
       if (msg === "Unauthorized") {
-        setWishMsg("Sign in to use wishlist.");
+        showToast("Sign in to use wishlist", "error");
         return;
       }
-      setWishMsg(msg);
+      showToast(msg, "error");
     }
   }
 
   return (
     <div className="mt-10 flex flex-col gap-4">
-      {wishMsg ? <p className="text-sm text-neutral-600">{wishMsg}</p> : null}
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
       <label className="flex flex-col gap-2 text-sm font-medium text-neutral-700 sm:shrink-0">
         <span>Quantity</span>

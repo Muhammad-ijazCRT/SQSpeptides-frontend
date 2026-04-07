@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductDetailActions } from "@/components/store/product-detail-actions";
 import { fetchProductBySlug } from "@/lib/api/products";
-import { resolveProductImage } from "@/lib/store/catalog-image";
+import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 
 const detailImageSizes = "(max-width: 1023px) 100vw, (max-width: 1535px) 50vw, 640px";
 
@@ -66,7 +66,7 @@ export default async function ProductDetailPage({ params }: Props) {
                   src={img}
                   alt={product.name}
                   fill
-                  className="object-cover"
+                  className={productImageBoxClassName(img)}
                   priority
                   sizes={detailImageSizes}
                   unoptimized

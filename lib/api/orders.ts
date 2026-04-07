@@ -9,6 +9,7 @@ export type CheckoutPayload = {
   city: string;
   postalCode: string;
   country: string;
+  researchUseAttestation: string;
   items: { productId: string; quantity: number }[];
 };
 

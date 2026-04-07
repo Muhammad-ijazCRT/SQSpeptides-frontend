@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ATTRIBUTE_FILTERS, CATEGORY_NAV } from "@/lib/store/popular-peptides-data";
-import { resolveProductImage } from "@/lib/store/catalog-image";
+import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 import type { Product } from "@/lib/store/types";
 
 type SortKey = "popularity" | "latest" | "price-asc" | "price-desc";
@@ -148,7 +148,7 @@ export function PopularPeptidesShopClient({ products, headingFont }: Props) {
                             src={img}
                             alt={p.name}
                             fill
-                            className="object-cover transition duration-500 ease-out group-hover:scale-[1.04]"
+                            className={productImageBoxClassName(img, "transition duration-500 ease-out group-hover:scale-[1.04]")}
                             sizes={gridImageSizes}
                             unoptimized
                           />

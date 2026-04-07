@@ -9,6 +9,19 @@ function getJwtSecret(): string | null {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Legacy URLs: `/products` and `/products/:slug` → `/products-catalog`, but never touch static files under `public/products/images/`.
+  if (pathname === "/products" || pathname === "/products/") {
+    return NextResponse.redirect(new URL("/products-catalog", request.url), 308);
+  }
+  if (pathname.startsWith("/products/images")) {
+    return NextResponse.next();
+  }
+  if (pathname.startsWith("/products/")) {
+    const dest = pathname.replace(/^\/products/, "/products-catalog");
+    return NextResponse.redirect(new URL(dest, request.url), 308);
+  }
+
   const secret = getJwtSecret();
 
   if (!secret) {
@@ -56,6 +69,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/products",
+    "/products/:path*",
     "/admin/dashboard/:path*",
     "/admin/login",
     "/account/dashboard/:path*",

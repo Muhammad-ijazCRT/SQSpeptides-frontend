@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { SiteHeaderSearchSync } from "@/components/store/site-header-search-sync";
 import { BrandWordmark } from "@/components/store/brand-wordmark";
 import { MolecularLogo } from "@/components/store/molecular-logo";
 import { useCart } from "@/components/store/cart-context";
@@ -43,10 +44,23 @@ function NavLink({
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const { itemCount } = useCart();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchDraft, setSearchDraft] = useState("");
   const [customerAuthed, setCustomerAuthed] = useState<boolean | null>(null);
+
+  const applyUrlQueryToDraft = useCallback((q: string) => {
+    setSearchDraft(q);
+  }, []);
+
+  function submitHeaderSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const q = searchDraft.trim();
+    setSearchOpen(false);
+    router.push(q ? `/products-catalog?q=${encodeURIComponent(q)}` : "/products-catalog");
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -72,7 +86,21 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 bg-white">
-      <div className="h-1 bg-black" aria-hidden />
+      <div
+        className="bg-black px-3 py-2 text-center text-[11px] font-semibold leading-snug text-white sm:text-xs sm:leading-normal"
+        role="status"
+        aria-live="polite"
+      >
+        <span className="inline-flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
+          <span aria-hidden className="text-amber-400">
+            ⚠
+          </span>
+          <span>Warning For Research Purposes Only / Not For Human Consumption Warning</span>
+          <span aria-hidden className="text-amber-400">
+            ⚠
+          </span>
+        </span>
+      </div>
 
       <div className="border-b border-neutral-200">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 py-4 lg:px-8">
@@ -150,12 +178,51 @@ export function SiteHeader() {
         </div>
 
         {searchOpen && (
-          <div className="border-t border-neutral-200 bg-white px-4 py-3 lg:px-8">
-            <input
-              type="search"
-              placeholder="Search products…"
-              className="w-full max-w-xl rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm text-black placeholder:text-neutral-400 outline-none focus:border-black"
-            />
+          <div className="border-t border-neutral-200 bg-neutral-50/80 px-4 py-4 lg:px-8">
+            <Suspense fallback={null}>
+              <SiteHeaderSearchSync onQuery={applyUrlQueryToDraft} />
+            </Suspense>
+            <form
+              onSubmit={submitHeaderSearch}
+              className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-end"
+              role="search"
+            >
+              <div className="min-w-0 flex-1">
+                <label htmlFor="site-header-search" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-neutral-600">
+                  Search catalog
+                </label>
+                <input
+                  id="site-header-search"
+                  type="search"
+                  name="q"
+                  value={searchDraft}
+                  onChange={(e) => setSearchDraft(e.target.value)}
+                  placeholder="Product name, keyword, or SKU…"
+                  autoComplete="off"
+                  className="w-full rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm text-black placeholder:text-neutral-400 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                />
+                <p className="mt-1.5 text-xs text-neutral-500">Results open on the product catalog page.</p>
+              </div>
+              <div className="flex shrink-0 gap-2 sm:pb-0.5">
+                <button
+                  type="submit"
+                  className="rounded-md bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
+                >
+                  Search
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchDraft("");
+                    setSearchOpen(false);
+                    router.push("/products-catalog");
+                  }}
+                  className="rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50"
+                >
+                  View all
+                </button>
+              </div>
+            </form>
           </div>
         )}
 

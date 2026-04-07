@@ -13,14 +13,19 @@ export function normalizeProduct(raw: unknown): Product | null {
   const rating =
     typeof p.rating === "number" ? p.rating : Number.isFinite(Number(p.rating)) ? Number(p.rating) : 0;
   const desc = p.description;
-  const img = p.imageUrl;
+  const img =
+    typeof p.imageUrl === "string"
+      ? p.imageUrl
+      : typeof p.image_url === "string"
+        ? p.image_url
+        : null;
   return {
     id,
     slug,
     name,
     description: typeof desc === "string" ? desc : null,
     price,
-    imageUrl: typeof img === "string" ? img : null,
+    imageUrl: img,
     rating: Math.min(5, Math.max(0, rating)),
   };
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { CustomerOrder } from "@/lib/api/customer-portal";
 import { fetchMyOrders } from "@/lib/api/customer-portal";
-import { resolveProductImage } from "@/lib/store/catalog-image";
+import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState<CustomerOrder[] | null>(null);
@@ -57,25 +57,28 @@ export default function MyOrdersPage() {
                 <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-stretch sm:gap-6 sm:p-6">
                   <div className="flex min-w-0 flex-1 gap-3 sm:gap-4">
                     <div className="flex shrink-0 gap-2">
-                      {preview.map((line) => (
+                      {preview.map((line) => {
+                        const img = resolveProductImage({
+                          slug: line.product.slug,
+                          imageUrl: line.product.imageUrl ?? null,
+                        });
+                        return (
                         <Link
                           key={line.id}
                           href={`/products-catalog/${line.product.slug}`}
                           className="relative h-[4.5rem] w-[4.5rem] overflow-hidden rounded-xl bg-neutral-100 ring-1 ring-neutral-200/80 transition hover:ring-neutral-400 sm:h-20 sm:w-20"
                         >
                           <Image
-                            src={resolveProductImage({
-                              slug: line.product.slug,
-                              imageUrl: line.product.imageUrl ?? null,
-                            })}
+                            src={img}
                             alt={line.product.name}
                             fill
-                            className="object-cover"
+                            className={productImageBoxClassName(img)}
                             sizes="80px"
                             unoptimized
                           />
                         </Link>
-                      ))}
+                        );
+                      })}
                       {extra > 0 ? (
                         <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-xl bg-neutral-100 text-sm font-semibold text-neutral-600 ring-1 ring-neutral-200/80 sm:h-20 sm:w-20">
                           +{extra}

@@ -8,6 +8,7 @@ export type CustomerOrder = {
   city: string;
   postalCode: string;
   country: string;
+  researchUseAttestation?: string;
   total: number;
   status: string;
   createdAt: string;

@@ -2,13 +2,42 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createOrder } from "@/lib/api/orders";
 import { useCart } from "@/components/store/cart-context";
-import { resolveProductImage } from "@/lib/store/catalog-image";
-import { CheckoutCrossmint, isCrossmintConfigured } from "@/components/store/checkout-crossmint";
+import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
+import {
+  formatResearchAttestationForDisplay,
+  isResearchUseAttestation,
+  RESEARCH_USE_ATTESTATION_OPTIONS,
+} from "@/lib/store/research-attestation";
 import { useToast } from "@/components/store/toast-context";
+
+function isCrossmintConfigured(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_CROSSMINT_CLIENT_SIDE_API_KEY?.trim());
+}
+
+const CheckoutCrossmint = dynamic(
+  () => import("@/components/store/checkout-crossmint").then((m) => m.CheckoutCrossmint),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-8"
+        role="status"
+        aria-live="polite"
+      >
+        <span
+          className="h-9 w-9 animate-spin rounded-full border-2 border-neutral-200 border-t-[#D4AF37]"
+          aria-hidden
+        />
+        <p className="text-center text-sm font-medium text-neutral-600">Loading secure card checkout…</p>
+      </div>
+    ),
+  }
+);
 
 const MIN_CARD_USD = 1;
 const PENDING_STORAGE_KEY = "sqspeptides_pending_checkout_v1";
@@ -20,6 +49,7 @@ type CheckoutSnapshot = {
   city: string;
   postalCode: string;
   country: string;
+  researchUseAttestation: string;
   items: { productId: string; quantity: number }[];
 };
 
@@ -61,6 +91,8 @@ export function CheckoutForm() {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [country, setCountry] = useState("US");
+  const [researchCategory, setResearchCategory] = useState("");
+  const [purchaserTermsAccepted, setPurchaserTermsAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"shipping" | "payment">("shipping");
@@ -120,6 +152,14 @@ export function CheckoutForm() {
       );
       return;
     }
+    if (!snap.researchUseAttestation || !isResearchUseAttestation(snap.researchUseAttestation)) {
+      finalizeOnce.current = false;
+      setLoading(false);
+      setError(
+        "Your saved checkout is missing a research-use attestation. Go back to shipping, select an attestation, and continue to payment again."
+      );
+      return;
+    }
 
     try {
       const order = await createOrder({
@@ -129,6 +169,7 @@ export function CheckoutForm() {
         city: snap.city,
         postalCode: snap.postalCode,
         country: snap.country,
+        researchUseAttestation: snap.researchUseAttestation,
         items: snap.items,
       });
       checkoutSnapshotRef.current = null;
@@ -154,6 +195,15 @@ export function CheckoutForm() {
       setError("Please complete all address fields.");
       return false;
     }
+    const catOk = (RESEARCH_USE_ATTESTATION_OPTIONS as readonly string[]).includes(researchCategory);
+    if (!researchCategory.trim() || !catOk) {
+      setError("Please select a research-use attestation.");
+      return false;
+    }
+    if (!purchaserTermsAccepted) {
+      setError("Please read and accept the purchaser responsibility agreement and terms to continue.");
+      return false;
+    }
     return true;
   }
 
@@ -165,6 +215,7 @@ export function CheckoutForm() {
       city: city.trim(),
       postalCode: postalCode.trim(),
       country: country.trim(),
+      researchUseAttestation: researchCategory,
       items: lines.map((l) => ({ productId: l.product.id, quantity: l.quantity })),
     };
   }
@@ -229,7 +280,7 @@ export function CheckoutForm() {
           return (
             <li key={l.product.id} className="flex gap-3 border-b border-neutral-100 pb-4 last:border-0 last:pb-0">
               <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-neutral-100 ring-1 ring-neutral-200/80">
-                <Image src={img} alt="" fill className="object-cover" unoptimized sizes="64px" />
+                <Image src={img} alt="" fill className={productImageBoxClassName(img)} unoptimized sizes="64px" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold leading-snug text-black">{l.product.name}</p>
@@ -270,6 +321,10 @@ export function CheckoutForm() {
             {country}
             <br />
             <span className="text-neutral-500">{email}</span>
+          </p>
+          <p className="mt-3 border-t border-neutral-200 pt-3 text-neutral-700">
+            <span className="font-semibold text-neutral-800">Research / legal attestation:</span>{" "}
+            {formatResearchAttestationForDisplay(researchCategory)}
           </p>
         </div>
       ) : null}
@@ -341,6 +396,78 @@ export function CheckoutForm() {
                 <span className="text-sm font-medium text-neutral-800">Country</span>
                 <input required value={country} onChange={(e) => setCountry(e.target.value)} className={inputClass} autoComplete="country-name" />
               </label>
+
+              <label className="block sm:col-span-2">
+                <span className="text-sm font-medium text-neutral-800">Research-use attestation</span>
+                <span className="mt-1 block text-xs text-neutral-500">
+                  Required — identify the context of your research use.
+                </span>
+                <select
+                  required
+                  value={researchCategory}
+                  onChange={(e) => setResearchCategory(e.target.value)}
+                  className={inputClass}
+                  aria-required="true"
+                >
+                  <option value="" disabled>
+                    Select one…
+                  </option>
+                  {RESEARCH_USE_ATTESTATION_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="rounded-2xl border border-neutral-200/90 bg-gradient-to-b from-amber-50/50 via-white to-white p-5 shadow-[0_4px_24px_-12px_rgba(15,23,42,0.08)] sm:p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9a7b1a]">Privacy &amp; agreement</p>
+              <p className="mt-3 text-[15px] leading-relaxed text-neutral-600">
+                Your personal data will be used to process your order, support your experience throughout this website, and for
+                other purposes described in our{" "}
+                <Link
+                  href="/privacy-policy"
+                  className="font-semibold text-[#9a7b1a] underline decoration-[#D4AF37]/60 underline-offset-2 transition hover:text-black"
+                >
+                  privacy policy
+                </Link>
+                .
+              </p>
+
+              <div className="mt-6 flex gap-3.5 border-t border-neutral-200/90 pt-6">
+                <input
+                  id="checkout-purchaser-terms"
+                  type="checkbox"
+                  name="purchaserTerms"
+                  required
+                  checked={purchaserTermsAccepted}
+                  onChange={(e) => setPurchaserTermsAccepted(e.target.checked)}
+                  className="mt-1 h-5 w-5 shrink-0 cursor-pointer rounded border-2 border-neutral-400 bg-white text-black accent-[#D4AF37] checked:border-[#b8962e] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 focus:ring-offset-2"
+                  aria-required="true"
+                />
+                <label
+                  htmlFor="checkout-purchaser-terms"
+                  className="cursor-pointer select-none text-[11px] font-semibold uppercase leading-snug tracking-wide text-neutral-800 sm:text-[12px]"
+                >
+                  Purchaser responsibility: By purchasing, I accept full responsibility for safe, lawful, research-only use and
+                  acknowledge that Petra Peptide Science LLC bears no liability for misuse. I agree to indemnify and hold
+                  harmless Petra Peptide Science LLC from any claim. I also attest that I am a qualified researcher (at least
+                  21 years of age) and I will not use these products for human, veterinary, or non-research use. I also
+                  acknowledge and accept the purchaser responsibility agreement and{" "}
+                  <Link
+                    href="/terms"
+                    className="font-bold text-[#9a7b1a] underline decoration-[#D4AF37]/60 underline-offset-2 transition hover:text-black"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    terms and conditions
+                  </Link>{" "}
+                  *
+                </label>
+              </div>
+              {!purchaserTermsAccepted ? (
+                <p className="mt-3 text-xs text-neutral-500">You must check the box above to continue to payment.</p>
+              ) : null}
             </div>
 
             {error ? (

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { ProductCatalogClient } from "@/components/store/catalog/product-catalog-client";
 import { fetchProducts } from "@/lib/api/products";
 
@@ -17,5 +18,15 @@ export default async function ProductCatalogPage() {
     apiError = true;
   }
 
-  return <ProductCatalogClient products={products} apiError={apiError} />;
+  return (
+    <Suspense
+      fallback={
+        <div className="bg-white px-4 py-20 text-center text-sm text-neutral-500">
+          Loading catalog…
+        </div>
+      }
+    >
+      <ProductCatalogClient products={products} apiError={apiError} />
+    </Suspense>
+  );
 }

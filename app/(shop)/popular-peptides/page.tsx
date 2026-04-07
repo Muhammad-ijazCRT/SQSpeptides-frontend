@@ -14,7 +14,7 @@ import {
   REVIEWS,
 } from "@/lib/store/popular-peptides-data";
 import { popularPepImage } from "@/lib/store/popular-peptides-images";
-import { resolveProductImage } from "@/lib/store/catalog-image";
+import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 import type { Product } from "@/lib/store/types";
 
 const playfair = Playfair_Display({
@@ -49,7 +49,7 @@ function RelatedCard({ product, headingClass }: { product: Product; headingClass
             src={img}
             alt={product.name}
             fill
-            className="object-cover transition duration-500 group-hover:scale-[1.03]"
+            className={productImageBoxClassName(img, "transition duration-500 group-hover:scale-[1.03]")}
             sizes={relatedImageSizes}
             unoptimized
           />
@@ -136,7 +136,6 @@ export default async function PopularPeptidesPage() {
                   fill
                   className="object-cover brightness-[0.35]"
                   sizes="(max-width:768px) 100vw, 33vw"
-                  unoptimized
                 />
                 <div className="relative z-10">
                   <h3 className={`text-xl font-bold md:text-2xl ${heading}`}>{f.title}</h3>
@@ -201,7 +200,6 @@ export default async function PopularPeptidesPage() {
               className="object-cover"
               sizes="(max-width:1024px) 100vw, 50vw"
               priority={false}
-              unoptimized
             />
           </div>
           <div>

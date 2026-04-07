@@ -2,11 +2,21 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useTransition } from "react";
 import { useCart } from "@/components/store/cart-context";
-import { resolveProductImage } from "@/lib/store/catalog-image";
+import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 
 export default function CartPage() {
+  const router = useRouter();
+  const [checkoutPending, startCheckoutTransition] = useTransition();
   const { lines, setQuantity, removeLine, subtotal } = useCart();
+
+  useEffect(() => {
+    if (lines.length > 0) {
+      router.prefetch("/checkout");
+    }
+  }, [lines.length, router]);
 
   return (
     <div className="bg-neutral-50 min-h-[60vh] py-12 lg:py-16">
@@ -29,7 +39,7 @@ export default function CartPage() {
                   className="flex flex-wrap gap-4 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm"
                 >
                   <div className="relative h-24 w-24 shrink-0">
-                    <Image src={img} alt={product.name} fill className="object-cover" unoptimized />
+                    <Image src={img} alt={product.name} fill className={productImageBoxClassName(img)} unoptimized />
                   </div>
                   <div className="flex-1 min-w-[200px]">
                     <Link href={`/products-catalog/${product.slug}`} className="font-semibold text-black hover:text-[#b8962e]">
@@ -70,12 +80,24 @@ export default function CartPage() {
             <p className="text-lg">
               Subtotal: <span className="font-bold">${subtotal.toFixed(2)}</span>
             </p>
-            <Link
-              href="/checkout"
-              className="inline-block rounded bg-[#D4AF37] px-8 py-3 text-sm font-bold text-black hover:bg-[#c9a432]"
+            <button
+              type="button"
+              disabled={checkoutPending}
+              onClick={() => startCheckoutTransition(() => router.push("/checkout"))}
+              className="inline-flex min-h-12 min-w-[12rem] items-center justify-center rounded bg-[#D4AF37] px-8 py-3 text-sm font-bold text-black transition hover:bg-[#c9a432] disabled:cursor-wait disabled:opacity-80"
             >
-              Proceed to checkout
-            </Link>
+              {checkoutPending ? (
+                <span className="flex items-center gap-2">
+                  <span
+                    className="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black"
+                    aria-hidden
+                  />
+                  Going to checkout…
+                </span>
+              ) : (
+                "Proceed to checkout"
+              )}
+            </button>
           </div>
         )}
       </div>

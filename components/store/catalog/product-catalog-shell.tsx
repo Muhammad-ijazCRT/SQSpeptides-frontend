@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Product } from "@/lib/store/types";
-import { resolveProductImage } from "@/lib/store/catalog-image";
+import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 import { normalizeProduct } from "@/lib/store/normalize-product";
 import { useCart } from "@/components/store/cart-context";
 import { useToast } from "@/components/store/toast-context";
@@ -61,7 +61,7 @@ function CatalogGridCard({ product }: { product: Product }) {
           alt={safe.name}
           fill
           unoptimized
-          className="object-cover"
+          className={productImageBoxClassName(img)}
           sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 25vw"
         />
       </Link>

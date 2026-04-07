@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { CustomerOrder } from "@/lib/api/customer-portal";
 import { fetchMyOrder } from "@/lib/api/customer-portal";
-import { resolveProductImage } from "@/lib/store/catalog-image";
+import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -71,6 +71,12 @@ export default function OrderDetailPage() {
           <p className="mt-2 text-sm text-neutral-700">{order.email}</p>
           <p className="mt-4 text-xs font-bold uppercase tracking-wide text-neutral-500">Placed</p>
           <p className="mt-1 text-sm text-neutral-700">{new Date(order.createdAt).toLocaleString()}</p>
+          {order.researchUseAttestation ? (
+            <>
+              <p className="mt-4 text-xs font-bold uppercase tracking-wide text-neutral-500">Research-use attestation</p>
+              <p className="mt-1 text-sm text-neutral-700">{order.researchUseAttestation}</p>
+            </>
+          ) : null}
         </div>
       </div>
 
@@ -88,7 +94,7 @@ export default function OrderDetailPage() {
                   href={`/products-catalog/${line.product.slug}`}
                   className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-neutral-100 ring-1 ring-neutral-200/80 sm:h-24 sm:w-24"
                 >
-                  <Image src={img} alt={line.product.name} fill className="object-cover" sizes="96px" unoptimized />
+                  <Image src={img} alt={line.product.name} fill className={productImageBoxClassName(img)} sizes="96px" unoptimized />
                 </Link>
                 <div className="min-w-0 flex-1">
                   <Link
