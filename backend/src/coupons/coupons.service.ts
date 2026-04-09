@@ -5,6 +5,16 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { Coupon, Prisma } from "../generated/prisma-client";
+
+export type AdminCouponRow = {
+  id: string;
+  code: string;
+  percentOff: number;
+  active: boolean;
+  maxUses: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
 import { PrismaService } from "../prisma/prisma.service";
 import type { CreateCouponDto } from "./dto/create-coupon.dto";
 import type { PreviewCouponDto } from "./dto/preview-coupon.dto";
@@ -107,8 +117,17 @@ export class CouponsService {
     };
   }
 
-  listAdmin() {
-    return this.prisma.coupon.findMany({ orderBy: { createdAt: "desc" } });
+  async listAdmin(): Promise<AdminCouponRow[]> {
+    const rows = await this.prisma.coupon.findMany({ orderBy: { createdAt: "desc" } });
+    return rows.map((c) => ({
+      id: c.id,
+      code: c.code,
+      percentOff: Number(c.percentOff),
+      active: c.active,
+      maxUses: c.maxUses,
+      createdAt: c.createdAt.toISOString(),
+      updatedAt: c.updatedAt.toISOString(),
+    }));
   }
 
   async createAdmin(dto: CreateCouponDto): Promise<Coupon> {

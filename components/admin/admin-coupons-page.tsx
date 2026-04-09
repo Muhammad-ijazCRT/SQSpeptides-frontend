@@ -51,8 +51,29 @@ export function AdminCouponsPage() {
         fetch("/api/admin/coupons", { cache: "no-store" }),
         fetch("/api/admin/coupons/analytics", { cache: "no-store" }),
       ]);
-      if (!cRes.ok) throw new Error("Could not load coupons.");
-      const list = (await cRes.json()) as CouponRow[];
+      const cText = await cRes.text();
+      if (!cRes.ok) {
+        let extra = "";
+        try {
+          const j = JSON.parse(cText) as { message?: string | string[] };
+          if (j.message != null) {
+            extra = Array.isArray(j.message) ? j.message.join(", ") : String(j.message);
+          }
+        } catch {
+          if (cText.trim()) extra = cText.trim().slice(0, 280);
+        }
+        throw new Error(
+          extra
+            ? `Could not load coupons (HTTP ${cRes.status}): ${extra}`
+            : `Could not load coupons (HTTP ${cRes.status}).`
+        );
+      }
+      let list: CouponRow[];
+      try {
+        list = JSON.parse(cText) as CouponRow[];
+      } catch {
+        throw new Error("Could not load coupons: invalid response from server.");
+      }
       setCoupons(
         list.map((c) => ({
           ...c,
