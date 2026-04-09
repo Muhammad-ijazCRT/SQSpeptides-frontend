@@ -13,6 +13,7 @@ export async function POST(request: Request) {
   if (res.ok) {
     revalidatePath("/account/orders");
     revalidatePath("/account/dashboard");
+    revalidatePath("/account/affiliate");
     revalidatePath("/admin/dashboard");
     revalidatePath("/admin/dashboard/orders");
   }

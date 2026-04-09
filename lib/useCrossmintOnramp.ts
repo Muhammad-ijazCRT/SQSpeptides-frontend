@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 import { CreateOrderResponse } from "./types";
-import { linkWallet, createCrossmintOrder } from "./actions";
 
 export type OnrampStatus =
   | "not-created"
@@ -32,17 +31,31 @@ export function useCrossmintOnramp({
       setStatus("creating-order");
 
       try {
-        const linkResult = await linkWallet(email, walletAddress);
-        if (linkResult && "error" in linkResult) {
-          setError(linkResult.error);
+        const linkRes = await fetch("/api/crossmint/link-wallet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, walletAddress }),
+        });
+        const linkJson = (await linkRes.json()) as { ok?: boolean; error?: string };
+        if (!linkRes.ok || linkJson.error) {
+          setError(linkJson.error ?? `Wallet link failed (HTTP ${linkRes.status}).`);
           setStatus("error");
           return;
         }
 
-        const data = await createCrossmintOrder(amountUsd, email, walletAddress);
+        const orderRes = await fetch("/api/crossmint/order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amountUsd, email, walletAddress }),
+        });
+        const data = (await orderRes.json()) as CreateOrderResponse | { error?: string };
 
-        if (data && typeof data === "object" && "error" in data && (data as { error?: string }).error) {
-          setError(String((data as { error: string }).error));
+        if (!orderRes.ok || (data && typeof data === "object" && "error" in data && data.error)) {
+          setError(
+            typeof data === "object" && data && "error" in data && data.error
+              ? String(data.error)
+              : `Order creation failed (HTTP ${orderRes.status}).`
+          );
           setStatus("error");
           return;
         }

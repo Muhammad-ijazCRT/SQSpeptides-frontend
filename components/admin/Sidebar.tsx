@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useState } from "react";
-import { BrandWordmark } from "@/components/store/brand-wordmark";
+import { BrandLogo } from "@/components/store/brand-logo";
 
 function navActive(pathname: string, href: string) {
   if (href === "/admin/dashboard") return pathname === "/admin/dashboard";
@@ -32,17 +32,16 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
   return (
     <div className="d-flex flex-column h-100">
       <div className="px-3 py-4 border-bottom border-secondary border-opacity-25">
-        <div className="bg-white rounded-3 px-3 py-2 d-flex align-items-center gap-2">
-          <span className="rounded-2 bg-primary bg-opacity-10 text-primary d-inline-flex p-2">
-            <i className="bi bi-bag-check-fill" aria-hidden />
-          </span>
-          <div className="text-start lh-sm">
-            <span className="admin-logo-title text-truncate d-block">
-              <BrandWordmark className="text-base" />
-            </span>
-            <span className="text-secondary admin-logo-sub">ADMIN</span>
+        <Link
+          href="/admin/dashboard"
+          className="bg-white rounded-3 px-3 py-2 d-flex align-items-center gap-2 text-decoration-none text-dark"
+          onClick={onNavigate}
+        >
+          <BrandLogo height={30} className="flex-shrink-0" />
+          <div className="text-start lh-sm min-w-0">
+            <span className="text-secondary admin-logo-sub d-block">ADMIN</span>
           </div>
-        </div>
+        </Link>
       </div>
 
       <nav className="flex-grow-1 overflow-auto py-3 px-2">
@@ -124,6 +123,18 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
 
         <p className="text-secondary text-uppercase px-3 mt-4 mb-2 fw-semibold admin-nav-section-label">Settings</p>
         <ul className="nav flex-column gap-1 px-0">
+          <li className="nav-item">
+            <Link className={linkClass("/admin/dashboard/affiliate")} href="/admin/dashboard/affiliate" onClick={onNavigate}>
+              <i className="bi bi-percent fs-5" aria-hidden />
+              <span>Affiliate program</span>
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link className={linkClass("/admin/dashboard/coupons")} href="/admin/dashboard/coupons" onClick={onNavigate}>
+              <i className="bi bi-ticket-perforated fs-5" aria-hidden />
+              <span>Coupons</span>
+            </Link>
+          </li>
           <li className="nav-item">
             <Link className={linkClass("/admin/dashboard/settings")} href="/admin/dashboard/settings" onClick={onNavigate}>
               <i className="bi bi-gear fs-5" aria-hidden />

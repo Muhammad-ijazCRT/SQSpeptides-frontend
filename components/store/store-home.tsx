@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { BrandWordmark } from "@/components/store/brand-wordmark";
-import { MolecularLogo } from "@/components/store/molecular-logo";
+import { BrandLogo } from "@/components/store/brand-logo";
 import { ProductCard } from "@/components/store/product-card";
 import { FaqSection } from "@/components/store/faq-section";
 import type { Product } from "@/lib/store/types";
@@ -61,8 +60,7 @@ export function StoreHome({ featured, apiError }: Props) {
         />
         <div className="pointer-events-none absolute inset-0 z-1 bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 256 256%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22 opacity=%220.06%22/%3E%3C/svg%3E')]" />
         <div className="relative z-10 flex flex-col items-center">
-          <MolecularLogo size={72} className="mb-4" />
-          <BrandWordmark variant="onDark" className="mb-6 text-2xl sm:text-3xl md:text-4xl" />
+          <BrandLogo priority height={88} className="mb-6 max-h-[5.5rem] sm:max-h-24 drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)]" />
           <h1 className="text-4xl font-extrabold tracking-tight text-[#D4AF37] sm:text-5xl md:text-6xl">
             PURITY DISCOVERED
           </h1>
@@ -129,10 +127,10 @@ export function StoreHome({ featured, apiError }: Props) {
       <section id="about" className="bg-black py-16 lg:py-24">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 lg:grid-cols-2 lg:items-center lg:px-8">
           <div>
-            <p className="flex flex-wrap items-center gap-2 text-sm font-semibold uppercase tracking-widest text-[#D4AF37]">
+            <p className="flex flex-wrap items-center gap-3 text-sm font-semibold uppercase tracking-widest text-[#D4AF37]">
               <span>About</span>
               <span className="normal-case">
-                <BrandWordmark variant="onDark" className="text-base font-bold tracking-tight md:text-lg" />
+                <BrandLogo height={28} className="max-h-7" />
               </span>
             </p>
             <h2 className="mt-3 text-3xl font-bold text-white md:text-4xl">
@@ -240,25 +238,73 @@ export function StoreHome({ featured, apiError }: Props) {
         </div>
       </section>
 
-      <section className="border-t border-neutral-200 bg-neutral-50 py-10">
-        <div className="mx-auto flex max-w-4xl flex-col gap-8 px-4 text-center sm:flex-row sm:justify-center sm:gap-16 lg:px-8">
-          <div className="scroll-mt-28">
-            <h2 className="text-lg font-bold text-black">Apply for Wholesale</h2>
-            <p className="mt-2 text-sm text-neutral-600">Volume pricing for qualified laboratories.</p>
-            <Link href="/apply-wholesale" className="mt-3 inline-block text-sm font-semibold text-[#b8962e] hover:underline">
-              Get started
-            </Link>
-          </div>
-          <div id="become-affiliate" className="scroll-mt-28">
-            <h2 className="text-lg font-bold text-black">Become an Affiliate</h2>
-            <p className="mt-2 flex flex-wrap items-center justify-center gap-1.5 text-sm text-neutral-600 sm:justify-start">
-              <span>Partner with</span>
-              <BrandWordmark className="text-sm" />
-              <span>.</span>
-            </p>
-            <Link href="/contact-us" className="mt-3 inline-block text-sm font-semibold text-[#b8962e] hover:underline">
-              Learn more
-            </Link>
+      <section className="relative border-t-[6px] border-[#D4AF37] bg-gradient-to-b from-neutral-100 via-white to-neutral-50 py-16 md:py-20 lg:py-24">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent" aria-hidden />
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-[11px] font-bold uppercase tracking-[0.28em] text-[#9a7b1a] sm:text-xs">
+            Wholesale &amp; partners
+          </p>
+          <h2 className="mt-3 text-center text-3xl font-bold tracking-tight text-black sm:text-4xl md:text-[2.5rem] md:leading-tight">
+            Scale your lab or earn with referrals
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-relaxed text-neutral-600 sm:text-lg">
+            Volume pricing for qualified facilities, or share your link and earn commission on every qualifying order.
+          </p>
+
+          <div className="mt-12 grid gap-6 sm:mt-14 md:grid-cols-2 md:gap-8 lg:mt-16 lg:gap-10">
+            <div className="scroll-mt-28 flex flex-col rounded-2xl border border-neutral-200/90 bg-white p-8 shadow-[0_8px_40px_-12px_rgba(15,23,42,0.12)] ring-1 ring-neutral-900/5 sm:p-10 md:min-h-[280px] md:justify-between">
+              <div>
+                <span className="inline-block rounded-full bg-amber-100/90 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-950">
+                  Wholesale
+                </span>
+                <h3 className="mt-4 text-2xl font-bold text-black sm:text-[1.65rem] sm:leading-snug">Apply for wholesale</h3>
+                <p className="mt-3 text-base leading-relaxed text-neutral-600 sm:text-lg">
+                  Volume pricing and streamlined ordering for qualified laboratories and research organizations.
+                </p>
+              </div>
+              <div className="mt-8 flex flex-col gap-3 sm:mt-10">
+                <Link
+                  href="/apply-wholesale"
+                  className="inline-flex w-full items-center justify-center rounded-full bg-[#D4AF37] px-8 py-4 text-base font-bold text-black shadow-sm transition hover:bg-[#c9a432] sm:w-auto sm:self-start"
+                >
+                  Get started
+                </Link>
+                <Link href="/contact-us" className="text-center text-sm font-semibold text-[#b8962e] hover:underline sm:text-left">
+                  Questions? Contact us
+                </Link>
+              </div>
+            </div>
+
+            <div
+              id="become-affiliate"
+              className="scroll-mt-28 flex flex-col rounded-2xl border border-neutral-200/90 bg-white p-8 shadow-[0_8px_40px_-12px_rgba(15,23,42,0.12)] ring-1 ring-neutral-900/5 sm:p-10 md:min-h-[280px] md:justify-between"
+            >
+              <div>
+                <span className="inline-block rounded-full bg-neutral-900 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#D4AF37]">
+                  Affiliate
+                </span>
+                <h3 className="mt-4 text-2xl font-bold text-black sm:text-[1.65rem] sm:leading-snug">Become an affiliate</h3>
+                <p className="mt-3 flex flex-wrap items-center gap-2 text-base leading-relaxed text-neutral-600 sm:text-lg">
+                  <span>Partner with</span>
+                  <BrandLogo height={28} className="max-h-7" />
+                  <span>and earn on referred orders.</span>
+                </p>
+              </div>
+              <div className="mt-8 flex flex-col gap-3 sm:mt-10">
+                <Link
+                  href="/account/affiliate"
+                  className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-8 py-4 text-base font-bold text-white shadow-sm transition hover:bg-neutral-800 sm:w-auto sm:self-start"
+                >
+                  Open affiliate dashboard
+                </Link>
+                <p className="text-center text-sm text-neutral-500 sm:text-left">
+                  Sign in required. New here?{" "}
+                  <Link href="/account/signup" className="font-semibold text-[#b8962e] hover:underline">
+                    Create an account
+                  </Link>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

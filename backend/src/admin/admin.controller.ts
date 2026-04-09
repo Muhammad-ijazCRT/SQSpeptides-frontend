@@ -1,6 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { AffiliateService } from "../affiliate/affiliate.service";
 import { AdminJwtGuard } from "../auth/guards/admin-jwt.guard";
+import { CreateCouponDto } from "../coupons/dto/create-coupon.dto";
+import { UpdateCouponDto } from "../coupons/dto/update-coupon.dto";
+import { CouponsService } from "../coupons/coupons.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { AffiliatePayoutResolveDto } from "./dto/affiliate-payout-resolve.dto";
+import { UpdateAffiliateSettingsDto } from "./dto/affiliate-settings.dto";
 import { CreateProductDto } from "../products/dto/create-product.dto";
 import { UpdateProductDto } from "../products/dto/update-product.dto";
 import { ProductsService } from "../products/products.service";
@@ -10,7 +16,9 @@ import { ProductsService } from "../products/products.service";
 export class AdminController {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly products: ProductsService
+    private readonly products: ProductsService,
+    private readonly affiliate: AffiliateService,
+    private readonly coupons: CouponsService
   ) {}
 
   @Get("overview")
@@ -101,5 +109,45 @@ export class AdminController {
   @Delete("products/:id")
   deleteProduct(@Param("id") id: string) {
     return this.products.remove(id);
+  }
+
+  @Get("affiliate/settings")
+  getAffiliateSettings() {
+    return this.affiliate.getSettings();
+  }
+
+  @Patch("affiliate/settings")
+  patchAffiliateSettings(@Body() dto: UpdateAffiliateSettingsDto) {
+    return this.affiliate.updateCommissionPercent(dto.affiliateCommissionPercent);
+  }
+
+  @Get("affiliate/payout-requests")
+  listAffiliatePayoutRequests() {
+    return this.affiliate.listPayoutRequestsAdmin();
+  }
+
+  @Patch("affiliate/payout-requests/:id")
+  resolveAffiliatePayout(@Param("id") id: string, @Body() dto: AffiliatePayoutResolveDto) {
+    return this.affiliate.updatePayoutRequestAdmin(id, dto);
+  }
+
+  @Get("coupons/analytics")
+  couponAnalytics() {
+    return this.coupons.analytics();
+  }
+
+  @Get("coupons")
+  listCoupons() {
+    return this.coupons.listAdmin();
+  }
+
+  @Post("coupons")
+  createCoupon(@Body() dto: CreateCouponDto) {
+    return this.coupons.createAdmin(dto);
+  }
+
+  @Patch("coupons/:id")
+  updateCoupon(@Param("id") id: string, @Body() dto: UpdateCouponDto) {
+    return this.coupons.updateAdmin(id, dto);
   }
 }

@@ -4,8 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { SiteHeaderSearchSync } from "@/components/store/site-header-search-sync";
-import { BrandWordmark } from "@/components/store/brand-wordmark";
-import { MolecularLogo } from "@/components/store/molecular-logo";
+import { BrandLogo } from "@/components/store/brand-logo";
 import { useCart } from "@/components/store/cart-context";
 
 const nav = [
@@ -104,9 +103,8 @@ export function SiteHeader() {
 
       <div className="border-b border-neutral-200">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 py-4 lg:px-8">
-          <Link href="/" className="flex shrink-0 flex-col items-center gap-1 text-center sm:flex-row sm:items-center sm:gap-3 sm:text-left">
-            <MolecularLogo size={40} />
-            <BrandWordmark className="text-base sm:text-lg" />
+          <Link href="/" className="flex shrink-0 items-center">
+            <BrandLogo height={40} className="max-h-10 sm:max-h-11" />
           </Link>
 
           <nav className="hidden lg:flex flex-1 items-center justify-center gap-5 xl:gap-7 2xl:gap-8">

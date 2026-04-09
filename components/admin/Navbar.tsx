@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { BrandLogo } from "@/components/store/brand-logo";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Me = { name?: string; email?: string };
@@ -127,6 +128,10 @@ export function Navbar({ title, onMenuClick }: NavbarProps) {
         >
           <i className="bi bi-list fs-5" aria-hidden />
         </button>
+
+        <Link href="/admin/dashboard" className="d-flex align-items-center flex-shrink-0 text-decoration-none me-1 me-sm-2">
+          <BrandLogo height={32} className="max-h-8" />
+        </Link>
 
         <h1 className="h5 mb-0 fw-bold text-dark text-truncate">{title}</h1>
 

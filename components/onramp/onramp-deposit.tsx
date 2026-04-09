@@ -3,6 +3,7 @@
 import React from "react";
 import { Order } from "@/lib/types";
 import Tooltip from "@/components/onramp/tooltip";
+import { isCrossmintProduction } from "@/lib/onramp/crossmint-public-env";
 
 type Props = {
   amountUsd: string;
@@ -21,6 +22,7 @@ function PricingInfo({ effectiveAmount, totalUsd }: { effectiveAmount: string | 
   const addedToBalance = parseFloat(effectiveAmount);
   const totalAmountUsd = parseFloat(totalUsd);
   const feesUsd = totalAmountUsd - addedToBalance;
+  const prod = isCrossmintProduction();
 
   return (
     <div className="mt-6 bg-gray-50 rounded-lg p-4">
@@ -34,7 +36,11 @@ function PricingInfo({ effectiveAmount, totalUsd }: { effectiveAmount: string | 
           <div className="flex items-center gap-2">
             {feesUsd <= 0.01 && (
               <Tooltip
-                content="No fees in staging. Contact sales to discuss rates for production."
+                content={
+                  prod
+                    ? "Fees may still apply depending on Crossmint and your card issuer; check your receipt or Crossmint dashboard for details."
+                    : "No fees in staging. Contact sales to discuss rates for production."
+                }
                 className="text-xs w-5 h-5 inline-flex items-center justify-center rounded-full border border-gray-300 text-gray-600 cursor-default"
               >
                 ?

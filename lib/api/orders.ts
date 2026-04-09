@@ -11,6 +11,9 @@ export type CheckoutPayload = {
   country: string;
   researchUseAttestation: string;
   items: { productId: string; quantity: number }[];
+  affiliateRef?: string;
+  storeCreditToUse?: number;
+  couponCode?: string;
 };
 
 export async function createOrder(payload: CheckoutPayload): Promise<OrderCreated> {

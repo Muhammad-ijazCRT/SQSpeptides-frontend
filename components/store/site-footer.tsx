@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { BrandWordmark } from "@/components/store/brand-wordmark";
+import { BrandLogo } from "@/components/store/brand-logo";
 import { LinktreeLinks } from "@/components/store/linktree-links";
-import { MolecularLogo } from "@/components/store/molecular-logo";
 import { NewsletterForm } from "@/components/store/newsletter-form";
 
 export function SiteFooter() {
@@ -12,9 +11,8 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-4 py-14 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <MolecularLogo size={32} />
-              <BrandWordmark variant="onDark" className="text-lg" />
+            <div className="mb-4">
+              <BrandLogo height={36} className="max-h-9" />
             </div>
             <p className="text-sm text-white/60 leading-relaxed mb-6">
               Advanced chemical research solutions for the modern laboratory environment.

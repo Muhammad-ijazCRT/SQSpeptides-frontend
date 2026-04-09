@@ -17,6 +17,8 @@ function pageTitle(pathname: string): string {
     settings: "Store settings",
     analytics: "Analytics",
     marketing: "Marketing",
+    affiliate: "Affiliate program",
+    coupons: "Coupons",
   };
   return map[segment] ?? "Admin";
 }

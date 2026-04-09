@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { RAILWAY_API_ORIGIN } from "./lib/api/production-api-origin";
+import { getCrossmintEnvMode } from "./lib/crossmint/resolve-env";
 
 const LOCAL_API_ORIGIN = "http://localhost:3001";
 
@@ -12,8 +13,17 @@ const nextPublicApiUrl = (
 ).replace(/\/+$/, "");
 
 const nextConfig: NextConfig = {
+  /** Dev: allow both hostname spellings so RSC / HMR / internal fetches are not blocked when switching localhost ↔ 127.0.0.1. */
+  allowedDevOrigins: ["localhost:3000", "127.0.0.1:3000"],
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["localhost:3000", "127.0.0.1:3000"],
+    },
+  },
   env: {
     NEXT_PUBLIC_API_URL: nextPublicApiUrl,
+    /** Ensures production builds use www.crossmint.com + Stellar pubnet USDC when env var is missing but keys are production. */
+    NEXT_PUBLIC_CROSSMINT_ENV: getCrossmintEnvMode(),
   },
   async headers() {
     return [

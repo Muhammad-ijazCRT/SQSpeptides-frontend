@@ -3,27 +3,28 @@
 import { CrossmintProvider, CrossmintEmbeddedCheckout } from "@crossmint/client-sdk-react-ui";
 import { useCallback, useEffect, useRef } from "react";
 import { useCrossmintOnramp } from "@/lib/useCrossmintOnramp";
-import { ONRAMP_RECIPIENT_SOLANA, ONRAMP_RETURNING_EMAIL } from "@/lib/onramp/config";
-
-const CLIENT_API_KEY = process.env.NEXT_PUBLIC_CROSSMINT_CLIENT_SIDE_API_KEY;
+import { ONRAMP_RECIPIENT_WALLET, ONRAMP_RETURNING_EMAIL } from "@/lib/onramp/config";
+import { isCrossmintProduction } from "@/lib/onramp/crossmint-public-env";
 
 export type CheckoutPaymentInfo = { txId?: string };
 
 type Props = {
+  /** Must be passed from the parent bundle so Turbopack/dynamic-import chunks still receive the key. */
+  clientApiKey: string;
   amountUsd: string;
   disabled?: boolean;
   onPaymentComplete: (info: CheckoutPaymentInfo) => void;
 };
 
-/** Crossmint user for link-wallet + receipt must match the wallet owner (same as /onramp). */
+/** Embedded checkout user must match the linked-wallet identity used for card settlement. */
 const CROSSMINT_CHECKOUT_EMAIL = ONRAMP_RETURNING_EMAIL.trim();
 
-export function CheckoutCrossmint({ amountUsd, disabled, onPaymentComplete }: Props) {
+export function CheckoutCrossmint({ clientApiKey, amountUsd, disabled, onPaymentComplete }: Props) {
   const completedRef = useRef(false);
 
   const { order, createOrder, orderId, clientSecret } = useCrossmintOnramp({
     email: CROSSMINT_CHECKOUT_EMAIL,
-    walletAddress: ONRAMP_RECIPIENT_SOLANA,
+    walletAddress: ONRAMP_RECIPIENT_WALLET,
   });
 
   const onPaymentCompleteRef = useRef(onPaymentComplete);
@@ -45,7 +46,8 @@ export function CheckoutCrossmint({ amountUsd, disabled, onPaymentComplete }: Pr
     return () => window.removeEventListener("message", handleMessage);
   }, [orderId, handleMessage]);
 
-  if (!CLIENT_API_KEY?.trim()) {
+  const apiKey = clientApiKey.trim();
+  if (!apiKey) {
     return null;
   }
 
@@ -63,11 +65,7 @@ export function CheckoutCrossmint({ amountUsd, disabled, onPaymentComplete }: Pr
             <span className="font-bold tabular-nums text-black" suppressHydrationWarning>
               ${amountUsd}
             </span>{" "}
-            with card. Processing uses the same Crossmint merchant identity as{" "}
-            <a href="/onramp" className="font-medium text-[#b8962e] underline">
-              /onramp
-            </a>{" "}
-            (fixed wallet + email). Your store order still uses the email you entered for shipping.
+            with card. Your store order uses the email you entered for shipping.
           </p>
           <button
             type="button"
@@ -80,8 +78,12 @@ export function CheckoutCrossmint({ amountUsd, disabled, onPaymentComplete }: Pr
         </>
       ) : (
         <>
-          <p className="text-center text-xs text-neutral-500">Test card (staging): 4242 4242 4242 4242</p>
-          <CrossmintProvider apiKey={CLIENT_API_KEY}>
+          {!isCrossmintProduction() ? (
+            <p className="text-center text-xs text-neutral-500">Test card (staging): 4242 4242 4242 4242</p>
+          ) : (
+            <p className="text-center text-xs text-neutral-500">Secure card checkout (production)</p>
+          )}
+          <CrossmintProvider apiKey={apiKey}>
             <div className="mx-auto w-full max-w-[450px]">
               <CrossmintEmbeddedCheckout
                 orderId={orderId}
@@ -105,6 +107,7 @@ export function CheckoutCrossmint({ amountUsd, disabled, onPaymentComplete }: Pr
   );
 }
 
-export function isCrossmintConfigured(): boolean {
-  return Boolean(CLIENT_API_KEY?.trim());
+export function isCrossmintConfigured(clientApiKey?: string): boolean {
+  const key = (clientApiKey ?? process.env.NEXT_PUBLIC_CROSSMINT_CLIENT_SIDE_API_KEY ?? "").trim();
+  return Boolean(key);
 }

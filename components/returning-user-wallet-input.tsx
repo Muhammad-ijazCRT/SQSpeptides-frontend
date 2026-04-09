@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { isValidStellarWalletAddress } from "@/lib/onramp/stellar-address";
 
 type ReturningUserWalletInputProps = {
   email: string;
@@ -19,17 +20,13 @@ export default function ReturningUserWalletInput({
 }: ReturningUserWalletInputProps) {
   const [walletAddress, setWalletAddress] = useState("");
 
-  const isValidSolanaAddress = (address: string) => {
-    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
-  };
-
   const canContinue =
     !isCreatingOrder &&
     parseFloat(amountUsd) >= 5 &&
-    isValidSolanaAddress(walletAddress);
+    isValidStellarWalletAddress(walletAddress);
 
   const handleUseExample = () => {
-    setWalletAddress("x4zyf8T6n6NVN3kBW6fmzBvNVAGuDE8mzmzqkSUUh3U");
+    setWalletAddress("CDRL6CLJMJSLXCK2VTPJWHQRMI7EXG6BZYT7XTMH7DMMNDEDP6N4GKJ3");
   };
 
   return (
@@ -59,7 +56,7 @@ export default function ReturningUserWalletInput({
           type="text"
           value={walletAddress}
           onChange={(e) => setWalletAddress(e.target.value)}
-          placeholder="Enter Solana wallet address"
+          placeholder="Enter Stellar wallet address (G… or C…)"
           disabled={isCreatingOrder}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-sm"
         />

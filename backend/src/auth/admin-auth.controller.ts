@@ -1,4 +1,4 @@
-import { Body, Controller, Get, NotFoundException, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, NotFoundException, Post, Req, UseGuards } from "@nestjs/common";
 import type { Request } from "express";
 import { AuthService } from "./auth.service";
 import { AdminLoginDto } from "./dto/admin-login.dto";
@@ -14,6 +14,7 @@ export class AdminAuthController {
   ) {}
 
   @Post("login")
+  @HttpCode(HttpStatus.OK)
   login(@Body() dto: AdminLoginDto) {
     return this.auth.loginAdmin(dto);
   }

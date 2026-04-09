@@ -10,6 +10,10 @@ export type CustomerOrder = {
   country: string;
   researchUseAttestation?: string;
   total: number;
+  storeCreditUsed?: number;
+  cardAmountDue?: number;
+  couponDiscountAmount?: number;
+  couponCodeSnapshot?: string | null;
   status: string;
   createdAt: string;
   items: {

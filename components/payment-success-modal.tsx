@@ -1,3 +1,7 @@
+const crossmintProduction =
+  process.env.NEXT_PUBLIC_CROSSMINT_ENV === "production" ||
+  (process.env.NEXT_PUBLIC_CROSSMINT_CLIENT_SIDE_API_KEY ?? "").startsWith("ck_production_");
+
 interface PaymentSuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -15,9 +19,10 @@ export default function PaymentSuccessModal({
 }: PaymentSuccessModalProps) {
   if (!isOpen) return null;
 
+  const net = crossmintProduction ? "public" : "testnet";
   const explorerUrl = transactionHash
-    ? `https://explorer.solana.com/tx/${transactionHash}?cluster=devnet`
-    : `https://explorer.solana.com/address/${walletAddress}?cluster=devnet`;
+    ? `https://stellar.expert/explorer/${net}/tx/${encodeURIComponent(transactionHash)}`
+    : `https://stellar.expert/explorer/${net}/account/${encodeURIComponent(walletAddress)}`;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -50,7 +55,7 @@ export default function PaymentSuccessModal({
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center w-full py-3 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors mb-3"
           >
-            View on Solana Explorer
+            View on Stellar Explorer
             <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>

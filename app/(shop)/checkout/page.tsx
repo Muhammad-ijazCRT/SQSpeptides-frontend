@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrandWordmark } from "@/components/store/brand-wordmark";
+import { BrandLogo } from "@/components/store/brand-logo";
 import { CheckoutForm } from "@/components/store/checkout-form";
 
 export const metadata = {
@@ -23,11 +23,11 @@ export default function CheckoutPage() {
         </nav>
 
         <header className="mt-6 border-b border-neutral-200/80 pb-8">
-          <BrandWordmark className="text-base sm:text-lg" />
+          <BrandLogo height={40} className="max-h-10" />
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-black sm:text-4xl">Checkout</h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-neutral-600 sm:text-base">
-            Research-use catalog only. Complete your shipping details, then pay securely with card (Crossmint). Your order
-            is stored under your contact email after payment succeeds.
+            Research-use catalog only. Complete your shipping details, then pay securely by card. Your order is stored under
+            your contact email after payment succeeds.
           </p>
           <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-wide text-amber-900">
             <span className="rounded-full bg-amber-100 px-3 py-1">Not for human use</span>

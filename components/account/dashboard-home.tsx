@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CustomerOrder } from "@/lib/api/customer-portal";
 import { fetchMyOrders } from "@/lib/api/customer-portal";
-import { BrandWordmark } from "@/components/store/brand-wordmark";
+import { BrandLogo } from "@/components/store/brand-logo";
 import { useCart } from "@/components/store/cart-context";
 
 function isCompletedStatus(s: string) {
@@ -104,9 +104,9 @@ export function DashboardHome() {
           role="status"
         >
           <div className="h-full w-1 self-stretch rounded-full bg-emerald-600" aria-hidden />
-          <p className="flex flex-wrap items-center gap-1 text-sm font-medium text-emerald-900">
+          <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-emerald-900">
             <span>Account created successfully! Welcome to</span>
-            <BrandWordmark className="text-sm" />
+            <BrandLogo height={20} className="max-h-5" />
             <span>.</span>
           </p>
         </div>

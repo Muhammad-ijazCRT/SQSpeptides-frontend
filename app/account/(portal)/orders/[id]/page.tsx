@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { CustomerOrder } from "@/lib/api/customer-portal";
 import { fetchMyOrder } from "@/lib/api/customer-portal";
 import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
+import { formatResearchAttestationForDisplay } from "@/lib/store/research-attestation";
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -74,7 +75,9 @@ export default function OrderDetailPage() {
           {order.researchUseAttestation ? (
             <>
               <p className="mt-4 text-xs font-bold uppercase tracking-wide text-neutral-500">Research-use attestation</p>
-              <p className="mt-1 text-sm text-neutral-700">{order.researchUseAttestation}</p>
+              <p className="mt-1 text-sm text-neutral-700">
+                {formatResearchAttestationForDisplay(order.researchUseAttestation)}
+              </p>
             </>
           ) : null}
         </div>
@@ -114,10 +117,39 @@ export default function OrderDetailPage() {
             );
           })}
         </ul>
-        <div className="flex justify-end border-t border-neutral-100 px-6 py-4">
-          <p className="text-lg font-bold">
-            Total: <span className="tabular-nums">${order.total.toFixed(2)}</span>
+        <div className="space-y-1 border-t border-neutral-100 px-6 py-4 text-right text-sm text-neutral-600">
+          {(() => {
+            const linesSubtotal = order.items.reduce((s, l) => s + l.quantity * l.price, 0);
+            const disc = order.couponDiscountAmount ?? 0;
+            if (disc <= 0) return null;
+            return (
+              <>
+                <p>
+                  Subtotal (items):{" "}
+                  <span className="font-semibold tabular-nums text-black">${linesSubtotal.toFixed(2)}</span>
+                </p>
+                <p className="text-emerald-800">
+                  Coupon{order.couponCodeSnapshot ? ` (${order.couponCodeSnapshot})` : ""}: −
+                  <span className="font-semibold tabular-nums">${disc.toFixed(2)}</span>
+                </p>
+              </>
+            );
+          })()}
+          {(order.storeCreditUsed ?? 0) > 0 ? (
+            <p>
+              Affiliate balance applied:{" "}
+              <span className="font-semibold tabular-nums text-black">${(order.storeCreditUsed ?? 0).toFixed(2)}</span>
+            </p>
+          ) : null}
+          <p className="text-lg font-bold text-black">
+            Order total: <span className="tabular-nums">${order.total.toFixed(2)}</span>
           </p>
+          {(order.storeCreditUsed ?? 0) > 0 ? (
+            <p className="text-xs">
+              Card / other payment:{" "}
+              <span className="font-semibold tabular-nums text-black">${(order.cardAmountDue ?? 0).toFixed(2)}</span>
+            </p>
+          ) : null}
         </div>
       </div>
     </div>

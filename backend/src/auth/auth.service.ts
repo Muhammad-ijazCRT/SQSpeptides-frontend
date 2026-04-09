@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
@@ -17,7 +22,15 @@ export class AuthService {
   ) {}
 
   async loginAdmin(dto: AdminLoginDto) {
-    const admin = await this.prisma.adminUser.findUnique({ where: { email: dto.email.toLowerCase() } });
+    let admin;
+    try {
+      admin = await this.prisma.adminUser.findUnique({ where: { email: dto.email.toLowerCase() } });
+    } catch (err) {
+      console.error("[AuthService.loginAdmin] database error", err);
+      throw new ServiceUnavailableException(
+        "Could not query the database. Check DATABASE_URL, run migrations, and ensure PostgreSQL is running.",
+      );
+    }
     if (!admin) throw new UnauthorizedException("Invalid credentials");
     const ok = await bcrypt.compare(dto.password, admin.passwordHash);
     if (!ok) throw new UnauthorizedException("Invalid credentials");

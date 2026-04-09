@@ -13,8 +13,8 @@ export default function TermsPage() {
       </Link>
       <h1 className="mt-6 text-3xl font-bold text-black">Terms and conditions</h1>
       <p className="mt-6 text-sm leading-relaxed text-neutral-600">
-        By purchasing, you accept full responsibility for safe, lawful, research-only use and acknowledge that Petra Peptide
-        Science LLC bears no liability for misuse, subject to the full agreement at checkout. This page is a placeholder —
+        By purchasing, you accept full responsibility for safe, lawful, research-only use and acknowledge that SubQ Scientist
+        LLC bears no liability for misuse, subject to the full agreement at checkout. This page is a placeholder —
         publish your complete terms, indemnity, and eligibility requirements here before production.
       </p>
       <p className="mt-4 text-sm text-neutral-600">

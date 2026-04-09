@@ -3,15 +3,33 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BrandWordmark } from "@/components/store/brand-wordmark";
-import { MolecularLogo } from "@/components/store/molecular-logo";
+import { BrandLogo } from "@/components/store/brand-logo";
 import { useCart } from "@/components/store/cart-context";
 
 type Me = { id: string; email: string; name: string; role: string };
 
-const nav = [
+type NavIcon = ({ className }: { className?: string }) => React.JSX.Element;
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: NavIcon;
+  sub?: { href: string; label: string }[];
+};
+
+const nav: NavItem[] = [
   { href: "/account/dashboard", label: "Dashboard", icon: IconDashboard },
   { href: "/account/orders", label: "My Orders", icon: IconOrders },
+  {
+    href: "/account/affiliate",
+    label: "Affiliate",
+    icon: IconAffiliate,
+    sub: [
+      { href: "/account/affiliate", label: "Overview" },
+      { href: "/account/affiliate/withdrawals", label: "Withdrawal history" },
+      { href: "/account/affiliate/commissions", label: "Commission history" },
+    ],
+  },
   { href: "/account/wishlist", label: "Wishlist", icon: IconHeart },
   { href: "/cart", label: "Shopping Cart", icon: IconCartNav },
   { href: "/account/profile", label: "Profile & Settings", icon: IconUser },
@@ -53,6 +71,14 @@ function IconUser({ className }: { className?: string }) {
   );
 }
 
+function IconAffiliate({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+    </svg>
+  );
+}
+
 function initials(name: string) {
   const p = name.trim().split(/\s+/);
   return ((p[0]?.[0] ?? "?") + (p[1]?.[0] ?? "")).toUpperCase();
@@ -73,6 +99,45 @@ function AccountSidebarLinks({
             ? pathname === "/cart"
             : pathname === item.href || pathname?.startsWith(item.href + "/");
         const Icon = item.icon;
+
+        if (item.sub) {
+          const inAffiliate = pathname?.startsWith("/account/affiliate") ?? false;
+          return (
+            <div key={item.href} className="space-y-1">
+              <Link
+                href={item.href}
+                onClick={onNavigate}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                  active ? "bg-amber-50 text-amber-950 ring-1 ring-amber-200/80" : "text-neutral-600 hover:bg-neutral-50 hover:text-black"
+                }`}
+              >
+                <Icon className={`h-5 w-5 shrink-0 ${active ? "text-[#b8962e]" : "text-neutral-500"}`} />
+                {item.label}
+              </Link>
+              {inAffiliate ? (
+                <ul className="ml-2 space-y-0.5 border-l-2 border-amber-200/60 py-0.5 pl-3">
+                  {item.sub.map((s) => {
+                    const subActive = pathname === s.href;
+                    return (
+                      <li key={s.href}>
+                        <Link
+                          href={s.href}
+                          onClick={onNavigate}
+                          className={`block rounded-lg py-1.5 pl-2 pr-2 text-xs font-medium transition ${
+                            subActive ? "bg-amber-100/80 text-amber-950" : "text-neutral-600 hover:bg-neutral-50 hover:text-black"
+                          }`}
+                        >
+                          {s.label}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : null}
+            </div>
+          );
+        }
+
         return (
           <Link
             key={item.href}
@@ -168,11 +233,8 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
                 <path strokeLinecap="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <Link href="/" className="flex min-w-0 items-center gap-2" title="Back to store home">
-              <span className="shrink-0 text-[#D4AF37]">
-                <MolecularLogo size={34} />
-              </span>
-              <BrandWordmark className="truncate text-base sm:text-lg" />
+            <Link href="/" className="flex min-w-0 items-center" title="Back to store home">
+              <BrandLogo height={36} className="max-h-9 min-w-0" />
             </Link>
           </div>
           <div className="flex shrink-0 items-center gap-1 sm:gap-3">

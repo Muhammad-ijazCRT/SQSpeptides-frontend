@@ -1,12 +1,11 @@
-NEXT_PUBLIC_CROSSMINT_CLIENT_SIDE_API_KEY=ck_staging_9tYhw51aPGYXNrufxUcdBqRVBgQhKxuDAQZPDwTNoEkeVTMYQ4nmzjgyMA18yeWyahEJ4nVjFZm7oDqkvjuu3ekAmdKixBqjLh9ZWEnLPtQrryhPxzo24GUtjmqhqx4CQSaumixCdKURDYBnPjy8D4cjCCQUKudUJ5Jd8E3XFcHYTAreBaiGeXn6B5tg84Zz5A98cEKRgWKvs5YSxDwyDwzr
-CROSSMINT_SERVER_SIDE_API_KEY=sk_staging_9tYhw51aPGYXNrufxUcdBqRVBgQhKxuDAQZPDwTNoEkeVTMYQ4nktx9LFNUrSUUDKCdvXpuoHmnhgPkGAgXUfuLbMKKquL2py9RmVSatdfAvK2Sne9Y3PDiGUmbHfNEaSuAvsyRoXtBHzbzxTUExht2HsZh6AmDveG3ZPhoDUTiuwnjqNPXLMghAv6ehTQkVUAh92BuVSLuDQYCf4LCpDCkK
+# SQSpeptides frontend
 
-# staging | production
-NEXT_PUBLIC_CROSSMINT_ENV=staging
+Copy environment variables from [`.env.template`](./.env.template) into `.env` or `.env.local`. Never commit real API keys.
 
-NEXT_PUBLIC_MERCHANT_WALLET=0x769b686F3b5279dAdA67464C12584B06671d29c1
+## Crossmint (onramp / card checkout)
 
-## Crossmint Documentation
+- Set `NEXT_PUBLIC_CROSSMINT_CLIENT_SIDE_API_KEY` and `CROSSMINT_SERVER_SIDE_API_KEY`.
+- Set `NEXT_PUBLIC_CROSSMINT_ENV` to `production` for live cards (uses `https://www.crossmint.com` and mainnet USDC in `lib/crossmint/crossmint-api.ts`), or `staging` for sandbox.
+- Optional: `NEXT_PUBLIC_CROSSMINT_PROJECT_ID` for your own reference (console project id).
 
-- **Staging console overview**: [`https://staging.crossmint.com/console/overview`](https://staging.crossmint.com/console/overview)
-- **Client-side API keys docs**: [`https://docs.crossmint.com/introduction/platform/api-keys/client-side`](https://docs.crossmint.com/introduction/platform/api-keys/client-side)
+Docs: [Client-side API keys](https://docs.crossmint.com/introduction/platform/api-keys/client-side) · [Production console](https://www.crossmint.com/console/overview) · [Staging console](https://staging.crossmint.com/console/overview)

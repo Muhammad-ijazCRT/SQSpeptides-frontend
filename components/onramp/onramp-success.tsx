@@ -1,5 +1,7 @@
 "use client";
 
+import { isCrossmintProduction } from "@/lib/onramp/crossmint-public-env";
+
 type OnrampSuccessProps = {
   totalUsd: string;
   effectiveAmount: string;
@@ -26,9 +28,10 @@ export default function OnrampSuccess({
   txId,
   onStartNew,
 }: OnrampSuccessProps) {
+  const net = isCrossmintProduction() ? "public" : "testnet";
   const explorerUrl = txId
-    ? `https://explorer.solana.com/tx/${txId}?cluster=devnet`
-    : `https://explorer.solana.com/address/${walletAddress}?cluster=devnet`;
+    ? `https://stellar.expert/explorer/${net}/tx/${encodeURIComponent(txId)}`
+    : `https://stellar.expert/explorer/${net}/account/${encodeURIComponent(walletAddress)}`;
   const formattedUsdc = formatUsdc(effectiveAmount);
   const formattedUsd = formatUsdc(totalUsd);
 

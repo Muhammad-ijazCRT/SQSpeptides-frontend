@@ -4,9 +4,9 @@ export const metadata: Metadata = {
   title: "Crossmint Onramp",
   description: "Fiat-to-crypto onramp demo — direct link only.",
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    icon: [{ url: "/logo.png", type: "image/png" }],
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
 };
 

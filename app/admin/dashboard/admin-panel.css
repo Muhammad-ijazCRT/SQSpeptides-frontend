@@ -292,3 +292,123 @@
 .admin-bs-root .admin-main-inner {
   max-width: 1600px;
 }
+
+/* —— Page chrome (affiliate, coupons, etc.) —— */
+.admin-bs-root .admin-page-hero {
+  margin-bottom: 1.75rem;
+}
+
+.admin-bs-root .admin-page-hero-title {
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+@media (min-width: 768px) {
+  .admin-bs-root .admin-page-hero-title {
+    font-size: 1.85rem;
+  }
+}
+
+.admin-bs-root .admin-page-hero-sub {
+  color: #64748b;
+  font-size: 0.9rem;
+  max-width: 44rem;
+  line-height: 1.6;
+}
+
+.admin-bs-root .admin-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.admin-bs-root .admin-section-title--on-dark {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.admin-bs-root .admin-gold-accent {
+  color: #9a7b1a;
+}
+
+.admin-bs-root .admin-card-gold-cap {
+  border-top: 3px solid #d4af37;
+}
+
+.admin-bs-root .admin-table-shell {
+  background: #fff;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06), 0 14px 36px -8px rgba(15, 23, 42, 0.14);
+}
+
+.admin-bs-root .admin-table-shell .table {
+  margin-bottom: 0;
+}
+
+.admin-bs-root .admin-table-shell tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.admin-bs-root .admin-table-shell .table > :not(caption) > * > * {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+  vertical-align: middle;
+}
+
+.admin-bs-root .admin-empty-panel {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.9rem;
+  background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
+}
+
+.admin-bs-root .badge-payout-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  padding: 0.35em 0.65em;
+}
+
+.admin-bs-root .badge-payout-paid {
+  background-color: #d1fae5;
+  color: #065f46;
+  font-weight: 600;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  padding: 0.35em 0.65em;
+}
+
+.admin-bs-root .badge-payout-rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+  font-weight: 600;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  padding: 0.35em 0.65em;
+}
+
+.admin-bs-root .admin-modal-surface .modal-content {
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
+}
+
+.admin-bs-root .btn-admin-gold {
+  background: linear-gradient(180deg, #e8c547 0%, #d4af37 100%);
+  border: 1px solid #c9a432;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.admin-bs-root .btn-admin-gold:hover {
+  background: linear-gradient(180deg, #f0d060 0%, #d4af37 100%);
+  color: #0f172a;
+}

@@ -12,8 +12,10 @@ import {
 import type { Request } from "express";
 import { CustomerJwtGuard } from "../auth/guards/customer-jwt.guard";
 import type { AccessTokenPayload } from "../auth/jwt-payload.interface";
+import { AffiliateService } from "../affiliate/affiliate.service";
 import { CustomerPortalService } from "./customer-portal.service";
 import { CreateAddressDto, UpdateAddressDto } from "./dto/address.dto";
+import { AffiliatePayoutRequestDto } from "./dto/affiliate-payout-request.dto";
 import { CreatePaymentMethodDto, UpdatePaymentMethodDto } from "./dto/payment-method.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
 import { WishlistAddDto } from "./dto/wishlist-add.dto";
@@ -21,7 +23,10 @@ import { WishlistAddDto } from "./dto/wishlist-add.dto";
 @Controller("customer")
 @UseGuards(CustomerJwtGuard)
 export class CustomerPortalController {
-  constructor(private readonly portal: CustomerPortalService) {}
+  constructor(
+    private readonly portal: CustomerPortalService,
+    private readonly affiliate: AffiliateService,
+  ) {}
 
   private cid(req: Request & { user: AccessTokenPayload }) {
     return req.user.sub;
@@ -111,5 +116,18 @@ export class CustomerPortalController {
     @Param("id") id: string
   ) {
     return this.portal.deletePaymentMethod(this.cid(req), id);
+  }
+
+  @Get("affiliate/me")
+  affiliateMe(@Req() req: Request & { user: AccessTokenPayload }) {
+    return this.affiliate.getAffiliateMe(this.cid(req));
+  }
+
+  @Post("affiliate/payout-request")
+  affiliatePayoutRequest(
+    @Req() req: Request & { user: AccessTokenPayload },
+    @Body() dto: AffiliatePayoutRequestDto
+  ) {
+    return this.affiliate.createPayoutRequest(this.cid(req), dto);
   }
 }
