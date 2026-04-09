@@ -9,6 +9,7 @@ import { useCart } from "@/components/store/cart-context";
 
 const nav = [
   { href: "/", label: "Home" },
+  { href: "/about-us", label: "About Us" },
   { href: "/products-catalog", label: "Product Catalog" },
   { href: "/popular-peptides", label: "Popular Peptides" },
   { href: "/lab-calculator", label: "Lab Calculator" },
@@ -79,6 +80,7 @@ export function SiteHeader() {
     if (href.startsWith("/products-catalog"))
       return pathname === "/products-catalog" || pathname.startsWith("/products-catalog/");
     if (href === "/contact-us") return pathname === "/contact-us";
+    if (href === "/about-us") return pathname === "/about-us";
     if (href === "/apply-wholesale") return pathname === "/apply-wholesale";
     return false;
   };

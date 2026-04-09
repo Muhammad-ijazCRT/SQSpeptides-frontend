@@ -1,6 +1,7 @@
 "use client";
 
 import { isCrossmintProduction } from "@/lib/onramp/crossmint-public-env";
+import { SITE_BRAND_NAME } from "@/lib/site-business";
 
 type OnrampSuccessProps = {
   totalUsd: string;
@@ -38,59 +39,50 @@ export default function OnrampSuccess({
   return (
     <div className="flex flex-col items-center py-2">
       <div className="relative mb-5">
-        <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center animate-in zoom-in duration-500">
-          <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+        <div className="flex h-16 w-16 animate-in items-center justify-center rounded-full bg-green-50 duration-500 zoom-in">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
             <svg
-              className="w-6 h-6 text-green-600"
+              className="h-6 w-6 text-green-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
               strokeWidth={2.5}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 13l4 4L19 7"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
         </div>
       </div>
 
-      <h2 className="text-lg font-semibold text-gray-900 mb-1">
-        Payment successful
-      </h2>
-      <p className="text-sm text-gray-500 mb-6">
-        Your USDC has been delivered
+      <h2 className="mb-1 text-lg font-semibold text-gray-900">Payment completed</h2>
+      <p className="mb-6 max-w-sm text-center text-sm leading-relaxed text-gray-500">
+        Your card payment was processed by our partner. USDC settlement to the wallet on file is shown below. This supports{" "}
+        {SITE_BRAND_NAME} checkout workflows that use a funded wallet—not trading or investment returns.
       </p>
 
-      <div className="w-full bg-gray-50 rounded-xl p-5 mb-5">
-        <div className="flex items-center justify-between mb-3">
+      <div className="mb-5 w-full rounded-xl bg-gray-50 p-5">
+        <div className="mb-3 flex items-center justify-between">
           <span className="text-sm text-gray-500">You paid</span>
-          <span className="text-sm font-medium text-gray-900">
-            ${formattedUsd}
-          </span>
+          <span className="text-sm font-medium text-gray-900">${formattedUsd}</span>
         </div>
-        <div className="border-t border-gray-200 my-3" />
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm text-gray-500">You received</span>
+        <div className="my-3 border-t border-gray-200" />
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-sm text-gray-500">Credited (USDC)</span>
           <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center">
+            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500">
               <span className="text-[8px] font-bold text-white">$</span>
             </div>
-            <span className="text-sm font-semibold text-gray-900">
-              {formattedUsdc} USDC
-            </span>
+            <span className="text-sm font-semibold text-gray-900">{formattedUsdc} USDC</span>
           </div>
         </div>
-        <div className="border-t border-gray-200 my-3" />
+        <div className="my-3 border-t border-gray-200" />
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">Delivered to</span>
+          <span className="text-sm text-gray-500">Destination</span>
           <a
             href={explorerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-mono text-green-600 hover:text-green-700 hover:underline transition-colors"
+            className="font-mono text-sm text-green-600 transition-colors hover:text-green-700 hover:underline"
           >
             {truncateAddress(walletAddress)}
           </a>
@@ -102,16 +94,10 @@ export default function OnrampSuccess({
           href={explorerUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center w-full py-2.5 px-4 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+          className="flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700"
         >
-          View on Explorer
-          <svg
-            className="w-3.5 h-3.5 ml-1.5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-          >
+          View on network explorer
+          <svg className="ml-1.5 h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -121,8 +107,9 @@ export default function OnrampSuccess({
         </a>
 
         <button
+          type="button"
           onClick={onStartNew}
-          className="w-full py-2.5 px-4 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+          className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
         >
           New transaction
         </button>

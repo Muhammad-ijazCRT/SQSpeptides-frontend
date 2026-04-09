@@ -11,10 +11,7 @@ type Props = {
   order: Order;
   onContinue: () => void;
   children?: React.ReactNode;
-  userType?: "returning" | "new";
 };
-
-const LIGHT_KYC_THRESHOLD_NUMBER = 100;
 
 function PricingInfo({ effectiveAmount, totalUsd }: { effectiveAmount: string | null; totalUsd: string | null }) {
   if (effectiveAmount === null || totalUsd === null) return null;
@@ -25,33 +22,33 @@ function PricingInfo({ effectiveAmount, totalUsd }: { effectiveAmount: string | 
   const prod = isCrossmintProduction();
 
   return (
-    <div className="mt-6 bg-gray-50 rounded-lg p-4">
+    <div className="mt-6 rounded-lg bg-gray-50 p-4">
       <div className="space-y-3">
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600 text-sm">Added to your balance</span>
-          <span className="text-gray-900 font-medium">${addedToBalance.toFixed(2)}</span>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">Added to your balance</span>
+          <span className="font-medium text-gray-900">${addedToBalance.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600 text-sm">Fees</span>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">Fees</span>
           <div className="flex items-center gap-2">
             {feesUsd <= 0.01 && (
               <Tooltip
                 content={
                   prod
                     ? "Fees may still apply depending on Crossmint and your card issuer; check your receipt or Crossmint dashboard for details."
-                    : "No fees in staging. Contact sales to discuss rates for production."
+                    : "Fee display in staging may differ from production."
                 }
-                className="text-xs w-5 h-5 inline-flex items-center justify-center rounded-full border border-gray-300 text-gray-600 cursor-default"
+                className="inline-flex h-5 w-5 cursor-default items-center justify-center rounded-full border border-gray-300 text-xs text-gray-600"
               >
                 ?
               </Tooltip>
             )}
-            <span className="text-gray-900 font-medium">${feesUsd.toFixed(2)}</span>
+            <span className="font-medium text-gray-900">${feesUsd.toFixed(2)}</span>
           </div>
         </div>
-        <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-          <span className="text-gray-900 font-medium">Total amount</span>
-          <span className="text-gray-900 font-semibold text-lg">${totalAmountUsd.toFixed(2)}</span>
+        <div className="flex items-center justify-between border-t border-gray-200 pt-2">
+          <span className="font-medium text-gray-900">Total amount</span>
+          <span className="text-lg font-semibold text-gray-900">${totalAmountUsd.toFixed(2)}</span>
         </div>
       </div>
     </div>
@@ -64,21 +61,17 @@ export default function OnrampDeposit({
   order,
   onContinue,
   children,
-  userType,
 }: Props) {
-  const showKycMessage = userType === "new";
-  const isLightKyc = showKycMessage && Number(amountUsd) <= LIGHT_KYC_THRESHOLD_NUMBER;
-
   return (
     <div className="px-6">
-      <h2 className="text-lg font-semibold text-center">Deposit</h2>
+      <h2 className="text-center text-lg font-semibold">Amount</h2>
 
       {children}
 
       <div className="mt-4 flex items-center justify-center gap-2">
         <div className="text-5xl text-gray-500">$</div>
         <input
-          className="text-5xl font-semibold text-gray-800 text-center outline-none min-w-[120px] max-w-[300px] w-auto"
+          className="w-auto min-w-[120px] max-w-[300px] text-center text-5xl font-semibold text-gray-800 outline-none"
           type="number"
           min={0}
           step={1}
@@ -88,15 +81,20 @@ export default function OnrampDeposit({
         />
       </div>
 
-      {showKycMessage && (
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800 text-center">
-            {isLightKyc
-              ? "This amount will use the light KYC experience. Select more than $100 to try full KYC."
-              : "This amount will use the full KYC experience. Select less than $101 to try light KYC."}
-          </p>
-        </div>
-      )}
+      <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+        <p className="text-center text-sm leading-snug text-neutral-700">
+          Card payments are processed by Crossmint. Additional verification may be required for fraud prevention and
+          regulations. By continuing, you agree to our{" "}
+          <a href="/terms" className="font-medium text-black underline hover:text-neutral-900">
+            terms
+          </a>{" "}
+          and{" "}
+          <a href="/privacy-policy" className="font-medium text-black underline hover:text-neutral-900">
+            privacy policy
+          </a>
+          .
+        </p>
+      </div>
 
       {order.status === "error" && order.error && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
@@ -109,7 +107,7 @@ export default function OnrampDeposit({
       {order.totalUsd == null && (
         <div className="mt-6">
           <button
-            className="bg-black text-white rounded-full px-5 py-2 text-sm w-full disabled:opacity-50"
+            className="w-full rounded-full bg-black px-5 py-2 text-sm text-white disabled:opacity-50"
             onClick={onContinue}
             disabled={order.status === "creating-order"}
           >

@@ -8,8 +8,8 @@ const faqs: LargeFaqItem[] = [
     a: "No. Products are sold strictly for laboratory research use only, by qualified professionals.",
   },
   {
-    q: "How do I verify a COA?",
-    a: "Use the COA search tool with your batch number, or download lab reports from the product page.",
+    q: "How do I get batch or COA documentation?",
+    a: "Email support with your order number, SKU, and batch identifier (if shown on your label). We will send applicable documentation or confirm what is available for that catalog item.",
   },
   {
     q: "What shipping options are available?",

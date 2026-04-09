@@ -4,13 +4,23 @@ import { BrandLogo } from "@/components/store/brand-logo";
 import { ProductCard } from "@/components/store/product-card";
 import { FaqSection } from "@/components/store/faq-section";
 import type { Product } from "@/lib/store/types";
+import { SITE_ADDRESS_SINGLE_LINE, SITE_SUPPORT_EMAIL } from "@/lib/site-business";
 
 type Props = { featured: Product[]; apiError?: boolean };
 
-const reviews = [
-  { name: "Dr. Morgan K.", text: "Consistent labeling and fast fulfillment. Our lab reorders monthly." },
-  { name: "Alex R.", text: "COA matched the batch exactly. Support answered technical questions same day." },
-  { name: "Jordan P.", text: "Clean packaging and documentation. Exactly what we need for compliance." },
+const trustPoints = [
+  {
+    title: "Documented catalog",
+    body: "Product pages describe intended research use. Batch-related documentation is available where applicable—contact support with your order or SKU for specifics.",
+  },
+  {
+    title: "U.S.-based operations",
+    body: `Orders ship from our fulfillment workflow with clear tracking. Business address: ${SITE_ADDRESS_SINGLE_LINE}.`,
+  },
+  {
+    title: "Responsive support",
+    body: `Reach ${SITE_SUPPORT_EMAIL} for order status, wholesale questions, or documentation requests. We respond during business hours.`,
+  },
 ];
 
 const valueProps = [
@@ -64,8 +74,10 @@ export function StoreHome({ featured, apiError }: Props) {
           <h1 className="text-4xl font-extrabold tracking-tight text-[#D4AF37] sm:text-5xl md:text-6xl">
             PURITY DISCOVERED
           </h1>
-          <p className="mt-4 max-w-xl text-lg text-white/90">
-            Premium Research Peptides
+          <p className="mt-4 max-w-xl text-lg text-white/90">Premium research peptides and lab supplies for qualified professionals.</p>
+          <p className="mt-3 max-w-lg text-sm text-white/75">
+            Verifiable U.S. business, published legal pages, and payments processed through licensed partners for research-use
+            catalog orders.
           </p>
           <Link
             href="/products-catalog"
@@ -108,17 +120,17 @@ export function StoreHome({ featured, apiError }: Props) {
 
       <section className="bg-neutral-50 py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
-          <h2 className="text-center text-3xl font-bold text-black md:text-4xl">Product Reviews</h2>
+          <h2 className="text-center text-3xl font-bold text-black md:text-4xl">Why labs work with us</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-sm leading-relaxed text-neutral-600">
+            Straightforward information, traceability where we provide it, and support you can reach by email—built for research
+            compliance, not hype.
+          </p>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {reviews.map((r) => (
-              <blockquote
-                key={r.name}
-                className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm"
-              >
-                <div className="text-[#D4AF37] mb-3">★★★★★</div>
-                <p className="text-neutral-700 text-sm leading-relaxed">&ldquo;{r.text}&rdquo;</p>
-                <footer className="mt-4 text-sm font-semibold text-black">— {r.name}</footer>
-              </blockquote>
+            {trustPoints.map((t) => (
+              <div key={t.title} className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+                <h3 className="text-base font-bold text-black">{t.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-neutral-700">{t.body}</p>
+              </div>
             ))}
           </div>
         </div>
@@ -141,10 +153,10 @@ export function StoreHome({ featured, apiError }: Props) {
               dependable from order to bench. Every batch is documented and traceable.
             </p>
             <Link
-              href="/products-catalog"
+              href="/about-us"
               className="mt-8 inline-block border-2 border-white px-6 py-2.5 text-sm font-semibold text-white hover:bg-white hover:text-black transition-colors"
             >
-              Learn More
+              About SQSpeptides
             </Link>
           </div>
           <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-[#D4AF37]/30">
@@ -217,16 +229,20 @@ export function StoreHome({ featured, apiError }: Props) {
           <h2 className="text-3xl font-bold md:text-4xl">Precision You Can Measure</h2>
           <div className="mt-12 grid gap-10 md:grid-cols-3 text-left">
             <div>
-              <h3 className="text-[#D4AF37] text-sm font-semibold uppercase">Email Support</h3>
-              <p className="mt-2 text-white/80">support@sqspeptides.com</p>
+              <h3 className="text-[#D4AF37] text-sm font-semibold uppercase">Email</h3>
+              <p className="mt-2 text-white/80">
+                <a href={`mailto:${SITE_SUPPORT_EMAIL}`} className="hover:text-white hover:underline">
+                  {SITE_SUPPORT_EMAIL}
+                </a>
+              </p>
             </div>
             <div>
-              <h3 className="text-[#D4AF37] text-sm font-semibold uppercase">Call Support</h3>
-              <p className="mt-2 text-white/80">+1 (555) 014-2270</p>
+              <h3 className="text-[#D4AF37] text-sm font-semibold uppercase">Business hours</h3>
+              <p className="mt-2 text-white/80">Monday–Friday, 9:00 a.m.–5:00 p.m. Central Time</p>
             </div>
             <div>
-              <h3 className="text-[#D4AF37] text-sm font-semibold uppercase">Location</h3>
-              <p className="mt-2 text-white/80">262 Chapman Rd, Ste 240, Newark, DE 19702</p>
+              <h3 className="text-[#D4AF37] text-sm font-semibold uppercase">Address</h3>
+              <p className="mt-2 text-white/80">{SITE_ADDRESS_SINGLE_LINE}</p>
             </div>
           </div>
           <Link

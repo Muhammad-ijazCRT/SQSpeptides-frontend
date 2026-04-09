@@ -631,6 +631,13 @@ export function CheckoutForm() {
                 >
                   privacy policy
                 </Link>
+                . Returns and refunds are limited for research materials; see our{" "}
+                <Link
+                  href="/refund-policy"
+                  className="font-semibold text-[#9a7b1a] underline decoration-[#D4AF37]/60 underline-offset-2 transition hover:text-black"
+                >
+                  refund policy
+                </Link>
                 .
               </p>
 

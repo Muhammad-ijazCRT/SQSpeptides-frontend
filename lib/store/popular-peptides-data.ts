@@ -89,23 +89,21 @@ export const ATTRIBUTE_FILTERS = [
   { id: "domestic", label: "Domestic fulfillment" },
 ];
 
-export const REVIEWS = [
+/** Factual service highlights (no fabricated customer testimonials). */
+export const POPULAR_TRUST_HIGHLIGHTS = [
   {
-    name: "James R",
-    date: "Sept 12, 2025",
-    text: "The product arrived in perfect condition with secure, professional packaging. Labeling was clear and matched the specifications provided on the website. Quality and purity were exactly as expected for research-grade",
+    title: "Published policies",
+    body: "Privacy, terms, refund, and shipping policies are linked in the site footer so you know how orders, data, and payments are handled.",
   },
   {
-    name: "Daniel Smith",
-    date: "Sept 12, 2025",
-    text: "From placing the order to receiving the shipment, the process was seamless. The product was well protected and arrived within the expected timeframe. Performance and consistency met professional research requirements.",
+    title: "Documentation on request",
+    body: "For batch-related questions, email support with your order number and SKU. We confirm what documentation exists for that catalog line.",
   },
   {
-    name: "Sarah L",
-    date: "Sept 12, 2025",
-    text: "Professional-grade product and trustworthy service. Clear documentation and transparent product details were reassuring. The material quality aligned well with the stated specifications.",
+    title: "U.S. business address",
+    body: "760 East Main Street, Lewisville, TX 75057 — the same address shown on our Contact page and legal notices.",
   },
-];
+] as const;
 
 export const FAQ_ITEMS: { q: string; a: string }[] = [
   {
@@ -150,11 +148,11 @@ export const FAQ_ITEMS: { q: string; a: string }[] = [
   },
   {
     q: "What is your return or refund policy?",
-    a: "Due to the nature of research materials, all sales are final once shipped. If there is an issue with your order upon arrival, please contact us promptly.",
+    a: "Research materials are generally final sale once shipped. We replace or refund when we confirm our error, severe transit damage, or carrier-documented loss. See our Refund Policy page for the complete policy.",
   },
   {
     q: "How do I contact support?",
-    a: "For questions regarding orders, documentation, or general inquiries, please use the contact form on our website or reach out via the listed support channels.",
+    a: "Use the Contact page for our Lewisville, TX address and email, or write to support@sqspeptides.com with your order number.",
   },
   {
     q: "Do you provide usage instructions or dosing guidance?",
@@ -162,7 +160,7 @@ export const FAQ_ITEMS: { q: string; a: string }[] = [
   },
   {
     q: "Is my information kept private?",
-    a: "Yes. We respect customer privacy and handle all information in accordance with our privacy policy.",
+    a: "Yes. Our privacy policy explains what we collect, how we use it, and how payment processors handle card data.",
   },
 ];
 

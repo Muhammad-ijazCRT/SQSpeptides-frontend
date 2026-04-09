@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { BrandLogo } from "@/components/store/brand-logo";
+import { BusinessAddress } from "@/components/store/business-address";
 import { LinktreeLinks } from "@/components/store/linktree-links";
 import { NewsletterForm } from "@/components/store/newsletter-form";
+import { SITE_BUSINESS_TAGLINE } from "@/lib/site-business";
 
 export function SiteFooter() {
   return (
@@ -14,97 +16,94 @@ export function SiteFooter() {
             <div className="mb-4">
               <BrandLogo height={36} className="max-h-9" />
             </div>
-            <p className="text-sm text-white/60 leading-relaxed mb-6">
-              Advanced chemical research solutions for the modern laboratory environment.
-            </p>
-            <div className="flex flex-wrap items-center gap-4">
-              <a href="#" className="text-white/70 hover:text-[#D4AF37]" aria-label="Facebook">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-              </a>
-              <a href="#" className="text-white/70 hover:text-[#D4AF37]" aria-label="Instagram">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-              </a>
-            </div>
-            <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-[#D4AF37]">Link in bio</p>
+            <p className="mb-6 text-sm leading-relaxed text-white/60">{SITE_BUSINESS_TAGLINE}</p>
+            <BusinessAddress variant="footer" className="mb-6" />
+            <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-[#D4AF37]">Social &amp; links</p>
             <LinktreeLinks variant="footer" />
           </div>
 
           <div>
-            <h3 className="text-[#D4AF37] text-sm font-semibold uppercase tracking-wider mb-4">Catalog</h3>
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#D4AF37]">Catalog</h3>
             <ul className="space-y-2 text-sm text-white/70">
               <li>
                 <Link href="/products-catalog" className="hover:text-white">
-                  Shop All
+                  Shop all
                 </Link>
               </li>
               <li>
                 <Link href="/popular-peptides" className="hover:text-white">
-                  Popular Peptides
+                  Popular peptides
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h3 className="text-[#D4AF37] text-sm font-semibold uppercase tracking-wider mb-4">Support</h3>
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#D4AF37]">Company &amp; support</h3>
             <ul className="space-y-2 text-sm text-white/70">
+              <li>
+                <Link href="/about-us" className="hover:text-white">
+                  About us
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact-us" className="hover:text-white">
+                  Contact us
+                </Link>
+              </li>
               <li>
                 <Link href="/account/dashboard" className="hover:text-white">
                   My account
                 </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white">
-                  CoA Lookup
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white">
-                  Track Order
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white">
-                  Privacy Policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white">
-                  Shipping Policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white">
-                  Request Testing Reports
-                </a>
+                <Link href="/account/orders" className="hover:text-white">
+                  Orders &amp; tracking
+                </Link>
               </li>
               <li>
                 <Link href="/contact-us" className="hover:text-white">
-                  Contact Us
+                  COA / batch documentation
+                </Link>
+              </li>
+            </ul>
+            <h3 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wider text-[#D4AF37]">Legal</h3>
+            <ul className="space-y-2 text-sm text-white/70">
+              <li>
+                <Link href="/privacy-policy" className="hover:text-white">
+                  Privacy policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="hover:text-white">
+                  Terms &amp; conditions
+                </Link>
+              </li>
+              <li>
+                <Link href="/refund-policy" className="hover:text-white">
+                  Refund policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/shipping-policy" className="hover:text-white">
+                  Shipping policy
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h3 className="text-base font-bold leading-snug text-white mb-4 normal-case tracking-normal">
-              Privacy isn&apos;t just a feature for us it&apos;s a promise.
+            <h3 className="mb-4 text-base font-bold leading-snug tracking-normal text-white normal-case">
+              Privacy isn&apos;t just a feature for us—it&apos;s a promise.
             </h3>
             <NewsletterForm />
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between text-sm text-white/50">
+        <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 text-sm text-white/50 sm:flex-row sm:items-center sm:justify-between">
           <p className="flex flex-wrap items-center gap-1.5 text-white/50">
             <span>© {new Date().getFullYear()}</span>
-            <a
-              href="https://dowhf.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-white/80 underline decoration-white/30 underline-offset-2 transition hover:text-[#D4AF37] hover:decoration-[#D4AF37]"
-            >
-              SQSpeptides
-            </a>
+            <span className="font-semibold text-white/80">SQSpeptides</span>
             <span>. All rights reserved.</span>
           </p>
           <div className="flex flex-wrap gap-2 opacity-70">

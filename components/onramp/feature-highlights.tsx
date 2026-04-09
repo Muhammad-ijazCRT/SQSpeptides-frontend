@@ -2,32 +2,33 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { SITE_BRAND_NAME } from "@/lib/site-business";
 
 const features = [
   {
-    title: "Native integrations",
+    title: "Licensed card processing",
     description:
-      "Embedded and headless flows that look and feel fully native to your app.",
-    iconPath: "/window.svg",
-  },
-  {
-    title: "Progressive onboarding",
-    description:
-      "Light kyc for up to $1,000 per year. See the checkout to explore no-KYC flows",
-    iconPath: "/window.svg",
-  },
-  {
-    title: "Observability",
-    description:
-      "Dashboards, webhooks, and APIs to monitor activity in real time",
-    iconPath: "/globe.svg",
-  },
-  {
-    title: "Full chargeback protection",
-    description:
-      "Crossmint manages disputes and assumes chargeback risk",
+      "Debit and credit card payments are handled by Crossmint, a regulated payments partner. You complete checkout in a secure embedded flow.",
     iconPath: "/shield-check.svg",
+  },
+  {
+    title: "Clear business purpose",
+    description: `${SITE_BRAND_NAME} uses this option so approved customers can fund a wallet for catalog purchases—not for trading, investing, or speculative crypto activity.`,
+    iconPath: "/window.svg",
+  },
+  {
+    title: "Verification when required",
+    description:
+      "Depending on amount, issuer, and risk checks, you may be asked to verify identity. This is standard for card-to-asset flows and helps prevent fraud.",
+    iconPath: "/file.svg",
+  },
+  {
+    title: "Receipts and records",
+    description:
+      "You receive confirmation from the processor. Keep your email and any receipts for your records. Full policies are in our Terms and Privacy pages.",
+    iconPath: "/globe.svg",
   },
 ];
 
@@ -43,7 +44,7 @@ export default function FeatureHighlights() {
 
   return (
     <div
-      className="relative hidden lg:flex flex-col rounded-[20px] justify-center px-12 py-8 m-3 col-span-2"
+      className="relative m-3 col-span-2 hidden flex-col justify-center rounded-[20px] px-12 py-8 lg:flex"
       style={{
         backgroundImage: `url('/grid-bg.png')`,
         backgroundSize: "cover",
@@ -53,16 +54,18 @@ export default function FeatureHighlights() {
     >
       <div
         className={cn(
-          "absolute rounded-[20px] inset-0 bg-black/40 transition-opacity duration-600 ease-out",
+          "absolute inset-0 rounded-[20px] bg-black/40 transition-opacity duration-600 ease-out",
           showFeatures ? "opacity-100" : "opacity-0"
         )}
-      ></div>
+      />
 
       <div className="relative z-10 flex flex-col gap-12 text-white">
         <div className="flex flex-col gap-4">
-          <h1 className="text-6xl font-bold">Onramp demo</h1>
-          <p className="text-white/60 text-lg">
-            Allow users to fund their wallets with a native onramp experience.
+          <h1 className="text-4xl font-bold leading-tight xl:text-5xl">Card funding</h1>
+          <p className="text-lg text-white/70">
+            Add funds with a U.S. card through our payment partner for use with {SITE_BRAND_NAME} checkout options that require a
+            funded wallet. This is a merchant checkout feature—not a standalone investment or &ldquo;crypto profits&rdquo;
+            product.
           </p>
         </div>
 
@@ -70,20 +73,18 @@ export default function FeatureHighlights() {
           {features.map((feature, index) => (
             <div
               key={feature.title}
-              className={`flex items-start gap-5 p-4 backdrop-blur-sm rounded-2xl bg-blue-300/3 border border-white/10 transition-all duration-600 ease-out ${
-                showFeatures
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-8"
+              className={`flex items-start gap-5 rounded-2xl border border-white/10 bg-blue-300/3 p-4 backdrop-blur-sm transition-all duration-600 ease-out ${
+                showFeatures ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
               }`}
               style={{
                 transitionDelay: showFeatures ? `${index * 150}ms` : "0ms",
               }}
             >
-              <div className="w-10 h-10 border-white/20 border-2 rounded-full flex items-center justify-center self-center flex-shrink-0">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center self-center rounded-full border-2 border-white/20">
                 <Image
                   className="filter-green w-6"
                   src={feature.iconPath}
-                  alt={feature.title}
+                  alt=""
                   width={20}
                   height={20}
                 />
@@ -96,25 +97,19 @@ export default function FeatureHighlights() {
           ))}
         </div>
 
-        <div className="mt-2 flex items-center gap-8 text-white/80">
-          <a
-            href="https://www.crossmint.com/contact/sales"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 text-white/80 hover:text-white focus:text-white visited:text-white/80 active:text-white transition-colors"
-          >
-            <Image src="/file.svg" alt="Contact sales" width={18} height={18} />
-            <span>Contact sales</span>
-          </a>
-          <a
-            href="https://github.com/Crossmint/onramp-embedded-quickstart"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 text-white/80 hover:text-white focus:text-white visited:text-white/80 active:text-white transition-colors"
-          >
-            <Image src="/github.svg" alt="View code" width={18} height={18} />
-            <span>View code</span>
-          </a>
+        <div className="mt-2 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-white/80">
+          <Link href="/about-us" className="hover:text-white hover:underline">
+            About {SITE_BRAND_NAME}
+          </Link>
+          <Link href="/terms" className="hover:text-white hover:underline">
+            Terms
+          </Link>
+          <Link href="/privacy-policy" className="hover:text-white hover:underline">
+            Privacy
+          </Link>
+          <Link href="/contact-us" className="hover:text-white hover:underline">
+            Contact
+          </Link>
         </div>
       </div>
     </div>

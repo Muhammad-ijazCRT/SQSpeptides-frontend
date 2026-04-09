@@ -58,7 +58,7 @@ export const CATALOG_FAQ = [
   },
   {
     q: "Do you provide Certificates of Analysis (COAs)?",
-    a: "Batch documentation and supporting quality information may be available upon request where applicable. Please contact us directly if you require additional batch-related documentation.",
+    a: "Batch documentation may be available for specific SKUs. Email support with your order number, SKU, and batch identifier when shown on your label.",
   },
   {
     q: "Where is your inventory located?",

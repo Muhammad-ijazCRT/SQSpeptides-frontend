@@ -8,10 +8,10 @@ import { fetchProducts } from "@/lib/api/products";
 import {
   FAQ_ITEMS,
   POPULAR_PEPTIDES_INTRO,
+  POPULAR_TRUST_HIGHLIGHTS,
   PRECISION_FEATURES,
   PRECISION_INTRO,
   RESEARCH_QUALITY,
-  REVIEWS,
 } from "@/lib/store/popular-peptides-data";
 import { popularPepImage } from "@/lib/store/popular-peptides-images";
 import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
@@ -169,21 +169,28 @@ export default async function PopularPeptidesPage() {
 
       <section className="bg-black py-16 text-white lg:py-24">
         <div className="mx-auto max-w-[1400px] px-4 lg:px-8">
-          <h2 className={`text-center text-3xl font-bold md:text-4xl ${heading}`}>Product Reviews</h2>
+          <h2 className={`text-center text-3xl font-bold md:text-4xl ${heading}`}>Ordering with SQSpeptides</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-white/70">
+            Verifiable business information and clear policies—not paid review copy.
+          </p>
           <div className="mt-14 grid gap-8 md:grid-cols-3">
-            {REVIEWS.map((r) => (
-              <blockquote
-                key={r.name}
+            {POPULAR_TRUST_HIGHLIGHTS.map((t) => (
+              <div
+                key={t.title}
                 className="flex flex-col rounded-lg border border-white/15 bg-white/[0.04] p-8 backdrop-blur-sm"
               >
-                <div className="text-[#D4AF37]">★★★★★</div>
-                <p className="mt-4 flex-1 text-sm leading-relaxed text-white/85">&ldquo;{r.text}&rdquo;</p>
-                <footer className="mt-6 text-sm">
-                  <span className="font-semibold text-white">{r.name}</span>
-                  <span className="text-white/50"> — {r.date}</span>
-                </footer>
-              </blockquote>
+                <h3 className="text-lg font-semibold text-[#D4AF37]">{t.title}</h3>
+                <p className="mt-4 flex-1 text-sm leading-relaxed text-white/85">{t.body}</p>
+              </div>
             ))}
+          </div>
+          <div className="mt-10 flex flex-wrap justify-center gap-4 text-sm">
+            <Link href="/contact-us" className="font-semibold text-white underline decoration-white/40 hover:decoration-white">
+              Contact &amp; address
+            </Link>
+            <Link href="/refund-policy" className="font-semibold text-white underline decoration-white/40 hover:decoration-white">
+              Refund policy
+            </Link>
           </div>
         </div>
       </section>

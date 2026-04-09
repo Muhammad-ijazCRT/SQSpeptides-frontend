@@ -45,11 +45,11 @@ const items: LargeFaqItem[] = [
   },
   {
     q: "What is your return or refund policy?",
-    a: "Due to the nature of research materials, all sales are final once shipped. If there is an issue with your order upon arrival, please contact us promptly.",
+    a: "Research materials are generally final sale once shipped. We replace or refund when we confirm our error, severe transit damage, or carrier-documented loss. Full details are published on our Refund Policy page.",
   },
   {
     q: "How do I contact support?",
-    a: "For questions regarding orders, documentation, or general inquiries, please use the contact form on our website or reach out via the listed support channels.",
+    a: "Use the Contact page (email and business address), or write to support@sqspeptides.com with your order number for the fastest help.",
   },
   {
     q: "Do you provide usage instructions or dosing guidance?",
@@ -57,7 +57,7 @@ const items: LargeFaqItem[] = [
   },
   {
     q: "Is my information kept private?",
-    a: "Yes. We respect customer privacy and handle all information in accordance with our privacy policy.",
+    a: "Yes. We handle personal data as described in our published privacy policy, including how payment partners process card information.",
   },
 ];
 

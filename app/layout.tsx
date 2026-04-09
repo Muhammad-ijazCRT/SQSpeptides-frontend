@@ -18,7 +18,8 @@ export const metadata: Metadata = {
     default: "SQSpeptides | Research Peptides",
     template: "%s | SQSpeptides",
   },
-  description: "Premium research peptides — purity discovered.",
+  description:
+    "Research peptides and lab supplies for qualified professionals. U.S. business with published policies and secure checkout.",
   icons: {
     icon: [{ url: "/logo.png", type: "image/png" }],
     shortcut: "/logo.png",

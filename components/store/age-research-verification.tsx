@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -46,7 +47,7 @@ export function AgeResearchVerification() {
         </h2>
         <ul className="mt-6 list-disc space-y-3 pl-5 text-sm leading-relaxed text-neutral-800 sm:text-[15px]">
           <li>
-            I confirm I am <strong>18 years of age or older</strong>
+            I confirm I am <strong>21 years of age or older</strong>
           </li>
           <li>
             I acknowledge all products sold are <strong>for research purposes only</strong>
@@ -55,7 +56,10 @@ export function AgeResearchVerification() {
             I acknowledge products are <strong>not for human or veterinary use</strong>
           </li>
           <li>
-            By clicking &quot;<strong>I Agree</strong>&quot;, I accept and acknowledge these terms
+            By clicking &quot;<strong>I Agree</strong>&quot;, I accept the site&apos;s{" "}
+            <Link href="/terms" className="font-semibold text-[#b8962e] underline hover:text-black">
+              terms and conditions
+            </Link>
           </li>
         </ul>
 

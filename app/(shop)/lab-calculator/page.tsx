@@ -2,17 +2,15 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { DM_Sans, Playfair_Display } from "next/font/google";
-import { LabCalculatorReviewsCarousel } from "@/components/store/lab-calculator-reviews-carousel";
 import { LabReconstitutionCalculator } from "@/components/store/lab-reconstitution-calculator";
 import { PopularPeptidesFaqClient } from "@/components/store/popular-peptides-faq-client";
 import {
-  LAB_CALC_FAQ_DUMMY,
   LAB_CALC_PRECISION_FEATURES,
   LAB_CALC_PRECISION_INTRO,
   RELATED_PRODUCTS,
   RESEARCH_QUALITY,
-  REVIEWS,
 } from "@/lib/store/lab-calculator-page-data";
+import { FAQ_ITEMS, POPULAR_TRUST_HIGHLIGHTS } from "@/lib/store/popular-peptides-data";
 import { popularPepImage } from "@/lib/store/popular-peptides-images";
 
 const playfair = Playfair_Display({
@@ -149,9 +147,35 @@ export default function LabCalculatorPage() {
         </div>
       </section>
 
-      <LabCalculatorReviewsCarousel reviews={REVIEWS} headingFont={heading} />
+      <section className="bg-black py-16 text-white lg:py-24">
+        <div className="mx-auto max-w-[1400px] px-4 lg:px-8">
+          <h2 className={`text-center text-3xl font-bold md:text-4xl ${heading}`}>Policies &amp; support</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-white/70">
+            The same legal pages and contact information as the rest of the SQSpeptides store.
+          </p>
+          <div className="mt-14 grid gap-8 md:grid-cols-3">
+            {POPULAR_TRUST_HIGHLIGHTS.map((t) => (
+              <div
+                key={t.title}
+                className="flex flex-col rounded-lg border border-white/15 bg-white/[0.04] p-8 backdrop-blur-sm"
+              >
+                <h3 className="text-lg font-semibold text-[#D4AF37]">{t.title}</h3>
+                <p className="mt-4 flex-1 text-sm leading-relaxed text-white/85">{t.body}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-10 flex flex-wrap justify-center gap-4 text-sm">
+            <Link href="/contact-us" className="font-semibold text-white underline decoration-white/40 hover:decoration-white">
+              Contact
+            </Link>
+            <Link href="/terms" className="font-semibold text-white underline decoration-white/40 hover:decoration-white">
+              Terms
+            </Link>
+          </div>
+        </div>
+      </section>
 
-      <PopularPeptidesFaqClient items={LAB_CALC_FAQ_DUMMY} headingFont={heading} />
+      <PopularPeptidesFaqClient items={FAQ_ITEMS} headingFont={heading} />
 
       <section className="bg-neutral-100 py-16 lg:py-24">
         <div className="mx-auto grid max-w-[1400px] gap-12 px-4 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-8">
