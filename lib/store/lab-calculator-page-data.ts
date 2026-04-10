@@ -17,8 +17,8 @@ export const LAB_CALC_PRECISION_FEATURES = [
     imageSeed: "lab-calc-purity",
   },
   {
-    title: "Potent & Single-Compound Formulation",
-    subtitle: "Focused compounds without unnecessary fillers.",
+    title: "Single-compound reference material",
+    subtitle: "Defined formulations for reproducible laboratory protocols.",
     imageSeed: "lab-calc-potent",
   },
 ];

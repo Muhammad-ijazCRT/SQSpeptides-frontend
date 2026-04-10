@@ -1,4 +1,12 @@
-import { SITE_ADDRESS_LINE1, SITE_ADDRESS_LINE2, SITE_BRAND_NAME, SITE_LEGAL_NAME, SITE_SUPPORT_EMAIL } from "@/lib/site-business";
+import {
+  SITE_ADDRESS_LINE1,
+  SITE_ADDRESS_LINE2,
+  SITE_BRAND_NAME,
+  SITE_LEGAL_NAME,
+  SITE_SUPPORT_EMAIL,
+  SITE_SUPPORT_PHONE,
+  siteSupportPhoneTelHref,
+} from "@/lib/site-business";
 
 type Variant = "footer" | "inline";
 
@@ -17,6 +25,14 @@ export function BusinessAddress({ variant = "inline", className = "" }: { varian
       <a href={`mailto:${SITE_SUPPORT_EMAIL}`} className={`mt-2 inline-block text-sm font-medium ${link}`}>
         {SITE_SUPPORT_EMAIL}
       </a>
+      {SITE_SUPPORT_PHONE ? (
+        <a
+          href={`tel:${siteSupportPhoneTelHref()}`}
+          className={`mt-1 block text-sm font-medium ${link}`}
+        >
+          {SITE_SUPPORT_PHONE}
+        </a>
+      ) : null}
     </address>
   );
 }

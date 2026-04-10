@@ -6,6 +6,12 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { SiteHeaderSearchSync } from "@/components/store/site-header-search-sync";
 import { BrandLogo } from "@/components/store/brand-logo";
 import { useCart } from "@/components/store/cart-context";
+import {
+  SITE_ADDRESS_SINGLE_LINE,
+  SITE_SUPPORT_EMAIL,
+  SITE_SUPPORT_PHONE,
+  siteSupportPhoneTelHref,
+} from "@/lib/site-business";
 
 const nav = [
   { href: "/", label: "Home" },
@@ -100,6 +106,28 @@ export function SiteHeader() {
           <span aria-hidden className="text-amber-400">
             ⚠
           </span>
+        </span>
+      </div>
+
+      <div className="border-b border-neutral-200 bg-neutral-50 px-3 py-2 text-center text-[10px] leading-snug text-neutral-700 sm:text-xs">
+        <span className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 sm:gap-x-4">
+          <span className="font-medium text-neutral-800">{SITE_ADDRESS_SINGLE_LINE}</span>
+          <span className="hidden text-neutral-300 sm:inline" aria-hidden>
+            |
+          </span>
+          <a href={`mailto:${SITE_SUPPORT_EMAIL}`} className="font-semibold text-[#b8962e] hover:underline">
+            {SITE_SUPPORT_EMAIL}
+          </a>
+          {SITE_SUPPORT_PHONE ? (
+            <>
+              <span className="hidden text-neutral-300 sm:inline" aria-hidden>
+                |
+              </span>
+              <a href={`tel:${siteSupportPhoneTelHref()}`} className="font-semibold text-neutral-900 hover:underline">
+                {SITE_SUPPORT_PHONE}
+              </a>
+            </>
+          ) : null}
         </span>
       </div>
 

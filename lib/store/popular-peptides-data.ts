@@ -8,7 +8,7 @@ export type PopularPeptideProduct = {
 };
 
 export const POPULAR_PEPTIDES_INTRO =
-  "Premium incretin mimetics including GLP-1, GIP, and Glucagon analogs. Strictly for in-vitro laboratory research and development.";
+  "Peptide reference materials for non-clinical study of receptor pharmacology and metabolic biochemistry in controlled laboratory systems—not for human or veterinary use.";
 
 export const CATEGORY_PRODUCTS: PopularPeptideProduct[] = [
   { name: "BPC-157", slug: "bpc-157", price: 75, purity: "99.9% Purity" },
@@ -68,8 +68,8 @@ export const PRECISION_FEATURES = [
     imageSeed: "lab-testing",
   },
   {
-    title: "Superior Bioavailability",
-    subtitle: "Focused, single-compound formulation",
+    title: "Single-compound reference",
+    subtitle: "Defined composition for reproducible assay design",
     imageSeed: "lab-bio",
   },
 ];

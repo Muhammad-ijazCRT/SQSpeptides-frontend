@@ -1,5 +1,5 @@
 /**
- * Catalog rows for Prisma seed. Sync from products.json (dedupe by slug, last wins).
+ * Catalog rows — keep descriptions in sync with repo-root `products.json` (seed source of truth).
  * Images: public/products/images/ — filenames have no spaces.
  */
 export type CatalogProductSeed = {
@@ -23,7 +23,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "5-amino-1mq-5mg",
     name: "5-Amino 1MQ 5mg",
-    description: "5-Amino-1MQ is a research compound studied for its role in metabolic regulation and fat metabolism pathways. This 5mg vial is intended for laboratory-based research into weight management mechanisms and cellular energy utilization.",
+    description:
+      "5-Amino-1MQ is supplied as a reference compound for non-clinical investigation of nicotinamide N-methyltransferase–related pathways and adipocyte biochemistry in controlled in-vitro models. This 5mg vial is for laboratory research use only—not for human or veterinary use.",
     price: 90,
     imageUrl: productImageUrl("/images/9.jpg"),
     rating: 4.6,
@@ -31,7 +32,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "bpc-157-10mg",
     name: "BPC-157 10mg",
-    description: "BPC-157 in a higher 10mg concentration, ideal for extended research protocols. Commonly studied for its effects on tissue regeneration, gastrointestinal protection, and cellular repair pathways. Manufactured for high consistency and purity.",
+    description:
+      "BPC-157 (10mg) is intended for extended-protocol studies of synthetic pentadecapeptide behavior in cell and tissue models, including angiogenesis-related readouts and gastrointestinal epithelial assays under controlled conditions. For in-vitro and non-clinical laboratory research only.",
     price: 110,
     imageUrl: productImageUrl("/images/8.jpg"),
     rating: 4.8,
@@ -39,7 +41,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "bpc-157-5mg",
     name: "BPC-157 5mg",
-    description: "BPC-157 is a synthetic peptide derived from a protective protein found in the stomach. It is commonly studied for its potential in tissue repair, gut health, and anti-inflammatory responses. This 5mg vial is optimized for precise experimental research and laboratory investigations.",
+    description:
+      "BPC-157 is a synthetic peptide sequence studied in laboratory models of extracellular-matrix interaction and inflammatory signaling pathways. This 5mg vial is for qualified researchers conducting non-clinical, in-vitro or ex-vivo experiments only—not for human or veterinary use.",
     price: 75,
     imageUrl: productImageUrl("/images/5.jpg"),
     rating: 4.7,
@@ -47,7 +50,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "bpc-157-tb-500-10mg-blend",
     name: "BPC-157 (5mg) + TB-500 (5mg) 10mg Blend",
-    description: "This dual peptide blend combines BPC-157 and TB-500, each at 5mg, offering a total of 10mg. It is widely used in research studying synergistic effects on tissue repair, recovery, and cellular regeneration. Designed for advanced experimental applications requiring combined peptide interactions.",
+    description:
+      "A defined blend of BPC-157 and TB-500 (5mg each) for comparative peptide-interaction and cytoskeletal-biology studies in controlled laboratory systems. Intended solely for research use to characterize co-incubation effects in non-clinical models.",
     price: 135,
     imageUrl: productImageUrl("/images/6.jpg"),
     rating: 4.8,
@@ -55,7 +59,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "bpc-157-tb-500-20mg-blend",
     name: "BPC-157 (10mg) + TB-500 (10mg) 20mg Blend",
-    description: "A high-dosage research blend of BPC-157 and TB-500, each at 10mg. This 20mg combination is intended for in-depth laboratory studies on regenerative processes, injury recovery, and advanced peptide synergy research.",
+    description:
+      "Higher-mass blend of BPC-157 and TB-500 (10mg each) for extended non-clinical protocols examining peptide synergy in cell-motility and matrix-biology assays. Strictly for laboratory research—not for diagnostic or therapeutic application.",
     price: 180,
     imageUrl: productImageUrl("/images/7.jpg"),
     rating: 4.9,
@@ -63,7 +68,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "cagrilintide-5mg",
     name: "Cagrilintide 5mg",
-    description: "Cagrilintide is a long-acting amylin analogue that is widely researched for its role in appetite regulation, gastric emptying, and metabolic balance. It mimics the natural amylin hormone and is often studied in controlled environments for its potential impact on weight management and satiety signaling. Due to its extended duration of action, researchers can observe prolonged metabolic responses and hormonal interactions. This 5mg vial is intended strictly for laboratory and scientific research purposes only and is not suitable for human or veterinary consumption.",
+    description:
+      "Cagrilintide is a long-acting amylin analogue supplied for non-clinical pharmacology studies, including amylin-receptor binding, gastric-emptying kinetics, and enteroendocrine signaling in isolated systems and animal models where lawfully permitted. This 5mg vial is for laboratory research only—not for human or veterinary use.",
     price: 120,
     imageUrl: productImageUrl("/images/21.jpg"),
     rating: 4.8,
@@ -71,7 +77,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "cjc-ipa-no-dac-10mg",
     name: "CJC-1295 + Ipamorelin (No DAC) 10mg",
-    description: "This research peptide blend combines CJC-1295 (No DAC) and Ipamorelin, both studied for their role in stimulating growth hormone release. It is widely used in laboratory experiments focusing on endocrine system activity, hormone regulation, and metabolic function. The absence of DAC allows for shorter activity duration and more controlled experimental conditions. Researchers utilize this blend to analyze growth hormone pulses and related biological effects. Strictly for research use only.",
+    description:
+      "Blend of CJC-1295 (No DAC) and Ipamorelin for laboratory investigation of growth-hormone–secretagogue receptor pathways and pulsatile GH release dynamics in approved non-clinical models. The no-DAC variant supports shorter-interval experimental designs. Research use only.",
     price: 130,
     imageUrl: productImageUrl("/images/33.jpg"),
     rating: 4.8,
@@ -79,7 +86,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "ghk-cu-50mg",
     name: "GHK-Cu 50mg",
-    description: "GHK-Cu is a copper peptide widely studied for its regenerative and tissue-repair properties. It is commonly used in research involving wound healing, collagen production, skin regeneration, and anti-aging mechanisms. Scientists explore its ability to support cellular repair and modulate biological processes. This 50mg vial is intended for laboratory research purposes only.",
+    description:
+      "GHK-Cu is a copper(II)-complexed tripeptide used in cell-culture and biomaterials research to study extracellular-matrix gene expression, collagen-related biochemistry, and metal-ion coordination in controlled assays—not for cosmetic or clinical endpoints. 50mg; laboratory use only.",
     price: 125,
     imageUrl: productImageUrl("/images/32.jpg"),
     rating: 4.9,
@@ -87,7 +95,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "glow-70mg",
     name: "GLOW 70mg",
-    description: "GLOW is a research blend formulated for experimental studies focusing on cellular health, oxidative stress, and tissue response. It is often used in laboratory environments to investigate skin-related biological processes and overall cellular function. The blend is designed to support exploratory research into regeneration and biochemical activity. This product is strictly for research use only.",
+    description:
+      "GLOW is a multi-component research blend for oxidative-stress, viability, and biochemical endpoint assays in non-clinical models. Intended for method development and comparative peptide-blend characterization—not for human or veterinary application.",
     price: 115,
     imageUrl: productImageUrl("/images/31.jpg"),
     rating: 4.6,
@@ -95,7 +104,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "glp-1s-20mg",
     name: "GLP-1S 20mg",
-    description: "GLP-1S is a peptide analogue commonly researched for its role in insulin secretion, appetite control, and metabolic regulation. It is used in laboratory studies to explore its interaction with GLP-1 receptors and its effects on glucose metabolism. Researchers analyze its potential influence on energy balance and endocrine system responses. This 20mg vial is designed for scientific research only.",
+    description:
+      "GLP-1S analogue for in-vitro studies of GLP-1 receptor pharmacology, incretin signaling, and glucose-dependent insulin secretion in isolated systems. Sold for non-clinical laboratory research only—no implication of diagnostic or therapeutic use.",
     price: 95,
     imageUrl: productImageUrl("/images/30.jpg"),
     rating: 4.8,
@@ -103,7 +113,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "glp-r3-10mg",
     name: "GLP-R3 10mg",
-    description: "GLP-R3 is a modified peptide used in advanced laboratory studies related to glucose metabolism and receptor activity. It is commonly researched for its interaction with GLP receptors and its role in insulin signaling pathways. Scientists use GLP-R3 to explore metabolic responses and endocrine system functions. The 10mg variant is suitable for targeted experimental setups. This compound is intended strictly for research use only.",
+    description:
+      "GLP-R3 for controlled experiments on GLP-family receptor engagement, second-messenger readouts, and metabolic pathway biochemistry in cell-based models. 10mg format; research use only—not for humans or animals as medicine.",
     price: 90,
     imageUrl: productImageUrl("/images/27.jpg"),
     rating: 4.7,
@@ -111,7 +122,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "glp-r3-20mg",
     name: "GLP-R3 20mg",
-    description: "GLP-R3 is a peptide compound studied for its role in metabolic pathways and hormonal signaling. Researchers use it in controlled laboratory conditions to investigate glucose metabolism and endocrine responses. Its interaction with GLP receptors makes it valuable for experimental studies focused on energy balance and insulin activity. The 20mg format supports flexible research protocols. Not for human consumption.",
+    description:
+      "GLP-R3 peptide reference material for non-clinical investigation of receptor–ligand interactions and downstream signaling relevant to incretin biology in approved laboratory systems. 20mg; not for human consumption.",
     price: 100,
     imageUrl: productImageUrl("/images/29.jpg"),
     rating: 4.7,
@@ -119,7 +131,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "glp-r3-30mg",
     name: "GLP-R3 30mg",
-    description: "GLP-R3 is a research peptide used to study metabolic regulation, glucose control, and hormonal interactions. It is frequently utilized in laboratory experiments to understand its influence on insulin secretion and receptor binding. The 30mg version allows for extended research applications and more comprehensive experimental designs. This product is strictly for laboratory research and is not intended for human or veterinary use.",
+    description:
+      "Extended-quantity GLP-R3 for longer non-clinical protocols examining GLP-receptor pharmacology and insulinotropic signaling in experimental models. Strictly for qualified laboratory use—not for human or veterinary use.",
     price: 110,
     imageUrl: productImageUrl("/images/28.jpg"),
     rating: 4.8,
@@ -127,7 +140,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "glp-t2-20mg",
     name: "GLP-T2 20mg",
-    description: "GLP-T2 is widely researched for its potential effects on gastrointestinal health and metabolic processes. It plays a role in studies involving intestinal repair, nutrient uptake, and hormonal balance. Scientists use this peptide in laboratory settings to analyze its biological interactions and effects on digestion. The 20mg vial is ideal for precise dosing and controlled experiments. For research purposes only.",
+    description:
+      "GLP-T2 for non-clinical studies of gastrointestinal endocrine signaling, nutrient-sensing pathways, and peptide–receptor interactions in ex-vivo or in-vitro systems where legally permitted. 20mg vial; research only.",
     price: 85,
     imageUrl: productImageUrl("/images/26.jpg"),
     rating: 4.6,
@@ -135,7 +149,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "glp-t2-30mg",
     name: "GLP-T2 30mg",
-    description: "GLP-T2 is a peptide used in experimental research focusing on metabolic activity and gastrointestinal biology. It is often studied for its effects on intestinal growth, nutrient absorption, and hormone regulation. Researchers utilize this compound to better understand digestive system functions and metabolic pathways. The 30mg format provides flexibility for controlled lab experiments. This product is for research use only and not for human consumption.",
+    description:
+      "GLP-T2 supplied for metabolic and GI-physiology research models focusing on hormone regulation and intestinal peptide biology under controlled laboratory conditions. 30mg; not for human consumption.",
     price: 95,
     imageUrl: productImageUrl("/images/25.jpg"),
     rating: 4.6,
@@ -143,7 +158,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "glp-t2-40mg",
     name: "GLP-T2 40mg",
-    description: "GLP-T2 is a research peptide studied for its role in metabolic regulation and gastrointestinal function. It is commonly used in laboratory environments to investigate nutrient absorption, gut health, and hormonal signaling pathways. Researchers explore its interaction with biological receptors and its impact on digestion-related processes. The 40mg variant is suitable for extended experimental protocols and advanced studies. This compound is intended strictly for research purposes only.",
+    description:
+      "GLP-T2 (40mg) for extended non-clinical protocols characterizing enteroendocrine signaling and related biochemical endpoints. Intended solely for in-vitro and lawful non-clinical research—not for therapeutic or diagnostic claims.",
     price: 105,
     imageUrl: productImageUrl("/images/24.jpg"),
     rating: 4.7,
@@ -151,7 +167,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "igf-lr3-1mg",
     name: "IGF LR3 1mg",
-    description: "IGF-1 LR3 is a synthetic analogue of insulin-like growth factor-1, engineered with a longer half-life and enhanced biological activity. It is widely used in laboratory research to study cell proliferation, tissue regeneration, and protein synthesis. Due to reduced binding with IGF-binding proteins, it remains active for longer durations, enabling detailed experimental analysis. Researchers often use IGF LR3 in studies related to muscle development, cellular repair, and metabolic processes. This product is strictly for research use only.",
+    description:
+      "IGF-1 LR3 is a synthetic IGF-1 analogue with altered IGF-binding protein affinity, used to study IGF-axis signaling, cell proliferation, and protein-synthesis readouts in controlled cell-based assays—not for performance or clinical use. Research only.",
     price: 95,
     imageUrl: productImageUrl("/images/23.jpg"),
     rating: 4.9,
@@ -159,7 +176,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "klow-80mg",
     name: "KLOW 80mg",
-    description: "KLOW is a specialized research compound designed for advanced biochemical and molecular studies. It is commonly utilized in laboratory environments to investigate cellular responses, chemical interactions, and metabolic pathways. Its unique composition allows researchers to explore a wide range of experimental scenarios involving biological processes. This 80mg vial is intended for controlled research use only and must be handled by qualified professionals. Not intended for human or animal consumption.",
+    description:
+      "KLOW is a multi-peptide research formulation for advanced biochemical and molecular assays in qualified laboratory environments. 80mg total mass for method development and non-clinical characterization only—not for human or animal consumption.",
     price: 110,
     imageUrl: productImageUrl("/images/22.jpg"),
     rating: 4.7,
@@ -167,7 +185,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "kpv-10mg",
     name: "KPV 10mg",
-    description: "KPV (Lysine-Proline-Valine) is a synthetic peptide studied for its potential anti-inflammatory and immune-modulating properties. This 10mg vial is designed strictly for laboratory research and experimental purposes. Researchers commonly explore KPV in studies related to gut health, inflammation pathways, and cellular repair mechanisms. Manufactured under controlled conditions to ensure purity and consistency.",
+    description:
+      "KPV (Lys-Pro-Val) tripeptide for in-vitro investigation of immune-cell assays and inflammatory pathway mediators in non-clinical models. 10mg; manufactured for analytical consistency—no therapeutic claims.",
     price: 95,
     imageUrl: productImageUrl("/images/1.jpg"),
     rating: 4.7,
@@ -175,7 +194,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "lipo-c-b12-10ml",
     name: "Lipo-C with B12 10ml",
-    description: "Lipo-C with B12 is a research formulation combining lipotropic compounds and Vitamin B12, commonly studied for metabolic and fat metabolism pathways. This 10ml vial is designed for laboratory experiments exploring energy regulation, lipid metabolism, and cellular detoxification processes. For research use only.",
+    description:
+      "Research formulation combining lipotropic-class compounds and cyanocobalamin for non-clinical studies of lipid biochemistry and one-carbon metabolism in controlled assays. 10ml; laboratory use only.",
     price: 85,
     imageUrl: productImageUrl("/images/3.jpg"),
     rating: 4.6,
@@ -183,7 +203,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "mots-c-10mg",
     name: "MOTS-C 10mg",
-    description: "MOTS-C is a mitochondrial-derived peptide researched for its role in metabolic regulation and energy homeostasis. This 10mg vial is designed for advanced experimental studies focusing on metabolic health.",
+    description:
+      "MOTS-C mitochondrial-derived peptide for non-clinical investigation of cellular energetics, stress-response pathways, and mitochondrial signaling in approved research models. 10mg; not for human or veterinary use.",
     price: 135,
     imageUrl: productImageUrl("/images/19.jpg"),
     rating: 4.8,
@@ -191,7 +212,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "mt1-10mg",
     name: "MT1 10mg",
-    description: "MT1 (Melanotan I) is a peptide studied in research related to pigmentation and UV response mechanisms. This 10mg vial is intended strictly for laboratory use.",
+    description:
+      "MT1 (afamelanotide-related sequence) for non-clinical studies of melanocortin receptor pharmacology and pigmentation biochemistry in lawful laboratory models. 10mg vial; research use only.",
     price: 100,
     imageUrl: productImageUrl("/images/18.jpg"),
     rating: 4.6,
@@ -199,7 +221,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "mt2-10mg",
     name: "MT2 10mg",
-    description: "MT2 (Melanotan II) is a synthetic peptide studied for its effects on melanogenesis and skin pigmentation pathways. This 10mg vial is provided for controlled research environments only.",
+    description:
+      "MT2 synthetic peptide for in-vitro and non-clinical investigation of melanogenesis-related signaling and MSH-receptor binding—not for tanning, cosmetic, or human use. 10mg; controlled research environments only.",
     price: 100,
     imageUrl: productImageUrl("/images/17.jpg"),
     rating: 4.6,
@@ -207,7 +230,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "nad-500mg-10ml",
     name: "NAD+ 500mg 10ml",
-    description: "NAD+ (Nicotinamide Adenine Dinucleotide) is a vital coenzyme involved in cellular energy metabolism and mitochondrial function. This 500mg solution in 10ml format is intended for advanced research into aging, energy production, and cellular repair. Ideal for controlled laboratory use, ensuring high purity and stability for consistent experimental outcomes.",
+    description:
+      "NAD+ (oxidized nicotinamide adenine dinucleotide) for biochemical assays of redox cofactor pools, dehydrogenase kinetics, and mitochondrial enzyme systems in non-clinical research. 500mg/10ml solution; not for human administration.",
     price: 130,
     imageUrl: productImageUrl("/images/2.jpg"),
     rating: 4.8,
@@ -215,7 +239,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "selank-10mg",
     name: "Selank 10mg",
-    description: "Selank is a synthetic peptide studied for its anxiolytic and cognitive-enhancing effects. Commonly researched for stress modulation and immune response, this 10mg vial is ideal for laboratory investigations.",
+    description:
+      "Selank synthetic peptide for laboratory studies of tuftsin-related analog behavior, neuropeptide receptor binding, and CNS cell-line models under controlled conditions—not for anxiolytic, cognitive, or clinical use. 10mg; research only.",
     price: 110,
     imageUrl: productImageUrl("/images/16.jpg"),
     rating: 4.7,
@@ -223,7 +248,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "semax-10mg",
     name: "Semax 10mg",
-    description: "Semax is a nootropic peptide studied for its potential cognitive-enhancing and neuroprotective properties. This 10mg vial is intended for research into brain function, memory, and stress response mechanisms.",
+    description:
+      "Semax adrenocorticotropic hormone–derived peptide for non-clinical investigation of neurotrophic-factor expression and cellular stress readouts in approved in-vitro systems—no claims regarding cognition or neuroprotection in humans. 10mg; research use only.",
     price: 110,
     imageUrl: productImageUrl("/images/15.jpg"),
     rating: 4.8,
@@ -231,7 +257,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "sqs-p4-10mg",
     name: "SQS-P4 10mg",
-    description: "SQS-P4 is a proprietary research peptide designed for experimental studies in cellular signaling and biological pathways. This 10mg vial ensures high purity and consistency for laboratory applications.",
+    description:
+      "SQS-P4 proprietary peptide reference for experimental cellular-signaling and pathway-mapping studies. 10mg; high-purity material for qualified laboratory applications only.",
     price: 120,
     imageUrl: productImageUrl("/images/14.jpg"),
     rating: 4.5,
@@ -239,7 +266,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "sqs-t1som-10mg",
     name: "SQS-T1SOM 10mg",
-    description: "SQS-T1SOM is a research peptide formulation studied for its potential effects on growth hormone pathways and metabolic activity. Provided in a 10mg vial for controlled laboratory experimentation.",
+    description:
+      "SQS-T1SOM formulation for non-clinical exploration of somatotropic-axis–related receptor biology and metabolic readouts in controlled assays. 10mg vial; not for human or veterinary use.",
     price: 125,
     imageUrl: productImageUrl("/images/13.jpg"),
     rating: 4.6,
@@ -247,7 +275,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "ss-31-10mg",
     name: "SS-31 10mg",
-    description: "SS-31 (Elamipretide) is a mitochondria-targeting peptide researched for its role in improving cellular energy production and reducing oxidative stress. This 10mg vial is suitable for advanced biochemical and cellular research.",
+    description:
+      "SS-31 (Elamipretide) mitochondria-targeted tetrapeptide for cellular models measuring mitochondrial membrane potential, bioenergetics, and oxidative-stress markers—not for use as a therapeutic agent. 10mg; laboratory research only.",
     price: 150,
     imageUrl: productImageUrl("/images/12.jpg"),
     rating: 4.8,
@@ -255,7 +284,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "tb-500-10mg",
     name: "TB-500 10mg",
-    description: "TB-500 (Thymosin Beta-4 fragment) is widely researched for its role in tissue regeneration, wound healing, and cellular migration. This 10mg vial is intended for controlled experimental environments focusing on recovery and repair mechanisms at the cellular level. High purity formulation for consistent laboratory results.",
+    description:
+      "TB-500 (Thymosin Beta-4 fragment) for non-clinical studies of actin polymerization, cell migration, and cytoskeletal dynamics in controlled in-vitro systems—not for wound-care or clinical regeneration claims. 10mg; research only.",
     price: 120,
     imageUrl: productImageUrl("/images/4.jpg"),
     rating: 4.8,
@@ -263,7 +293,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "tb-500-5mg",
     name: "TB-500 5mg",
-    description: "Lower dosage TB-500 variant for controlled experimental research. This 5mg vial is commonly used in studies focusing on tissue regeneration, cellular repair, and recovery processes under laboratory conditions.",
+    description:
+      "Lower-mass TB-500 reference vial for dose-response and comparative cytoskeletal-biology assays in laboratory models. 5mg; strictly for non-clinical research.",
     price: 90,
     imageUrl: productImageUrl("/images/11.jpg"),
     rating: 4.6,
@@ -271,7 +302,8 @@ export const CATALOG_PRODUCTS: CatalogProductSeed[] = [
   {
     slug: "test-e-250-10ml",
     name: "Test E 250 (10ml)",
-    description: "Testosterone Enanthate 250 is a long-acting ester studied in hormone regulation and endocrine system research. This 10ml vial is designed strictly for laboratory use, ensuring consistent composition and stability for controlled experimental settings.",
+    description:
+      "Testosterone enanthate reference preparation for analytical chemistry, receptor-binding studies, and endocrine biochemistry in licensed non-clinical research settings—not for human or veterinary administration. 10ml; qualified personnel only.",
     price: 140,
     imageUrl: productImageUrl("/images/10.jpg"),
     rating: 4.7,

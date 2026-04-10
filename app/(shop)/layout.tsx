@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { AffiliateRefCapture } from "@/components/store/affiliate-ref-capture";
-// import { AgeResearchVerification } from "@/components/store/age-research-verification";
+import { AgeResearchVerification } from "@/components/store/age-research-verification";
 import { CartProvider } from "@/components/store/cart-context";
 import { CheckoutSuccessHandler } from "@/components/store/checkout-success-handler";
 import { SiteFooter } from "@/components/store/site-footer";
@@ -17,8 +17,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
         <Suspense fallback={null}>
           <AffiliateRefCapture />
         </Suspense>
-        {/* Re-enable when ready: home-page age & research gate */}
-        {/* <AgeResearchVerification /> */}
+        <AgeResearchVerification />
         <div className="flex min-h-screen flex-col bg-white text-black">
           <SiteHeader />
           <main className="flex-1">{children}</main>

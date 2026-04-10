@@ -4,7 +4,12 @@ import { BrandLogo } from "@/components/store/brand-logo";
 import { ProductCard } from "@/components/store/product-card";
 import { FaqSection } from "@/components/store/faq-section";
 import type { Product } from "@/lib/store/types";
-import { SITE_ADDRESS_SINGLE_LINE, SITE_SUPPORT_EMAIL } from "@/lib/site-business";
+import {
+  SITE_ADDRESS_SINGLE_LINE,
+  SITE_SUPPORT_EMAIL,
+  SITE_SUPPORT_PHONE,
+  siteSupportPhoneTelHref,
+} from "@/lib/site-business";
 
 type Props = { featured: Product[]; apiError?: boolean };
 
@@ -235,6 +240,16 @@ export function StoreHome({ featured, apiError }: Props) {
                   {SITE_SUPPORT_EMAIL}
                 </a>
               </p>
+              {SITE_SUPPORT_PHONE ? (
+                <>
+                  <h3 className="mt-6 text-[#D4AF37] text-sm font-semibold uppercase">Phone</h3>
+                  <p className="mt-2 text-white/80">
+                    <a href={`tel:${siteSupportPhoneTelHref()}`} className="hover:text-white hover:underline">
+                      {SITE_SUPPORT_PHONE}
+                    </a>
+                  </p>
+                </>
+              ) : null}
             </div>
             <div>
               <h3 className="text-[#D4AF37] text-sm font-semibold uppercase">Business hours</h3>
