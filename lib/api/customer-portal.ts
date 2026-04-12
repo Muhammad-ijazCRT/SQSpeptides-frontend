@@ -17,6 +17,10 @@ export type CustomerOrder = {
   status: string;
   paymentProvider?: string | null;
   paymentCompletion?: string;
+  zelleTransactionId?: string | null;
+  zelleProofUrl?: string | null;
+  zelleSubmittedAt?: string | null;
+  zelleRejectionNote?: string | null;
   createdAt: string;
   payments?: {
     id: string;

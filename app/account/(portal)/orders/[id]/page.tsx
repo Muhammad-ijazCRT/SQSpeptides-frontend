@@ -80,13 +80,37 @@ export default function OrderDetailPage() {
                   ? "Cryptocurrency (NOWPayments)"
                   : order.paymentProvider === "crossmint"
                     ? "Card (Crossmint)"
-                    : "Card / other"}
+                    : order.paymentProvider === "zelle"
+                      ? "Zelle (manual transfer)"
+                      : "Card / other"}
                 {order.paymentCompletion === "awaiting_payment" ? (
                   <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                    Awaiting payment
+                    {order.paymentProvider === "zelle"
+                      ? "Awaiting your Zelle payment and proof — return to checkout with your order email if you still need to submit"
+                      : "Awaiting payment"}
+                  </span>
+                ) : null}
+                {order.paymentCompletion === "zelle_pending_review" ? (
+                  <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-900">
+                    Proof received — we will confirm shortly
+                  </span>
+                ) : null}
+                {order.paymentCompletion === "zelle_rejected" ? (
+                  <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-900">
+                    Payment not accepted
                   </span>
                 ) : null}
               </p>
+              {order.paymentProvider === "zelle" && order.zelleRejectionNote ? (
+                <p className="mt-2 text-sm text-red-700">{order.zelleRejectionNote}</p>
+              ) : null}
+              {order.paymentProvider === "zelle" && order.zelleProofUrl ? (
+                <p className="mt-2 text-sm">
+                  <a href={order.zelleProofUrl} className="font-medium text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                    View submitted payment screenshot
+                  </a>
+                </p>
+              ) : null}
             </>
           ) : null}
           {order.researchUseAttestation ? (

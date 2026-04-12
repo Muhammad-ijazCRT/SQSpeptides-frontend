@@ -8,7 +8,9 @@ import type { Prisma } from "../generated/prisma-client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AffiliatePayoutResolveDto } from "./dto/affiliate-payout-resolve.dto";
 import { UpdateAffiliateSettingsDto } from "./dto/affiliate-settings.dto";
+import { OrdersService } from "../orders/orders.service";
 import { UpdatePaymentSettingsDto } from "./dto/update-payment-settings.dto";
+import { ZelleVerifyOrderDto } from "./dto/zelle-verify-order.dto";
 import { CreateProductDto } from "../products/dto/create-product.dto";
 import { UpdateProductDto } from "../products/dto/update-product.dto";
 import { ProductsService } from "../products/products.service";
@@ -20,7 +22,8 @@ export class AdminController {
     private readonly prisma: PrismaService,
     private readonly products: ProductsService,
     private readonly affiliate: AffiliateService,
-    private readonly coupons: CouponsService
+    private readonly coupons: CouponsService,
+    private readonly orders: OrdersService
   ) {}
 
   @Get("overview")
@@ -139,6 +142,9 @@ export class AdminController {
       nowpaymentsPublicKeyMasked: this.maskSecret(s.nowpaymentsPublicKey),
       nowpaymentsSandbox: s.nowpaymentsSandbox,
       nowpaymentsConfigured: Boolean(s.nowpaymentsApiKey?.trim() && s.nowpaymentsPublicKey?.trim()),
+      zelleEmail: s.zelleEmail?.trim() || null,
+      zellePhone: s.zellePhone?.trim() || null,
+      zelleConfigured: Boolean(s.zelleEmail?.trim() || s.zellePhone?.trim()),
     };
   }
 
@@ -155,8 +161,19 @@ export class AdminController {
     if (dto.nowpaymentsSandbox !== undefined) {
       data.nowpaymentsSandbox = dto.nowpaymentsSandbox;
     }
+    if (dto.zelleEmail !== undefined) {
+      data.zelleEmail = dto.zelleEmail.trim() || null;
+    }
+    if (dto.zellePhone !== undefined) {
+      data.zellePhone = dto.zellePhone.trim() || null;
+    }
     await this.prisma.siteSettings.update({ where: { id: "default" }, data });
     return this.getPaymentSettings();
+  }
+
+  @Patch("orders/:id/zelle")
+  verifyZelleOrder(@Param("id") id: string, @Body() dto: ZelleVerifyOrderDto) {
+    return this.orders.adminVerifyZelle(id, dto);
   }
 
   @Get("affiliate/payout-requests")

@@ -94,9 +94,21 @@ export default function MyOrdersPage() {
                           <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
                             Payment pending
                           </span>
+                        ) : o.paymentCompletion === "zelle_pending_review" ? (
+                          <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-900">
+                            Zelle — under review
+                          </span>
+                        ) : o.paymentCompletion === "zelle_rejected" ? (
+                          <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-900">
+                            Zelle declined
+                          </span>
                         ) : o.paymentProvider === "nowpayments" ? (
                           <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-800">
                             Crypto
+                          </span>
+                        ) : o.paymentProvider === "zelle" ? (
+                          <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-900">
+                            Zelle
                           </span>
                         ) : null}
                         <span className="text-xs text-neutral-500 tabular-nums">

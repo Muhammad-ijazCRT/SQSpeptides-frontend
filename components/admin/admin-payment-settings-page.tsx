@@ -7,6 +7,9 @@ type PaymentSettings = {
   nowpaymentsPublicKeyMasked: string | null;
   nowpaymentsSandbox: boolean;
   nowpaymentsConfigured: boolean;
+  zelleEmail: string | null;
+  zellePhone: string | null;
+  zelleConfigured: boolean;
 };
 
 export function AdminPaymentSettingsPage() {
@@ -14,6 +17,8 @@ export function AdminPaymentSettingsPage() {
   const [apiKey, setApiKey] = useState("");
   const [publicKey, setPublicKey] = useState("");
   const [sandbox, setSandbox] = useState(true);
+  const [zelleEmail, setZelleEmail] = useState("");
+  const [zellePhone, setZellePhone] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -36,6 +41,8 @@ export function AdminPaymentSettingsPage() {
       }
       setData(j);
       setSandbox(j.nowpaymentsSandbox);
+      setZelleEmail(j.zelleEmail ?? "");
+      setZellePhone(j.zellePhone ?? "");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Failed to load");
     } finally {
@@ -53,7 +60,11 @@ export function AdminPaymentSettingsPage() {
     setMsg(null);
     setSaving(true);
     try {
-      const body: Record<string, unknown> = { nowpaymentsSandbox: sandbox };
+      const body: Record<string, unknown> = {
+        nowpaymentsSandbox: sandbox,
+        zelleEmail: zelleEmail.trim() || "",
+        zellePhone: zellePhone.trim() || "",
+      };
       if (apiKey.trim()) body.nowpaymentsApiKey = apiKey.trim();
       if (publicKey.trim()) body.nowpaymentsPublicKey = publicKey.trim();
       const res = await fetch("/api/admin/payment-settings", {
@@ -66,7 +77,10 @@ export function AdminPaymentSettingsPage() {
         const m = typeof j.message === "string" ? j.message : Array.isArray(j.message) ? j.message.join(", ") : "Save failed";
         throw new Error(m);
       }
-      setData(j as PaymentSettings);
+      const saved = j as PaymentSettings;
+      setData(saved);
+      setZelleEmail(saved.zelleEmail ?? "");
+      setZellePhone(saved.zellePhone ?? "");
       setApiKey("");
       setPublicKey("");
       setMsg("Settings saved.");
@@ -131,7 +145,48 @@ export function AdminPaymentSettingsPage() {
           ) : null}
 
           <div className="col-12">
-            <h2 className="h6 fw-semibold text-dark mb-3">NOWPayments</h2>
+            <h2 className="h6 fw-semibold text-dark mb-2">Zelle (manual bank transfer)</h2>
+            <p className="small text-secondary mb-3">
+              Shown on checkout when at least one field is set. Customers pay you outside the site, then submit a transaction ID
+              and screenshot; you approve or reject in Orders.
+            </p>
+            <p className="small mb-3">
+              Status:{" "}
+              {data?.zelleConfigured ? (
+                <span className="text-success fw-medium">Zelle checkout enabled</span>
+              ) : (
+                <span className="text-secondary fw-medium">Not shown — add an email and/or phone</span>
+              )}
+            </p>
+          </div>
+
+          <div className="col-12 col-lg-6">
+            <label className="form-label small fw-semibold text-secondary text-uppercase">Zelle email</label>
+            <input
+              type="email"
+              autoComplete="off"
+              className={fieldClass}
+              placeholder="payments@yourbusiness.com"
+              value={zelleEmail}
+              onChange={(e) => setZelleEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="col-12 col-lg-6">
+            <label className="form-label small fw-semibold text-secondary text-uppercase">Zelle phone</label>
+            <input
+              type="tel"
+              autoComplete="off"
+              className={fieldClass}
+              placeholder="+1… (optional if email is set)"
+              value={zellePhone}
+              onChange={(e) => setZellePhone(e.target.value)}
+            />
+          </div>
+
+          <div className="col-12">
+            <hr className="my-2 text-secondary" />
+            <h2 className="h6 fw-semibold text-dark mb-3 mt-2">NOWPayments</h2>
             <p className="small text-secondary mb-3">
               Status:{" "}
               {data?.nowpaymentsConfigured ? (

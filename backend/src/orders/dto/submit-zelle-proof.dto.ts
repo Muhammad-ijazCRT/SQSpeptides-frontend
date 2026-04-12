@@ -3,7 +3,7 @@ import { IsEmail, IsString, MaxLength, MinLength } from "class-validator";
 
 export class SubmitZelleProofDto {
   @IsString()
-  @MinLength(10)
+  @MinLength(8)
   @MaxLength(40)
   orderId!: string;
 

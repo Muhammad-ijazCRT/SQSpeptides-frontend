@@ -1,10 +1,14 @@
 import { Body, Controller, Get, Post } from "@nestjs/common";
+import { OrdersService } from "../orders/orders.service";
 import { CreateNowpaymentsInvoiceDto } from "./dto/create-nowpayments-invoice.dto";
 import { NowpaymentsService } from "./nowpayments.service";
 
 @Controller("checkout")
 export class CheckoutNowpaymentsController {
-  constructor(private readonly nowpayments: NowpaymentsService) {}
+  constructor(
+    private readonly nowpayments: NowpaymentsService,
+    private readonly orders: OrdersService
+  ) {}
 
   @Get("nowpayments/availability")
   async availability() {
@@ -21,5 +25,10 @@ export class CheckoutNowpaymentsController {
   @Post("nowpayments/sync")
   sync(@Body() dto: CreateNowpaymentsInvoiceDto) {
     return this.nowpayments.syncOrderPaymentStatus(dto.orderId, dto.email);
+  }
+
+  @Get("zelle/config")
+  zelleConfig() {
+    return this.orders.getZelleStorefrontConfig();
   }
 }

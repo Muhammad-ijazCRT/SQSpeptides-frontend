@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { IsBoolean, IsOptional, IsString, MaxLength } from "class-validator";
+import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength, ValidateIf } from "class-validator";
 
 export class UpdatePaymentSettingsDto {
   @IsOptional()
@@ -24,13 +24,14 @@ export class UpdatePaymentSettingsDto {
   nowpaymentsSandbox?: boolean;
 
   @IsOptional()
-  @Transform(({ value }) => (value === "" || value == null ? undefined : String(value).trim()))
-  @IsString()
+  @Transform(({ value }) => (value == null ? undefined : String(value).trim()))
+  @ValidateIf((_, v) => typeof v === "string" && v.length > 0)
+  @IsEmail()
   @MaxLength(320)
   zelleEmail?: string;
 
   @IsOptional()
-  @Transform(({ value }) => (value === "" || value == null ? undefined : String(value).trim()))
+  @Transform(({ value }) => (value == null ? undefined : String(value).trim()))
   @IsString()
   @MaxLength(40)
   zellePhone?: string;

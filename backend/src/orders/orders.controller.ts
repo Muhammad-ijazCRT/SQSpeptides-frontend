@@ -7,6 +7,7 @@ import type { AccessTokenPayload } from "../auth/jwt-payload.interface";
 import { PreviewCouponDto } from "../coupons/dto/preview-coupon.dto";
 import { CouponsService } from "../coupons/coupons.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
+import { SubmitZelleProofDto } from "./dto/submit-zelle-proof.dto";
 import { OrdersService } from "./orders.service";
 
 @Controller("orders")
@@ -20,6 +21,11 @@ export class OrdersController {
   @Post("coupon-preview")
   couponPreview(@Body() dto: PreviewCouponDto) {
     return this.coupons.preview(dto);
+  }
+
+  @Post("zelle/submit-proof")
+  submitZelleProof(@Body() dto: SubmitZelleProofDto) {
+    return this.orders.submitZelleProof(dto);
   }
 
   @Post()

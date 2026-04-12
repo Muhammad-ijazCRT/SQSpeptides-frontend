@@ -8,7 +8,9 @@ import { Decimal } from "../generated/prisma-client/runtime/library";
 import { AffiliateService } from "../affiliate/affiliate.service";
 import { CouponsService } from "../coupons/coupons.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { ZelleVerifyOrderDto } from "../admin/dto/zelle-verify-order.dto";
 import { CreateOrderDto } from "./dto/create-order.dto";
+import { SubmitZelleProofDto } from "./dto/submit-zelle-proof.dto";
 
 function serializeOrder(o: {
   id: string;
@@ -98,9 +100,17 @@ export class OrdersService {
 
   async create(dto: CreateOrderDto, customerId?: string | null) {
     const payProvider = dto.paymentProvider ?? "crossmint";
-    if (payProvider === "nowpayments" && (dto.storeCreditToUse ?? 0) > 0) {
+    if (payProvider === "zelle") {
+      await this.affiliate.ensureSiteSettings();
+      const s = await this.prisma.siteSettings.findUniqueOrThrow({ where: { id: "default" } });
+      const zelleOk = Boolean(s.zelleEmail?.trim() || s.zellePhone?.trim());
+      if (!zelleOk) {
+        throw new BadRequestException("Zelle checkout is not configured. Contact the store.");
+      }
+    }
+    if ((payProvider === "nowpayments" || payProvider === "zelle") && (dto.storeCreditToUse ?? 0) > 0) {
       throw new BadRequestException(
-        "Affiliate balance cannot be used with cryptocurrency checkout. Choose card payment or remove the balance amount."
+        "Affiliate balance cannot be used with this payment method. Choose card payment or remove the balance amount."
       );
     }
 
@@ -182,7 +192,8 @@ export class OrdersService {
           couponCodeSnapshot: couponPart.couponCodeSnapshot ?? undefined,
           couponDiscountAmount: new Decimal(couponDiscount),
           paymentProvider: payProvider,
-          paymentCompletion: payProvider === "nowpayments" ? "awaiting_payment" : "paid",
+          paymentCompletion:
+            payProvider === "nowpayments" || payProvider === "zelle" ? "awaiting_payment" : "paid",
           items: {
             create: creates.map((c) => ({
               productId: c.productId,
@@ -193,7 +204,7 @@ export class OrdersService {
         },
       });
 
-      if (payProvider !== "nowpayments") {
+      if (payProvider !== "nowpayments" && payProvider !== "zelle") {
         await this.affiliate.applyReferralCommissionForOrder(created.id, tx);
       }
 
@@ -278,5 +289,81 @@ export class OrdersService {
       order.customerId == null && order.email.toLowerCase() === normalized;
     if (!byAccount && !byGuestEmail) throw new ForbiddenException();
     return serializeOrder(order);
+  }
+
+  async getZelleStorefrontConfig() {
+    await this.affiliate.ensureSiteSettings();
+    const s = await this.prisma.siteSettings.findUniqueOrThrow({ where: { id: "default" } });
+    const zelleEmail = s.zelleEmail?.trim() || null;
+    const zellePhone = s.zellePhone?.trim() || null;
+    return {
+      enabled: Boolean(zelleEmail || zellePhone),
+      zelleEmail,
+      zellePhone,
+    };
+  }
+
+  async submitZelleProof(dto: SubmitZelleProofDto) {
+    const normalizedEmail = dto.email.toLowerCase().trim();
+    const proofUrl = dto.proofUrl.trim();
+    if (!proofUrl.startsWith("/uploads/zelle/")) {
+      throw new BadRequestException("Invalid payment proof URL.");
+    }
+    const order = await this.prisma.order.findUnique({ where: { id: dto.orderId.trim() } });
+    if (!order) throw new NotFoundException("Order not found.");
+    if (order.email.toLowerCase() !== normalizedEmail) {
+      throw new ForbiddenException("Email does not match this order.");
+    }
+    if (order.paymentProvider !== "zelle") {
+      throw new BadRequestException("This order does not use Zelle.");
+    }
+    if (order.paymentCompletion !== "awaiting_payment") {
+      throw new BadRequestException("This order is not waiting for Zelle payment proof.");
+    }
+    if (order.zelleSubmittedAt) {
+      throw new BadRequestException("Payment proof was already submitted for this order.");
+    }
+    await this.prisma.order.update({
+      where: { id: order.id },
+      data: {
+        zelleTransactionId: dto.transactionId.trim(),
+        zelleProofUrl: proofUrl,
+        zelleSubmittedAt: new Date(),
+        paymentCompletion: "zelle_pending_review",
+      },
+    });
+    return { ok: true as const };
+  }
+
+  async adminVerifyZelle(orderId: string, dto: ZelleVerifyOrderDto) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException();
+    if (order.paymentProvider !== "zelle") {
+      throw new BadRequestException("Not a Zelle order.");
+    }
+    if (order.paymentCompletion !== "zelle_pending_review") {
+      throw new BadRequestException(
+        "Order is not awaiting Zelle verification (current status: " + order.paymentCompletion + ")."
+      );
+    }
+    if (dto.action === "approve") {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.order.update({
+          where: { id: orderId },
+          data: { paymentCompletion: "paid", zelleRejectionNote: null },
+        });
+        await this.affiliate.applyReferralCommissionForOrder(orderId, tx);
+      });
+      return { ok: true as const, paymentCompletion: "paid" as const };
+    }
+    await this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        paymentCompletion: "zelle_rejected",
+        zelleRejectionNote: dto.note?.trim() || null,
+        status: "cancelled",
+      },
+    });
+    return { ok: true as const, paymentCompletion: "zelle_rejected" as const };
   }
 }

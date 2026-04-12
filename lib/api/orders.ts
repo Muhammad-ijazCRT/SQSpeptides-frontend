@@ -14,7 +14,7 @@ export type CheckoutPayload = {
   affiliateRef?: string;
   storeCreditToUse?: number;
   couponCode?: string;
-  paymentProvider?: "crossmint" | "nowpayments";
+  paymentProvider?: "crossmint" | "nowpayments" | "zelle";
 };
 
 export async function createOrder(payload: CheckoutPayload): Promise<OrderCreated> {

@@ -32,9 +32,6 @@ export function CheckoutPaymentMethodSelector({ value, onChange }: Props) {
           {value === "crossmint" ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
         </span>
         <span className="min-w-0 flex-1 text-neutral-900">Pay with card</span>
-        <span className="rounded-full bg-emerald-600/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-800">
-          Popular
-        </span>
       </button>
 
       <button
@@ -53,25 +50,51 @@ export function CheckoutPaymentMethodSelector({ value, onChange }: Props) {
           {value === "crypto" ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
         </span>
         <span className="min-w-0 flex-1 text-neutral-900">Pay with cryptocurrency</span>
-        <svg
-          viewBox="0 0 24 24"
-          className="h-6 w-6 shrink-0"
-          xmlns="http://www.w3.org/2000/svg"
+        <span className="flex shrink-0 items-center gap-2">
+          <span className="rounded-full bg-emerald-600/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-800">
+            Popular
+          </span>
+          <svg
+            viewBox="0 0 24 24"
+            className="h-6 w-6 shrink-0"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden
+          >
+            <circle cx="12" cy="12" r="12" fill="#F7931A" />
+            <text
+              x="12"
+              y="16"
+              textAnchor="middle"
+              fontSize="11"
+              fontWeight="700"
+              fill="#fff"
+              fontFamily="system-ui, sans-serif"
+            >
+              ₿
+            </text>
+          </svg>
+        </span>
+      </button>
+
+      <button
+        type="button"
+        role="radio"
+        aria-checked={value === "zelle"}
+        onClick={() => onChange("zelle")}
+        className={`${base} ${value === "zelle" ? active : idle}`}
+      >
+        <span
+          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+            value === "zelle" ? "border-[#b8962e] bg-[#b8962e]" : "border-neutral-300 bg-white"
+          }`}
           aria-hidden
         >
-          <circle cx="12" cy="12" r="12" fill="#F7931A" />
-          <text
-            x="12"
-            y="16"
-            textAnchor="middle"
-            fontSize="11"
-            fontWeight="700"
-            fill="#fff"
-            fontFamily="system-ui, sans-serif"
-          >
-            ₿
-          </text>
-        </svg>
+          {value === "zelle" ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
+        </span>
+        <span className="min-w-0 flex-1 text-neutral-900">Pay with Zelle</span>
+        <span className="shrink-0 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-900" aria-hidden>
+          Z
+        </span>
       </button>
     </div>
   );

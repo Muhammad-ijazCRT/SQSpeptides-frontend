@@ -12,6 +12,7 @@ import { isResearchUseAttestation, RESEARCH_USE_ATTESTATION_OPTIONS } from "@/li
 import { useToast } from "@/components/store/toast-context";
 import { CheckoutCrossmint } from "@/components/store/checkout-crossmint";
 import { CheckoutPaymentMethodSelector } from "@/components/store/checkout-payment-method-selector";
+import { ZelleCheckoutPanel, ZELLE_PENDING_SESSION_KEY, type ZelleStorefrontConfig } from "@/components/store/zelle-checkout-panel";
 import {
   readCheckoutGateway,
   writeCheckoutGateway,
@@ -73,11 +74,11 @@ function validateAffiliateCreditForGateway(
   credit: number,
   balance: number,
   orderSub: number,
-  gateway: ReturnType<typeof readCheckoutGateway>
+  gateway: CheckoutPaymentGateway
 ): string | null {
-  if (gateway === "crypto") {
+  if (gateway === "crypto" || gateway === "zelle") {
     if (credit > 0) {
-      return "Cryptocurrency checkout cannot use affiliate balance. Set applied balance to zero or choose Pay with card above.";
+      return "Zelle and cryptocurrency checkout cannot use affiliate balance. Set the balance to zero or choose Pay with card.";
     }
     return null;
   }
@@ -135,6 +136,12 @@ export function CheckoutForm() {
   const [payKey, setPayKey] = useState(0);
   const [payGateway, setPayGateway] = useState<CheckoutPaymentGateway>("crossmint");
   const [npAvailable, setNpAvailable] = useState<boolean | null>(null);
+  const [zelleConfig, setZelleConfig] = useState<ZelleStorefrontConfig | null>(null);
+  const [zelleAwaitingProof, setZelleAwaitingProof] = useState<{
+    orderId: string;
+    email: string;
+    amountUsd: string;
+  } | null>(null);
   const finalizeOnce = useRef(false);
   const checkoutSnapshotRef = useRef<CheckoutSnapshot | null>(null);
 
@@ -219,6 +226,38 @@ export function CheckoutForm() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await fetch("/api/checkout/zelle/config", { cache: "no-store" });
+      if (cancelled) return;
+      const data = (await res.json().catch(() => ({}))) as ZelleStorefrontConfig;
+      if (!cancelled) {
+        setZelleConfig(
+          data && typeof data.enabled === "boolean"
+            ? data
+            : { enabled: false, zelleEmail: null, zellePhone: null }
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(ZELLE_PENDING_SESSION_KEY);
+      if (!raw) return;
+      const p = JSON.parse(raw) as { orderId?: string; email?: string; amountUsd?: string };
+      if (p.orderId && p.email && p.amountUsd) {
+        setZelleAwaitingProof({ orderId: p.orderId, email: p.email, amountUsd: p.amountUsd });
+      }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   useEffect(() => {
@@ -310,33 +349,34 @@ export function CheckoutForm() {
     const countryVal = inputTrim(countryRef, country);
     const researchVal = selectTrim(researchCategoryRef, researchCategory);
 
-    if (!emailVal) {
-      setError("Email is required.");
+    const fail = (message: string) => {
+      setError(null);
+      showToast(message, "error");
       return false;
+    };
+
+    if (!emailVal) {
+      return fail("Email is required.");
     }
     if (!fullNameVal || !addressVal || !cityVal || !postalVal || !countryVal) {
-      setError("Please complete all address fields.");
-      return false;
+      return fail("Please complete all address fields.");
     }
     const catOk = (RESEARCH_USE_ATTESTATION_OPTIONS as readonly string[]).includes(researchVal);
     if (!researchVal || !catOk) {
-      setError("Please select a research-use attestation.");
-      return false;
+      return fail("Please select a research-use attestation.");
     }
     if (!purchaserTermsAccepted) {
-      setError("Please read and accept the purchaser responsibility agreement and terms to continue.");
-      return false;
+      return fail("Please read and accept the purchaser responsibility agreement and terms to continue.");
     }
     if (affiliateBalance != null && affiliateBalance > 0 && storeCreditToUse > 0) {
       const msg = validateAffiliateCreditForGateway(
         storeCreditToUse,
         affiliateBalance,
         discountedSubtotal,
-        readCheckoutGateway()
+        payGateway
       );
       if (msg) {
-        setError(msg);
-        return false;
+        return fail(msg);
       }
     }
     return true;
@@ -365,7 +405,7 @@ export function CheckoutForm() {
   function prepareSnapshotForPayment(): boolean {
     setError(null);
     if (lines.length === 0) {
-      setError("Your cart is empty.");
+      showToast("Your cart is empty.", "error");
       return false;
     }
     if (!validateShipping()) return false;
@@ -441,6 +481,65 @@ export function CheckoutForm() {
     }
   }
 
+  async function startZelleCheckout() {
+    setError(null);
+    setLoading(true);
+    try {
+      if (!prepareSnapshotForPayment()) {
+        setLoading(false);
+        return;
+      }
+      let snap = checkoutSnapshotRef.current;
+      if (!snap?.items?.length) snap = loadPendingSnapshot();
+      if (!snap?.items?.length) {
+        setError(
+          "We could not find your checkout details. Return to checkout from the shop, or contact support with your order reference."
+        );
+        return;
+      }
+      if (!snap.researchUseAttestation || !isResearchUseAttestation(snap.researchUseAttestation)) {
+        setError("Your saved checkout is missing a research-use attestation. Go back to shipping and try again.");
+        return;
+      }
+      const cardDueLocal = Math.max(
+        0,
+        Math.round((discountedSubtotal - (snap.storeCreditToUse ?? 0)) * 100) / 100
+      );
+      const amountStr = cardDueLocal.toFixed(2);
+      const order = await createOrder({
+        email: snap.email,
+        fullName: snap.fullName,
+        addressLine1: snap.addressLine1,
+        city: snap.city,
+        postalCode: snap.postalCode,
+        country: snap.country,
+        researchUseAttestation: snap.researchUseAttestation,
+        items: snap.items,
+        affiliateRef: snap.affiliateRef,
+        storeCreditToUse: snap.storeCreditToUse,
+        couponCode: snap.couponCode,
+        paymentProvider: "zelle",
+      });
+      checkoutSnapshotRef.current = null;
+      clearPendingSnapshot();
+      try {
+        sessionStorage.setItem(
+          ZELLE_PENDING_SESSION_KEY,
+          JSON.stringify({ orderId: order.id, email: snap.email, amountUsd: amountStr })
+        );
+      } catch {
+        /* ignore */
+      }
+      setZelleAwaitingProof({ orderId: order.id, email: snap.email, amountUsd: amountStr });
+      clearCart();
+      showToast("Order created. Send your Zelle payment and submit proof below.", "success");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create Zelle order.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function applyCouponCode() {
     setCouponFieldError(null);
     const raw = couponInput.trim();
@@ -491,7 +590,7 @@ export function CheckoutForm() {
     await finalizeOrder();
   }
 
-  if (lines.length === 0) {
+  if (lines.length === 0 && !zelleAwaitingProof) {
     return (
       <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center shadow-sm">
         <p className="text-neutral-600">Your cart is empty.</p>
@@ -504,6 +603,28 @@ export function CheckoutForm() {
       </div>
     );
   }
+
+  const zelleAvailable = Boolean(zelleConfig?.enabled);
+
+  const zelleResumeSummary = zelleAwaitingProof ? (
+    <div className="lg:sticky lg:top-24">
+      <div className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-[0_4px_24px_-12px_rgba(15,23,42,0.1)] sm:p-5">
+        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">Zelle payment</h2>
+        <p className="mt-3 text-sm text-neutral-600">Send payment for this order, then submit proof on the left.</p>
+        <p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-neutral-500">Order ID (reference / memo)</p>
+        <p className="mt-1 break-all font-mono text-sm text-black">{zelleAwaitingProof.orderId}</p>
+        <p className="mt-4 text-[10px] font-bold uppercase tracking-wide text-neutral-500">Amount (USD)</p>
+        <p className="mt-1 text-2xl font-bold tabular-nums text-black">${zelleAwaitingProof.amountUsd}</p>
+        <p className="mt-3 text-xs text-neutral-500">Include the order ID in your bank’s note so we can match your payment.</p>
+        <Link
+          href="/products-catalog"
+          className="mt-5 inline-block text-sm font-semibold text-[#b8962e] hover:underline"
+        >
+          Continue shopping
+        </Link>
+      </div>
+    </div>
+  ) : null;
 
   const inputClass =
     "mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-black shadow-sm outline-none transition placeholder:text-neutral-400 focus:border-black focus:ring-1 focus:ring-black";
@@ -601,16 +722,41 @@ export function CheckoutForm() {
 
         <div className="rounded-lg border border-neutral-200 bg-neutral-50/60 p-3">
           {cardDue <= 0 ? (
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => {
-                if (prepareSnapshotForPayment()) void finalizeOrder();
-              }}
-              className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
-            >
-              {loading ? "Placing order…" : "Place order"}
-            </button>
+            payGateway === "zelle" ? (
+              <>
+                {zelleConfig === null ? (
+                  <p className="text-center text-sm text-neutral-600">Checking Zelle…</p>
+                ) : !zelleAvailable ? (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+                    Add a Zelle email or phone in{" "}
+                    <Link href="/admin/dashboard/settings" className="font-semibold underline">
+                      Admin → Store settings
+                    </Link>
+                    .
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => void startZelleCheckout()}
+                    className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
+                  >
+                    {loading ? "Creating order…" : `Pay $${paymentAmountStr} with Zelle`}
+                  </button>
+                )}
+              </>
+            ) : (
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => {
+                  if (prepareSnapshotForPayment()) void finalizeOrder();
+                }}
+                className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
+              >
+                {loading ? "Placing order…" : "Place order"}
+              </button>
+            )
           ) : payGateway === "crypto" ? (
             <>
               {npAvailable === null ? (
@@ -631,6 +777,29 @@ export function CheckoutForm() {
                   className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
                 >
                   {loading ? "Preparing…" : `Pay $${paymentAmountStr} with crypto`}
+                </button>
+              )}
+            </>
+          ) : payGateway === "zelle" ? (
+            <>
+              {zelleConfig === null ? (
+                <p className="text-center text-sm text-neutral-600">Checking Zelle…</p>
+              ) : !zelleAvailable ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+                  Add a Zelle email or phone in{" "}
+                  <Link href="/admin/dashboard/settings" className="font-semibold underline">
+                    Admin → Store settings
+                  </Link>
+                  .
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => void startZelleCheckout()}
+                  className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
+                >
+                  {loading ? "Creating order…" : `Pay $${paymentAmountStr} with Zelle`}
                 </button>
               )}
             </>
@@ -670,6 +839,35 @@ export function CheckoutForm() {
   return (
     <div className="grid gap-6 lg:grid-cols-12 lg:items-start lg:gap-8">
       <div className="lg:col-span-7 space-y-5">
+        {zelleAwaitingProof ? (
+          <>
+            <section className="rounded-xl border border-violet-200/80 bg-gradient-to-b from-violet-50/50 to-white p-4 shadow-[0_1px_8px_-4px_rgba(15,23,42,0.08)] sm:p-5">
+              <h2 className="text-base font-semibold tracking-tight text-black sm:text-lg">Pay with Zelle</h2>
+              <p className="mt-2 text-sm text-neutral-600">
+                Your order is created. Send the total from the summary using the Zelle details below, then enter your
+                transaction ID and upload a screenshot.
+              </p>
+              <div className="mt-4">
+                <ZelleCheckoutPanel
+                  orderId={zelleAwaitingProof.orderId}
+                  email={zelleAwaitingProof.email}
+                  amountUsd={zelleAwaitingProof.amountUsd}
+                  config={zelleConfig}
+                />
+              </div>
+            </section>
+            {error ? (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800">{error}</div>
+            ) : null}
+            <Link
+              href="/products-catalog"
+              className="inline-block text-xs font-medium text-neutral-600 hover:text-black hover:underline sm:text-sm"
+            >
+              ← Continue shopping
+            </Link>
+          </>
+        ) : (
+          <>
         <section className="rounded-xl border border-neutral-200/90 bg-white p-3 shadow-[0_1px_8px_-4px_rgba(15,23,42,0.08)] sm:p-4">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 pb-2.5">
             <h2 className="text-base font-semibold tracking-tight text-black sm:text-lg">
@@ -951,9 +1149,11 @@ export function CheckoutForm() {
           ← Continue shopping
         </Link>
         </div>
+          </>
+        )}
       </div>
 
-      <div className="lg:col-span-5 lg:order-2">{summaryCard}</div>
+      <div className="lg:col-span-5 lg:order-2">{zelleAwaitingProof ? zelleResumeSummary : summaryCard}</div>
     </div>
   );
 }
