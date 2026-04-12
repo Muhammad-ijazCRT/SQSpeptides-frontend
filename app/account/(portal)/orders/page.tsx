@@ -90,6 +90,15 @@ export default function MyOrdersPage() {
                         <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-neutral-700">
                           {o.status}
                         </span>
+                        {o.paymentCompletion === "awaiting_payment" ? (
+                          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
+                            Payment pending
+                          </span>
+                        ) : o.paymentProvider === "nowpayments" ? (
+                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-800">
+                            Crypto
+                          </span>
+                        ) : null}
                         <span className="text-xs text-neutral-500 tabular-nums">
                           {new Date(o.createdAt).toLocaleDateString(undefined, {
                             year: "numeric",

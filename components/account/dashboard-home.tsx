@@ -163,11 +163,11 @@ export function DashboardHome() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link
-          href="/cart"
+          href="/checkout"
           className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white p-6 shadow-sm transition hover:border-blue-200 hover:shadow-md"
         >
           <div>
-            <p className="font-semibold text-neutral-900">Shopping Cart</p>
+            <p className="font-semibold text-neutral-900">Checkout</p>
             <p className="mt-1 text-sm text-neutral-500">{cartLines.reduce((n, l) => n + l.quantity, 0)} items</p>
           </div>
           <div className="rounded-full bg-blue-50 p-3 text-blue-600">

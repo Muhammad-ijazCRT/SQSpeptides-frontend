@@ -15,7 +15,17 @@ export type CustomerOrder = {
   couponDiscountAmount?: number;
   couponCodeSnapshot?: string | null;
   status: string;
+  paymentProvider?: string | null;
+  paymentCompletion?: string;
   createdAt: string;
+  payments?: {
+    id: string;
+    provider: string;
+    externalId: string | null;
+    amountUsd: number;
+    status: string;
+    createdAt: string;
+  }[];
   items: {
     id: string;
     quantity: number;

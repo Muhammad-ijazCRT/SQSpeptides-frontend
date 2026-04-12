@@ -11,6 +11,9 @@ datasource db {
 model SiteSettings {
   id                         String   @id
   affiliateCommissionPercent Decimal  @default(10) @db.Decimal(5, 2)
+  nowpaymentsApiKey          String?  @db.Text
+  nowpaymentsPublicKey       String?  @db.Text
+  nowpaymentsSandbox         Boolean  @default(true)
   updatedAt                  DateTime @updatedAt
 }
 
@@ -88,9 +91,13 @@ model Order {
   coupon                 Coupon?           @relation(fields: [couponId], references: [id], onDelete: SetNull)
   couponCodeSnapshot     String?
   couponDiscountAmount   Decimal           @default(0) @db.Decimal(12, 2)
+  paymentProvider        String?
+  paymentCompletion      String            @default("paid")
+  nowpaymentsInvoiceId   String?
   createdAt              DateTime          @default(now())
   items                  OrderItem[]
   affiliateEarning       AffiliateEarning?
+  payments               OrderPayment[]
 
   @@index([customerId])
   @@index([email])
@@ -182,4 +189,19 @@ model OrderItem {
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
   price     Decimal @db.Decimal(10, 2)
+}
+
+model OrderPayment {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider   String
+  externalId String?
+  amountUsd  Decimal  @db.Decimal(12, 2)
+  status     String
+  rawPayload Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([orderId])
 }

@@ -15,19 +15,15 @@ export default function CheckoutPage() {
             Home
           </Link>
           <span className="mx-2 text-neutral-300">/</span>
-          <Link href="/cart" className="transition hover:text-[#b8962e]">
-            Cart
-          </Link>
-          <span className="mx-2 text-neutral-300">/</span>
           <span className="font-medium text-black">Checkout</span>
         </nav>
 
-        <header className="mt-6 border-b border-neutral-200/80 pb-8">
+        <header className="mt-6 border-b border-neutral-200/80 pb-6">
           <BrandLogo height={40} className="max-h-10" />
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-black sm:text-4xl">Checkout</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-neutral-600 sm:text-base">
-            Research-use catalog only. Complete your shipping details, then pay securely by card. Your order is stored under
-            your contact email after payment succeeds.
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-black sm:text-3xl">Checkout</h1>
+          <p className="mt-2 max-w-2xl text-sm text-neutral-600">
+            Review your order, enter shipping, then choose card or crypto on the right — one page. Research-use only; not for
+            human consumption.
           </p>
           <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-wide text-amber-900">
             <span className="rounded-full bg-amber-100 px-3 py-1">Not for human use</span>

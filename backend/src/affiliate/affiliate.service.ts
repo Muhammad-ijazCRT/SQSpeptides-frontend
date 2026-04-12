@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import type { Prisma } from "../generated/prisma-client";
 import { Decimal } from "../generated/prisma-client/runtime/library";
 import { AffiliatePayoutResolveDto } from "../admin/dto/affiliate-payout-resolve.dto";
 import { AffiliatePayoutRequestDto } from "../customer-portal/dto/affiliate-payout-request.dto";
@@ -24,6 +25,40 @@ export class AffiliateService {
     await this.ensureSiteSettings();
     const s = await this.prisma.siteSettings.findUniqueOrThrow({ where: { id: SETTINGS_ID } });
     return { affiliateCommissionPercent: Number(s.affiliateCommissionPercent) };
+  }
+
+  /**
+   * Creates affiliate earning and credits the referrer when an order has a referrer and no earning row yet.
+   * Used for card checkout at order creation, and for crypto after NOWPayments confirms payment (IPN).
+   */
+  async applyReferralCommissionForOrder(orderId: string, tx: Prisma.TransactionClient): Promise<void> {
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      include: { affiliateEarning: true },
+    });
+    if (!order?.affiliateReferrerId || order.affiliateEarning) return;
+
+    await this.ensureSiteSettings();
+    const { affiliateCommissionPercent: rate } = await this.getSettings();
+
+    const merchandiseTotal = Number(order.total);
+    const commissionRaw = (merchandiseTotal * rate) / 100;
+    const commission = Math.round(commissionRaw * 100) / 100;
+    if (commission <= 0) return;
+
+    await tx.affiliateEarning.create({
+      data: {
+        affiliateId: order.affiliateReferrerId,
+        orderId: order.id,
+        orderSubtotal: merchandiseTotal,
+        commissionPercent: rate,
+        amount: commission,
+      },
+    });
+    await tx.customer.update({
+      where: { id: order.affiliateReferrerId },
+      data: { affiliateBalance: { increment: new Decimal(commission) } },
+    });
   }
 
   async updateCommissionPercent(percent: number) {

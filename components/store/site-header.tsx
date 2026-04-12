@@ -160,9 +160,9 @@ export function SiteHeader() {
               </svg>
             </button>
             <Link
-              href="/cart"
+              href="/checkout"
               className="relative rounded-md p-2 text-black hover:bg-neutral-100"
-              aria-label="Cart"
+              aria-label="Cart and checkout"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 8h15l-1.5 9h-12z" />

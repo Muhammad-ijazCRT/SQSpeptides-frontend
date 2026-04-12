@@ -18,6 +18,8 @@ type OrderRow = {
   country: string;
   total: number;
   status: string;
+  paymentProvider?: string | null;
+  paymentCompletion?: string;
   createdAt: string;
   items: { quantity: number; product: { name: string } }[];
 };
@@ -88,6 +90,7 @@ export function AdminOrdersPage() {
                   <th>Ship to</th>
                   <th>Items</th>
                   <th>Total</th>
+                  <th>Pay</th>
                   <th>Status</th>
                   <th className="pe-4">Placed</th>
                 </tr>
@@ -120,6 +123,18 @@ export function AdminOrdersPage() {
                       )}
                     </td>
                     <td className="fw-semibold">${o.total.toFixed(2)}</td>
+                    <td className="small text-secondary">
+                      {o.paymentProvider === "nowpayments" ? (
+                        <>
+                          <span className="d-block text-dark">Crypto</span>
+                          <span className="text-capitalize">{o.paymentCompletion ?? "—"}</span>
+                        </>
+                      ) : o.paymentProvider === "crossmint" ? (
+                        <span className="text-dark">Card</span>
+                      ) : (
+                        <span>—</span>
+                      )}
+                    </td>
                     <td>
                       <span className={orderStatusBadgeClass(o.status)}>{o.status}</span>
                     </td>

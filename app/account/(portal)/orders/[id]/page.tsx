@@ -72,6 +72,23 @@ export default function OrderDetailPage() {
           <p className="mt-2 text-sm text-neutral-700">{order.email}</p>
           <p className="mt-4 text-xs font-bold uppercase tracking-wide text-neutral-500">Placed</p>
           <p className="mt-1 text-sm text-neutral-700">{new Date(order.createdAt).toLocaleString()}</p>
+          {order.paymentProvider || order.paymentCompletion ? (
+            <>
+              <p className="mt-4 text-xs font-bold uppercase tracking-wide text-neutral-500">Payment</p>
+              <p className="mt-1 text-sm text-neutral-700">
+                {order.paymentProvider === "nowpayments"
+                  ? "Cryptocurrency (NOWPayments)"
+                  : order.paymentProvider === "crossmint"
+                    ? "Card (Crossmint)"
+                    : "Card / other"}
+                {order.paymentCompletion === "awaiting_payment" ? (
+                  <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                    Awaiting payment
+                  </span>
+                ) : null}
+              </p>
+            </>
+          ) : null}
           {order.researchUseAttestation ? (
             <>
               <p className="mt-4 text-xs font-bold uppercase tracking-wide text-neutral-500">Research-use attestation</p>
@@ -82,6 +99,22 @@ export default function OrderDetailPage() {
           ) : null}
         </div>
       </div>
+
+      {order.payments && order.payments.length > 0 ? (
+        <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-black">Payment history</h2>
+          <ul className="mt-4 divide-y divide-neutral-100">
+            {order.payments.map((p) => (
+              <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                <span className="font-medium capitalize text-neutral-800">{p.provider}</span>
+                <span className="text-neutral-500">{p.status}</span>
+                <span className="tabular-nums text-neutral-600">${p.amountUsd.toFixed(2)} USD</span>
+                <span className="text-xs text-neutral-400">{new Date(p.createdAt).toLocaleString()}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="rounded-xl border border-neutral-200 bg-white shadow-sm">
         <h2 className="border-b border-neutral-100 px-6 py-4 text-lg font-semibold">Line items</h2>

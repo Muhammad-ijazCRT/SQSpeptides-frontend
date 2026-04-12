@@ -3,17 +3,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createOrder } from "@/lib/api/orders";
 import { useCart } from "@/components/store/cart-context";
 import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
-import {
-  formatResearchAttestationForDisplay,
-  isResearchUseAttestation,
-  RESEARCH_USE_ATTESTATION_OPTIONS,
-} from "@/lib/store/research-attestation";
+import { isResearchUseAttestation, RESEARCH_USE_ATTESTATION_OPTIONS } from "@/lib/store/research-attestation";
 import { useToast } from "@/components/store/toast-context";
 import { CheckoutCrossmint } from "@/components/store/checkout-crossmint";
+import { CheckoutPaymentMethodSelector } from "@/components/store/checkout-payment-method-selector";
+import {
+  readCheckoutGateway,
+  writeCheckoutGateway,
+  type CheckoutPaymentGateway,
+} from "@/lib/store/checkout-payment-gateway";
 import { AFFILIATE_REF_STORAGE_KEY } from "@/lib/store/site-access-storage";
 
 const CROSSMINT_CLIENT_API_KEY = (process.env.NEXT_PUBLIC_CROSSMINT_CLIENT_SIDE_API_KEY ?? "").trim();
@@ -66,6 +69,21 @@ function validateAffiliateCredit(credit: number, balance: number, orderSub: numb
   return null;
 }
 
+function validateAffiliateCreditForGateway(
+  credit: number,
+  balance: number,
+  orderSub: number,
+  gateway: ReturnType<typeof readCheckoutGateway>
+): string | null {
+  if (gateway === "crypto") {
+    if (credit > 0) {
+      return "Cryptocurrency checkout cannot use affiliate balance. Set applied balance to zero or choose Pay with card above.";
+    }
+    return null;
+  }
+  return validateAffiliateCredit(credit, balance, orderSub);
+}
+
 function savePendingSnapshot(s: CheckoutSnapshot) {
   try {
     sessionStorage.setItem(PENDING_STORAGE_KEY, JSON.stringify(s));
@@ -96,7 +114,7 @@ function clearPendingSnapshot() {
 
 export function CheckoutForm() {
   const router = useRouter();
-  const { lines, subtotal, clearCart } = useCart();
+  const { lines, subtotal, clearCart, setQuantity, removeLine } = useCart();
   const { showToast } = useToast();
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -114,10 +132,28 @@ export function CheckoutForm() {
   const [couponFieldError, setCouponFieldError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<"shipping" | "payment">("shipping");
   const [payKey, setPayKey] = useState(0);
+  const [payGateway, setPayGateway] = useState<CheckoutPaymentGateway>("crossmint");
+  const [npAvailable, setNpAvailable] = useState<boolean | null>(null);
   const finalizeOnce = useRef(false);
   const checkoutSnapshotRef = useRef<CheckoutSnapshot | null>(null);
+
+  /** Autofill/password managers often update the DOM without firing `onChange`, so controlled state can stay empty. */
+  const emailRef = useRef<HTMLInputElement>(null);
+  const fullNameRef = useRef<HTMLInputElement>(null);
+  const addressLine1Ref = useRef<HTMLInputElement>(null);
+  const cityRef = useRef<HTMLInputElement>(null);
+  const postalCodeRef = useRef<HTMLInputElement>(null);
+  const countryRef = useRef<HTMLInputElement>(null);
+  const researchCategoryRef = useRef<HTMLSelectElement>(null);
+
+  function inputTrim(ref: RefObject<HTMLInputElement | null>, state: string): string {
+    return (ref.current?.value ?? state).trim();
+  }
+
+  function selectTrim(ref: RefObject<HTMLSelectElement | null>, state: string): string {
+    return (ref.current?.value ?? state).trim();
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -168,6 +204,32 @@ export function CheckoutForm() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await fetch("/api/checkout/nowpayments/availability", { cache: "no-store" });
+      if (cancelled) return;
+      if (!res.ok) {
+        setNpAvailable(false);
+        return;
+      }
+      const data = (await res.json()) as { enabled?: boolean };
+      if (!cancelled) setNpAvailable(Boolean(data.enabled));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    setPayGateway(readCheckoutGateway());
+  }, []);
+
+  function selectPayGateway(g: CheckoutPaymentGateway) {
+    setPayGateway(g);
+    writeCheckoutGateway(g);
+  }
+
   const cartSig = JSON.stringify(lines.map((l) => ({ i: l.product.id, q: l.quantity })));
   useEffect(() => {
     setAppliedCoupon(null);
@@ -177,9 +239,11 @@ export function CheckoutForm() {
   const couponDiscount = appliedCoupon?.discountAmount ?? 0;
   const discountedSubtotal = Math.max(0, Math.round((subtotal - couponDiscount) * 100) / 100);
 
-  const creditAppliedForPayment =
-    step === "payment" ? (checkoutSnapshotRef.current?.storeCreditToUse ?? 0) : storeCreditToUse;
-  const cardDue = Math.max(0, Math.round((discountedSubtotal - creditAppliedForPayment) * 100) / 100);
+  const creditApplied =
+    affiliateBalance != null && affiliateBalance > 0
+      ? Math.min(Math.max(0, storeCreditToUse), affiliateBalance, discountedSubtotal)
+      : 0;
+  const cardDue = Math.max(0, Math.round((discountedSubtotal - creditApplied) * 100) / 100);
   const paymentAmountStr = cardDue.toFixed(2);
   const crossmintOk = isCrossmintConfigured();
   const itemCount = lines.reduce((n, l) => n + l.quantity, 0);
@@ -196,7 +260,7 @@ export function CheckoutForm() {
       finalizeOnce.current = false;
       setLoading(false);
       setError(
-        "We could not find your checkout details (cart may have been cleared after payment). Open your cart and start checkout again, or contact support with your payment receipt."
+        "We could not find your checkout details (your bag may have been cleared after payment). Return to checkout from the shop, or contact support with your payment receipt."
       );
       return;
     }
@@ -237,17 +301,89 @@ export function CheckoutForm() {
     }
   }, [clearCart, router, showToast]);
 
+  const startCryptoCheckout = useCallback(async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      if (!prepareSnapshotForPayment()) {
+        setLoading(false);
+        return;
+      }
+      let snap = checkoutSnapshotRef.current;
+      if (!snap?.items?.length) snap = loadPendingSnapshot();
+      if (!snap?.items?.length) {
+        setError(
+          "We could not find your checkout details. Return to checkout from the shop, or contact support with your order reference."
+        );
+        return;
+      }
+      if (!snap.researchUseAttestation || !isResearchUseAttestation(snap.researchUseAttestation)) {
+        setError("Your saved checkout is missing a research-use attestation. Go back to shipping and try again.");
+        return;
+      }
+      const order = await createOrder({
+        email: snap.email,
+        fullName: snap.fullName,
+        addressLine1: snap.addressLine1,
+        city: snap.city,
+        postalCode: snap.postalCode,
+        country: snap.country,
+        researchUseAttestation: snap.researchUseAttestation,
+        items: snap.items,
+        affiliateRef: snap.affiliateRef,
+        couponCode: snap.couponCode,
+        paymentProvider: "nowpayments",
+      });
+      const inv = await fetch("/api/checkout/nowpayments/invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id, email: snap.email }),
+      });
+      const invData = (await inv.json().catch(() => ({}))) as {
+        message?: string | string[];
+        invoiceUrl?: string;
+      };
+      if (!inv.ok) {
+        const m = Array.isArray(invData.message)
+          ? invData.message.join(", ")
+          : typeof invData.message === "string"
+            ? invData.message
+            : "Could not start cryptocurrency payment.";
+        throw new Error(m);
+      }
+      const url = typeof invData.invoiceUrl === "string" ? invData.invoiceUrl : "";
+      if (!url) throw new Error("Payment provider did not return a URL.");
+      checkoutSnapshotRef.current = null;
+      clearPendingSnapshot();
+      clearCart();
+      window.location.assign(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Cryptocurrency checkout failed.");
+      showToast("If an order was created, keep your reference email; contact support if payment cannot continue.", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [clearCart, showToast]);
+
   function validateShipping(): boolean {
-    if (!email.trim()) {
+    const emailVal = inputTrim(emailRef, email);
+    const fullNameVal = inputTrim(fullNameRef, fullName);
+    const addressVal = inputTrim(addressLine1Ref, addressLine1);
+    const cityVal = inputTrim(cityRef, city);
+    const postalVal = inputTrim(postalCodeRef, postalCode);
+    const countryVal = inputTrim(countryRef, country);
+    const researchVal = selectTrim(researchCategoryRef, researchCategory);
+
+    if (!emailVal) {
       setError("Email is required.");
       return false;
     }
-    if (!fullName.trim() || !addressLine1.trim() || !city.trim() || !postalCode.trim() || !country.trim()) {
+    if (!fullNameVal || !addressVal || !cityVal || !postalVal || !countryVal) {
       setError("Please complete all address fields.");
       return false;
     }
-    const catOk = (RESEARCH_USE_ATTESTATION_OPTIONS as readonly string[]).includes(researchCategory);
-    if (!researchCategory.trim() || !catOk) {
+    const catOk = (RESEARCH_USE_ATTESTATION_OPTIONS as readonly string[]).includes(researchVal);
+    if (!researchVal || !catOk) {
       setError("Please select a research-use attestation.");
       return false;
     }
@@ -256,7 +392,12 @@ export function CheckoutForm() {
       return false;
     }
     if (affiliateBalance != null && affiliateBalance > 0 && storeCreditToUse > 0) {
-      const msg = validateAffiliateCredit(storeCreditToUse, affiliateBalance, discountedSubtotal);
+      const msg = validateAffiliateCreditForGateway(
+        storeCreditToUse,
+        affiliateBalance,
+        discountedSubtotal,
+        readCheckoutGateway()
+      );
       if (msg) {
         setError(msg);
         return false;
@@ -271,18 +412,33 @@ export function CheckoutForm() {
         ? Math.min(Math.max(0, storeCreditToUse), affiliateBalance, discountedSubtotal)
         : 0;
     return {
-      email: email.trim(),
-      fullName: fullName.trim(),
-      addressLine1: addressLine1.trim(),
-      city: city.trim(),
-      postalCode: postalCode.trim(),
-      country: country.trim(),
-      researchUseAttestation: researchCategory,
+      email: inputTrim(emailRef, email),
+      fullName: inputTrim(fullNameRef, fullName),
+      addressLine1: inputTrim(addressLine1Ref, addressLine1),
+      city: inputTrim(cityRef, city),
+      postalCode: inputTrim(postalCodeRef, postalCode),
+      country: inputTrim(countryRef, country),
+      researchUseAttestation: selectTrim(researchCategoryRef, researchCategory),
       items: lines.map((l) => ({ productId: l.product.id, quantity: l.quantity })),
       storeCreditToUse: credit > 0 ? Math.round(credit * 100) / 100 : undefined,
       affiliateRef: readAffiliateRefFromStorage(),
       couponCode: appliedCoupon?.code,
     };
+  }
+
+  function prepareSnapshotForPayment(): boolean {
+    setError(null);
+    if (lines.length === 0) {
+      setError("Your cart is empty.");
+      return false;
+    }
+    if (!validateShipping()) return false;
+    const snap = captureSnapshot();
+    checkoutSnapshotRef.current = snap;
+    savePendingSnapshot(snap);
+    finalizeOnce.current = false;
+    setPayKey((k) => k + 1);
+    return true;
   }
 
   async function applyCouponCode() {
@@ -329,33 +485,9 @@ export function CheckoutForm() {
     }
   }
 
-  function goToPayment(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (lines.length === 0) {
-      setError("Your cart is empty.");
-      return;
-    }
-    if (!validateShipping()) return;
-    const snap = captureSnapshot();
-    checkoutSnapshotRef.current = snap;
-    savePendingSnapshot(snap);
-    finalizeOnce.current = false;
-    setPayKey((k) => k + 1);
-    setStep("payment");
-  }
-
   async function placeOrderWithoutCard() {
     setError(null);
-    if (lines.length === 0) {
-      setError("Your cart is empty.");
-      return;
-    }
-    if (!validateShipping()) return;
-    const snap = captureSnapshot();
-    checkoutSnapshotRef.current = snap;
-    savePendingSnapshot(snap);
-    finalizeOnce.current = false;
+    if (!prepareSnapshotForPayment()) return;
     await finalizeOrder();
   }
 
@@ -374,35 +506,16 @@ export function CheckoutForm() {
   }
 
   const inputClass =
-    "mt-1.5 w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-black shadow-sm outline-none transition placeholder:text-neutral-400 focus:border-black focus:ring-1 focus:ring-black";
+    "mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-black shadow-sm outline-none transition placeholder:text-neutral-400 focus:border-black focus:ring-1 focus:ring-black";
 
   const summaryCard = (
-    <div className="rounded-2xl border border-neutral-200/90 bg-white p-6 shadow-[0_4px_24px_-12px_rgba(15,23,42,0.12)] lg:sticky lg:top-28">
+    <div className="lg:sticky lg:top-24">
+      <div className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-[0_4px_24px_-12px_rgba(15,23,42,0.1)] sm:p-5">
       <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">Order summary</h2>
       <p className="mt-1 text-sm text-neutral-600">
         {itemCount} {itemCount === 1 ? "item" : "items"} · Research use only
       </p>
-      <ul className="mt-6 max-h-[min(50vh,28rem)] space-y-4 overflow-y-auto pr-1">
-        {lines.map((l) => {
-          const img = resolveProductImage(l.product);
-          const lineTotal = l.product.price * l.quantity;
-          return (
-            <li key={l.product.id} className="flex gap-3 border-b border-neutral-100 pb-4 last:border-0 last:pb-0">
-              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-neutral-100 ring-1 ring-neutral-200/80">
-                <Image src={img} alt="" fill className={productImageBoxClassName(img)} unoptimized sizes="64px" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold leading-snug text-black">{l.product.name}</p>
-                <p className="mt-0.5 text-xs text-neutral-500">
-                  ${l.product.price.toFixed(2)} each × {l.quantity}
-                </p>
-              </div>
-              <p className="shrink-0 text-sm font-semibold tabular-nums text-black">${lineTotal.toFixed(2)}</p>
-            </li>
-          );
-        })}
-      </ul>
-      <div className="mt-6 space-y-4 border-t border-neutral-200 pt-4">
+      <div className="mt-4 space-y-4 border-t border-neutral-200 pt-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">Coupon code</p>
           <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-stretch">
@@ -472,52 +585,183 @@ export function CheckoutForm() {
         </div>
       </div>
 
-      {step === "payment" ? (
-        <div className="mt-6 rounded-xl bg-neutral-50 p-4 text-xs text-neutral-600">
-          <p className="font-semibold uppercase tracking-wide text-neutral-800">Ship to</p>
-          <p className="mt-2 leading-relaxed">
-            {fullName}
-            <br />
-            {addressLine1}
-            <br />
-            {city}, {postalCode}
-            <br />
-            {country}
-            <br />
-            <span className="text-neutral-500">{email}</span>
-          </p>
-          <p className="mt-3 border-t border-neutral-200 pt-3 text-neutral-700">
-            <span className="font-semibold text-neutral-800">Research / legal attestation:</span>{" "}
-            {formatResearchAttestationForDisplay(researchCategory)}
-          </p>
+      <div className="mt-4 border-t border-neutral-200 pt-4">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">Payment</p>
+        <div className="mt-2">
+          <CheckoutPaymentMethodSelector value={payGateway} onChange={selectPayGateway} />
         </div>
-      ) : null}
+      </div>
+
+      <div className="mt-4 border-t border-neutral-200 pt-4">
+        {creditApplied > 0 ? (
+          <p className="mb-3 text-xs text-emerald-900">
+            Balance applied: <span className="font-bold tabular-nums">${creditApplied.toFixed(2)}</span>
+          </p>
+        ) : null}
+
+        <div className="rounded-lg border border-neutral-200 bg-neutral-50/60 p-3">
+          {cardDue <= 0 ? (
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                if (prepareSnapshotForPayment()) void finalizeOrder();
+              }}
+              className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
+            >
+              {loading ? "Placing order…" : "Place order"}
+            </button>
+          ) : payGateway === "crypto" ? (
+            <>
+              {npAvailable === null ? (
+                <p className="text-center text-sm text-neutral-600">Checking crypto checkout…</p>
+              ) : !npAvailable ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+                  Configure crypto payments in{" "}
+                  <Link href="/admin/dashboard/settings" className="font-semibold underline">
+                    Admin settings
+                  </Link>
+                  .
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => void startCryptoCheckout()}
+                  className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
+                >
+                  {loading ? "Preparing…" : `Pay $${paymentAmountStr} with crypto`}
+                </button>
+              )}
+            </>
+          ) : crossmintOk ? (
+            <CheckoutCrossmint
+              key={payKey}
+              clientApiKey={CROSSMINT_CLIENT_API_KEY}
+              amountUsd={paymentAmountStr}
+              disabled={loading}
+              onBeforeStartPayment={prepareSnapshotForPayment}
+              onPaymentComplete={() => void finalizeOrder()}
+            />
+          ) : (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+              Card payment is not configured (missing API keys).
+            </div>
+          )}
+
+          {!crossmintOk && cardDue > 0 && payGateway === "crossmint" ? (
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => void placeOrderWithoutCard()}
+              className="mt-3 w-full rounded-lg border border-dashed border-neutral-400 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+            >
+              {loading ? "Placing order…" : "Dev: place order without card"}
+            </button>
+          ) : null}
+        </div>
+
+        {loading ? <p className="mt-2 text-center text-xs text-neutral-500">Working…</p> : null}
+      </div>
+      </div>
     </div>
   );
 
   return (
-    <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
-      <div className="lg:col-span-5 lg:order-2">{summaryCard}</div>
+    <div className="grid gap-6 lg:grid-cols-12 lg:items-start lg:gap-8">
+      <div className="lg:col-span-7 space-y-5">
+        <section className="rounded-xl border border-neutral-200/90 bg-white p-3 shadow-[0_1px_8px_-4px_rgba(15,23,42,0.08)] sm:p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 pb-2.5">
+            <h2 className="text-base font-semibold tracking-tight text-black sm:text-lg">
+              Your order
+              <span className="ml-1.5 font-normal text-neutral-500 sm:ml-2">
+                · {itemCount} {itemCount === 1 ? "item" : "items"} · Research use only
+              </span>
+            </h2>
+            <Link
+              href="/products-catalog"
+              className="text-xs font-medium text-[#9a7b1a] hover:text-black hover:underline sm:text-sm"
+            >
+              Continue shopping
+            </Link>
+          </div>
+          <ul className="mt-2 space-y-2">
+            {lines.map(({ product, quantity }) => {
+              const img = resolveProductImage(product);
+              const lineTotal = product.price * quantity;
+              return (
+                <li
+                  key={product.id}
+                  className="flex gap-3 rounded-lg border border-neutral-100 bg-neutral-50/60 p-3 sm:gap-3.5"
+                >
+                  <Link
+                    href={`/products-catalog/${product.slug}`}
+                    className="relative h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-md bg-neutral-100 ring-1 ring-neutral-100 sm:h-20 sm:w-20"
+                  >
+                    <Image
+                      src={img}
+                      alt=""
+                      fill
+                      className={productImageBoxClassName(img)}
+                      unoptimized
+                      sizes="72px"
+                    />
+                  </Link>
+                  <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:justify-between sm:gap-4">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/products-catalog/${product.slug}`}
+                        className="text-sm font-medium leading-snug text-neutral-900 hover:text-[#b8962e] sm:text-[15px]"
+                      >
+                        {product.name}
+                      </Link>
+                      <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm">${product.price.toFixed(2)} each</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-3">
+                        <label className="flex items-center gap-2 text-sm text-neutral-700">
+                          <span className="text-neutral-500">Qty</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={99}
+                            value={quantity}
+                            onChange={(e) =>
+                              setQuantity(product.id, Math.max(1, Math.min(99, Number(e.target.value) || 1)))
+                            }
+                            className="w-14 rounded border border-neutral-300 bg-white py-1 text-center text-xs font-medium text-neutral-900 sm:text-sm"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => removeLine(product.id)}
+                          className="text-xs font-medium text-red-600 hover:text-red-700 hover:underline sm:text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-1 text-right sm:mt-0 sm:shrink-0 sm:pl-2">
+                      <p className="text-sm font-semibold tabular-nums text-neutral-900 sm:text-base">${lineTotal.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
 
-      <div className="lg:col-span-7 lg:order-1">
-        {step === "shipping" ? (
-          <form onSubmit={goToPayment} className="space-y-8">
-            <div>
-              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">Contact & shipping</h2>
-              <p className="mt-2 text-sm text-neutral-600">
-                We use this for order updates and compliance. On the next step you will complete a secure card payment; your
-                order stays under this contact information.
-              </p>
-            </div>
+        <div className="space-y-3">
+          <h2 className="text-base font-semibold tracking-tight text-black sm:text-lg">Shipping &amp; contact</h2>
 
-            <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
               <label className="block sm:col-span-2">
                 <span className="text-sm font-medium text-neutral-800">Email</span>
                 <input
+                  ref={emailRef}
                   required
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onInput={(e) => setEmail(e.currentTarget.value)}
                   className={inputClass}
                   autoComplete="email"
                 />
@@ -525,9 +769,11 @@ export function CheckoutForm() {
               <label className="block sm:col-span-2">
                 <span className="text-sm font-medium text-neutral-800">Full name</span>
                 <input
+                  ref={fullNameRef}
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  onInput={(e) => setFullName(e.currentTarget.value)}
                   className={inputClass}
                   autoComplete="name"
                 />
@@ -535,38 +781,56 @@ export function CheckoutForm() {
               <label className="block sm:col-span-2">
                 <span className="text-sm font-medium text-neutral-800">Street address</span>
                 <input
+                  ref={addressLine1Ref}
                   required
                   value={addressLine1}
                   onChange={(e) => setAddressLine1(e.target.value)}
+                  onInput={(e) => setAddressLine1(e.currentTarget.value)}
                   className={inputClass}
                   autoComplete="address-line1"
                 />
               </label>
               <label className="block">
                 <span className="text-sm font-medium text-neutral-800">City</span>
-                <input required value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} autoComplete="address-level2" />
+                <input
+                  ref={cityRef}
+                  required
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  onInput={(e) => setCity(e.currentTarget.value)}
+                  className={inputClass}
+                  autoComplete="address-level2"
+                />
               </label>
               <label className="block">
                 <span className="text-sm font-medium text-neutral-800">Postal code</span>
                 <input
+                  ref={postalCodeRef}
                   required
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
+                  onInput={(e) => setPostalCode(e.currentTarget.value)}
                   className={inputClass}
                   autoComplete="postal-code"
                 />
               </label>
               <label className="block sm:col-span-2">
                 <span className="text-sm font-medium text-neutral-800">Country</span>
-                <input required value={country} onChange={(e) => setCountry(e.target.value)} className={inputClass} autoComplete="country-name" />
+                <input
+                  ref={countryRef}
+                  required
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  onInput={(e) => setCountry(e.currentTarget.value)}
+                  className={inputClass}
+                  autoComplete="country-name"
+                />
               </label>
 
               <label className="block sm:col-span-2">
                 <span className="text-sm font-medium text-neutral-800">Research-use attestation</span>
-                <span className="mt-1 block text-xs text-neutral-500">
-                  Required — identify the context of your research use.
-                </span>
                 <select
+                  ref={researchCategoryRef}
                   required
                   value={researchCategory}
                   onChange={(e) => setResearchCategory(e.target.value)}
@@ -585,14 +849,14 @@ export function CheckoutForm() {
               </label>
 
               {affiliateBalance != null && affiliateBalance > 0 ? (
-                <div className="block sm:col-span-2 rounded-xl border border-emerald-200/90 bg-emerald-50/50 p-4 sm:p-5">
-                  <p className="text-xs font-bold uppercase tracking-[0.15em] text-emerald-900">Affiliate balance</p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-950">${affiliateBalance.toFixed(2)}</p>
-                  <p className="mt-2 text-xs leading-relaxed text-emerald-900/85">
+                <div className="block sm:col-span-2 rounded-lg border border-emerald-200/90 bg-emerald-50/50 p-3 sm:p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-900">Affiliate balance</p>
+                  <p className="mt-0.5 text-xl font-bold tabular-nums text-emerald-950 sm:text-2xl">${affiliateBalance.toFixed(2)}</p>
+                  <p className="mt-1.5 text-[11px] leading-snug text-emerald-900/85 sm:text-xs">
                     Signed-in customers may apply earnings toward this order. Paying by card? Either cover the full order with
                     balance or leave at least ${MIN_CARD_USD.toFixed(2)} for the card charge.
                   </p>
-                  <label className="mt-3 block">
+                  <label className="mt-2 block">
                     <span className="text-sm font-medium text-neutral-800">Apply toward order (USD)</span>
                     <input
                       type="number"
@@ -609,7 +873,7 @@ export function CheckoutForm() {
                   </label>
                   <button
                     type="button"
-                    className="mt-2 text-xs font-semibold text-[#b8962e] hover:underline"
+                    className="mt-1.5 text-xs font-semibold text-[#b8962e] hover:underline"
                     onClick={() =>
                       setStoreCreditToUse(Math.round(Math.min(affiliateBalance, discountedSubtotal) * 100) / 100)
                     }
@@ -620,9 +884,9 @@ export function CheckoutForm() {
               ) : null}
             </div>
 
-            <div className="rounded-2xl border border-neutral-200/90 bg-gradient-to-b from-amber-50/50 via-white to-white p-5 shadow-[0_4px_24px_-12px_rgba(15,23,42,0.08)] sm:p-6">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9a7b1a]">Privacy &amp; agreement</p>
-              <p className="mt-3 text-[15px] leading-relaxed text-neutral-600">
+            <div className="rounded-xl border border-neutral-200/90 bg-gradient-to-b from-amber-50/40 via-white to-white p-4 shadow-[0_2px_16px_-8px_rgba(15,23,42,0.08)] sm:p-5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#9a7b1a]">Privacy &amp; agreement</p>
+              <p className="mt-2 text-sm leading-relaxed text-neutral-600">
                 Your personal data will be used to process your order, support your experience throughout this website, and for
                 other purposes described in our{" "}
                 <Link
@@ -641,7 +905,7 @@ export function CheckoutForm() {
                 .
               </p>
 
-              <div className="mt-6 flex gap-3.5 border-t border-neutral-200/90 pt-6">
+              <div className="mt-4 flex gap-3 border-t border-neutral-200/90 pt-4">
                 <input
                   id="checkout-purchaser-terms"
                   type="checkbox"
@@ -649,12 +913,12 @@ export function CheckoutForm() {
                   required
                   checked={purchaserTermsAccepted}
                   onChange={(e) => setPurchaserTermsAccepted(e.target.checked)}
-                  className="mt-1 h-5 w-5 shrink-0 cursor-pointer rounded border-2 border-neutral-400 bg-white text-black accent-[#D4AF37] checked:border-[#b8962e] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 focus:ring-offset-2"
+                  className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-2 border-neutral-400 bg-white text-black accent-[#D4AF37] checked:border-[#b8962e] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 focus:ring-offset-1 sm:h-5 sm:w-5"
                   aria-required="true"
                 />
                 <label
                   htmlFor="checkout-purchaser-terms"
-                  className="cursor-pointer select-none text-[11px] font-semibold uppercase leading-snug tracking-wide text-neutral-800 sm:text-[12px]"
+                  className="cursor-pointer select-none text-[10px] font-semibold uppercase leading-snug tracking-wide text-neutral-800 sm:text-[11px]"
                 >
                   Purchaser responsibility: By purchasing, I accept full responsibility for safe, lawful, research-only use and
                   acknowledge that SubQ Scientist LLC bears no liability for misuse. I agree to indemnify and hold
@@ -672,111 +936,24 @@ export function CheckoutForm() {
                 </label>
               </div>
               {!purchaserTermsAccepted ? (
-                <p className="mt-3 text-xs text-neutral-500">You must check the box above to continue to payment.</p>
+                <p className="mt-2 text-[11px] text-neutral-500">Check the box to complete checkout.</p>
               ) : null}
             </div>
 
-            {error ? (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
-            ) : null}
+        {error ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800">{error}</div>
+        ) : null}
 
-            <div className="flex flex-wrap items-center gap-4">
-              <button
-                type="submit"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#D4AF37] px-10 text-sm font-bold text-black shadow-sm transition hover:bg-[#c9a432]"
-              >
-                Continue to payment
-              </button>
-              <Link href="/cart" className="text-sm font-medium text-neutral-600 hover:text-black hover:underline">
-                ← Back to cart
-              </Link>
-            </div>
-          </form>
-        ) : (
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">Secure payment</h2>
-              {creditAppliedForPayment > 0 ? (
-                <p className="mt-2 text-sm text-emerald-900">
-                  Applying{" "}
-                  <span className="font-bold tabular-nums">${creditAppliedForPayment.toFixed(2)}</span> from your affiliate
-                  balance.
-                </p>
-              ) : null}
-              {cardDue <= 0 ? (
-                <p className="mt-2 text-sm text-neutral-600">
-                  No card payment required. Click <strong>Complete order</strong> below to place your order.
-                </p>
-              ) : (
-                <p className="mt-2 text-sm text-neutral-600">
-                  Amount due by card{" "}
-                  <span className="font-bold tabular-nums text-black">${paymentAmountStr}</span> — processed securely. Your
-                  order will be recorded for <span className="font-medium text-black">{email}</span> after payment succeeds.
-                </p>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-neutral-200 bg-neutral-50/80 p-6">
-              {cardDue <= 0 ? (
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => void finalizeOrder()}
-                  className="w-full rounded-full bg-[#D4AF37] py-3 text-sm font-bold text-black shadow-sm transition hover:bg-[#c9a432] disabled:opacity-50"
-                >
-                  {loading ? "Placing order…" : "Complete order"}
-                </button>
-              ) : crossmintOk ? (
-                <CheckoutCrossmint
-                  key={payKey}
-                  clientApiKey={CROSSMINT_CLIENT_API_KEY}
-                  amountUsd={paymentAmountStr}
-                  disabled={loading}
-                  onPaymentComplete={() => void finalizeOrder()}
-                />
-              ) : (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-                  <p className="font-semibold">Card checkout not configured</p>
-                  <p className="mt-2 text-amber-900/90">
-                    Add the public and server payment keys in your environment to enable card payments from checkout.
-                  </p>
-                </div>
-              )}
-
-              {!crossmintOk && cardDue > 0 && (
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => void placeOrderWithoutCard()}
-                  className="mt-4 w-full rounded-lg border-2 border-dashed border-neutral-400 py-3 text-sm font-semibold text-neutral-700 hover:bg-white disabled:opacity-50"
-                >
-                  {loading ? "Placing order…" : "Place order without card (development only)"}
-                </button>
-              )}
-            </div>
-
-            {error ? (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
-            ) : null}
-
-            {loading ? (
-              <p className="text-center text-sm font-medium text-neutral-600">Saving your order…</p>
-            ) : null}
-
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => {
-                setStep("shipping");
-                setError(null);
-              }}
-              className="text-sm font-medium text-neutral-600 hover:text-black hover:underline"
-            >
-              ← Edit shipping details
-            </button>
-          </div>
-        )}
+        <Link
+          href="/products-catalog"
+          className="inline-block text-xs font-medium text-neutral-600 hover:text-black hover:underline sm:text-sm"
+        >
+          ← Continue shopping
+        </Link>
+        </div>
       </div>
+
+      <div className="lg:col-span-5 lg:order-2">{summaryCard}</div>
     </div>
   );
 }

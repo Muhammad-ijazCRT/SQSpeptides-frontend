@@ -14,6 +14,7 @@ export type CheckoutPayload = {
   affiliateRef?: string;
   storeCreditToUse?: number;
   couponCode?: string;
+  paymentProvider?: "crossmint" | "nowpayments";
 };
 
 export async function createOrder(payload: CheckoutPayload): Promise<OrderCreated> {

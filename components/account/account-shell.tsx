@@ -31,7 +31,7 @@ const nav: NavItem[] = [
     ],
   },
   { href: "/account/wishlist", label: "Wishlist", icon: IconHeart },
-  { href: "/cart", label: "Shopping Cart", icon: IconCartNav },
+  { href: "/checkout", label: "Checkout", icon: IconCartNav },
   { href: "/account/profile", label: "Profile & Settings", icon: IconUser },
 ];
 
@@ -95,8 +95,8 @@ function AccountSidebarLinks({
     <nav className="space-y-1 p-1">
       {nav.map((item) => {
         const active =
-          item.href === "/cart"
-            ? pathname === "/cart"
+          item.href === "/checkout"
+            ? pathname === "/checkout"
             : pathname === item.href || pathname?.startsWith(item.href + "/");
         const Icon = item.icon;
 
@@ -241,7 +241,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
             <Link href="/products-catalog" className="text-sm font-medium text-neutral-600 hover:text-black">
               Shop
             </Link>
-            <Link href="/cart" className="relative rounded-xl p-2 text-neutral-700 hover:bg-neutral-100">
+            <Link href="/checkout" className="relative rounded-xl p-2 text-neutral-700 hover:bg-neutral-100">
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 8h15l-1.5 9h-12z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 8V6a3 3 0 016 0v2" />

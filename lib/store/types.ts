@@ -22,5 +22,7 @@ export type OrderCreated = {
   couponDiscountAmount?: number;
   couponCodeSnapshot?: string | null;
   status: string;
+  paymentProvider?: string | null;
+  paymentCompletion?: string;
   createdAt: string;
 };

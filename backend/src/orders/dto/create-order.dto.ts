@@ -80,4 +80,9 @@ export class CreateOrderDto {
   @IsString()
   @MaxLength(80)
   couponCode?: string;
+
+  /** Card (Crossmint) checkout vs deferred crypto (NOWPayments invoice). */
+  @IsOptional()
+  @IsIn(["crossmint", "nowpayments"])
+  paymentProvider?: "crossmint" | "nowpayments";
 }

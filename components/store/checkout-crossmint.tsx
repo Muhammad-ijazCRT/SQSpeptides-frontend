@@ -14,12 +14,14 @@ type Props = {
   amountUsd: string;
   disabled?: boolean;
   onPaymentComplete: (info: CheckoutPaymentInfo) => void;
+  /** Validate shipping and persist checkout snapshot before opening Crossmint. Return false to block. */
+  onBeforeStartPayment?: () => boolean;
 };
 
 /** Embedded checkout user must match the linked-wallet identity used for card settlement. */
 const CROSSMINT_CHECKOUT_EMAIL = ONRAMP_RETURNING_EMAIL.trim();
 
-export function CheckoutCrossmint({ clientApiKey, amountUsd, disabled, onPaymentComplete }: Props) {
+export function CheckoutCrossmint({ clientApiKey, amountUsd, disabled, onPaymentComplete, onBeforeStartPayment }: Props) {
   const completedRef = useRef(false);
 
   const { order, createOrder, orderId, clientSecret } = useCrossmintOnramp({
@@ -52,6 +54,7 @@ export function CheckoutCrossmint({ clientApiKey, amountUsd, disabled, onPayment
   }
 
   async function startPay() {
+    if (onBeforeStartPayment && !onBeforeStartPayment()) return;
     completedRef.current = false;
     await createOrder(amountUsd);
   }
@@ -60,29 +63,26 @@ export function CheckoutCrossmint({ clientApiKey, amountUsd, disabled, onPayment
     <div className="space-y-4">
       {orderId == null ? (
         <>
-          <p className="text-center text-sm text-neutral-600">
-            Pay{" "}
-            <span className="font-bold tabular-nums text-black" suppressHydrationWarning>
+          <p className="text-center text-xs text-neutral-500">
+            <span className="font-semibold tabular-nums text-neutral-800" suppressHydrationWarning>
               ${amountUsd}
             </span>{" "}
-            with card. Your store order uses the email you entered for shipping.
+            due
           </p>
           <button
             type="button"
             disabled={disabled || order.status === "creating-order"}
             onClick={() => void startPay()}
-            className="w-full rounded-lg bg-black py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50"
+            className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
           >
-            {order.status === "creating-order" ? "Preparing secure checkout…" : "Continue to card payment"}
+            {order.status === "creating-order" ? "Preparing secure checkout…" : "Pay with card"}
           </button>
         </>
       ) : (
         <>
           {!isCrossmintProduction() ? (
-            <p className="text-center text-xs text-neutral-500">Test card (staging): 4242 4242 4242 4242</p>
-          ) : (
-            <p className="text-center text-xs text-neutral-500">Secure card checkout (production)</p>
-          )}
+            <p className="text-center text-[11px] text-neutral-400">Test: 4242 4242 4242 4242</p>
+          ) : null}
           <CrossmintProvider apiKey={apiKey}>
             <div className="mx-auto w-full max-w-[450px]">
               <CrossmintEmbeddedCheckout

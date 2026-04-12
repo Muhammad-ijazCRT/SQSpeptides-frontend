@@ -24,12 +24,22 @@ function serializeOrder(o: {
   couponDiscountAmount?: unknown;
   couponCodeSnapshot?: string | null;
   status: string;
+  paymentProvider?: string | null;
+  paymentCompletion?: string;
   createdAt: Date;
   items: {
     id: string;
     quantity: number;
     price: unknown;
     product: { id: string; name: string; slug: string; imageUrl: string | null };
+  }[];
+  payments?: {
+    id: string;
+    provider: string;
+    externalId: string | null;
+    amountUsd: unknown;
+    status: string;
+    createdAt: Date;
   }[];
 }) {
   const total = Number(o.total);
@@ -50,12 +60,22 @@ function serializeOrder(o: {
     couponCodeSnapshot: o.couponCodeSnapshot ?? null,
     cardAmountDue: Math.max(0, Math.round((total - storeCreditUsed) * 100) / 100),
     status: o.status,
+    paymentProvider: o.paymentProvider ?? null,
+    paymentCompletion: o.paymentCompletion ?? "paid",
     createdAt: o.createdAt.toISOString(),
     items: o.items.map((i) => ({
       id: i.id,
       quantity: i.quantity,
       price: Number(i.price),
       product: i.product,
+    })),
+    payments: (o.payments ?? []).map((p) => ({
+      id: p.id,
+      provider: p.provider,
+      externalId: p.externalId,
+      amountUsd: Number(p.amountUsd),
+      status: p.status,
+      createdAt: p.createdAt.toISOString(),
     })),
   };
 }
@@ -69,6 +89,13 @@ export class OrdersService {
   ) {}
 
   async create(dto: CreateOrderDto, customerId?: string | null) {
+    const payProvider = dto.paymentProvider ?? "crossmint";
+    if (payProvider === "nowpayments" && (dto.storeCreditToUse ?? 0) > 0) {
+      throw new BadRequestException(
+        "Affiliate balance cannot be used with cryptocurrency checkout. Choose card payment or remove the balance amount."
+      );
+    }
+
     const creates: { productId: string; quantity: number; price: Decimal }[] = [];
     let subtotal = 0;
 
@@ -105,9 +132,6 @@ export class OrdersService {
       }
     }
 
-    await this.affiliate.ensureSiteSettings();
-    const { affiliateCommissionPercent: rate } = await this.affiliate.getSettings();
-
     const order = await this.prisma.$transaction(async (tx) => {
       const couponPart = await this.coupons.resolveForOrder(dto.couponCode, subtotal, tx);
       const couponDiscount = couponPart.couponDiscountAmount;
@@ -133,9 +157,6 @@ export class OrdersService {
         });
       }
 
-      const commissionRaw = affiliateReferrerId ? (merchandiseTotal * rate) / 100 : 0;
-      const commission = Math.round(commissionRaw * 100) / 100;
-
       const created = await tx.order.create({
         data: {
           customerId: customerId ?? undefined,
@@ -152,6 +173,8 @@ export class OrdersService {
           couponId: couponPart.couponId ?? undefined,
           couponCodeSnapshot: couponPart.couponCodeSnapshot ?? undefined,
           couponDiscountAmount: new Decimal(couponDiscount),
+          paymentProvider: payProvider,
+          paymentCompletion: payProvider === "nowpayments" ? "awaiting_payment" : "paid",
           items: {
             create: creates.map((c) => ({
               productId: c.productId,
@@ -162,23 +185,11 @@ export class OrdersService {
         },
       });
 
-      if (affiliateReferrerId && commission > 0) {
-        await tx.affiliateEarning.create({
-          data: {
-            affiliateId: affiliateReferrerId,
-            orderId: created.id,
-            orderSubtotal: merchandiseTotal,
-            commissionPercent: rate,
-            amount: commission,
-          },
-        });
-        await tx.customer.update({
-          where: { id: affiliateReferrerId },
-          data: { affiliateBalance: { increment: new Decimal(commission) } },
-        });
+      if (payProvider !== "nowpayments") {
+        await this.affiliate.applyReferralCommissionForOrder(created.id, tx);
       }
 
-      return { created, merchandiseTotal, storeCredit, commission };
+      return { created, merchandiseTotal, storeCredit };
     });
 
     const cardDue = order.merchandiseTotal - order.storeCredit;
@@ -192,6 +203,8 @@ export class OrdersService {
       couponCodeSnapshot: order.created.couponCodeSnapshot,
       cardAmountDue: Math.max(0, Math.round(cardDue * 100) / 100),
       status: order.created.status,
+      paymentProvider: order.created.paymentProvider,
+      paymentCompletion: order.created.paymentCompletion,
       createdAt: order.created.createdAt.toISOString(),
     };
   }
@@ -205,6 +218,7 @@ export class OrdersService {
             product: { select: { id: true, name: true, slug: true, imageUrl: true } },
           },
         },
+        payments: { orderBy: { createdAt: "desc" }, take: 10 },
       },
     });
     return rows.map((o) => serializeOrder(o));
@@ -231,6 +245,7 @@ export class OrdersService {
             product: { select: { id: true, name: true, slug: true, imageUrl: true } },
           },
         },
+        payments: { orderBy: { createdAt: "desc" }, take: 20 },
       },
     });
     return rows.map((o) => serializeOrder(o));
@@ -246,6 +261,7 @@ export class OrdersService {
             product: { select: { id: true, name: true, slug: true, imageUrl: true } },
           },
         },
+        payments: { orderBy: { createdAt: "desc" }, take: 50 },
       },
     });
     if (!order) throw new NotFoundException();

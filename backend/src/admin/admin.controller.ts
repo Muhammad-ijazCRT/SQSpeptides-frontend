@@ -4,9 +4,11 @@ import { AdminJwtGuard } from "../auth/guards/admin-jwt.guard";
 import { CreateCouponDto } from "../coupons/dto/create-coupon.dto";
 import { UpdateCouponDto } from "../coupons/dto/update-coupon.dto";
 import { CouponsService } from "../coupons/coupons.service";
+import type { Prisma } from "../generated/prisma-client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AffiliatePayoutResolveDto } from "./dto/affiliate-payout-resolve.dto";
 import { UpdateAffiliateSettingsDto } from "./dto/affiliate-settings.dto";
+import { UpdatePaymentSettingsDto } from "./dto/update-payment-settings.dto";
 import { CreateProductDto } from "../products/dto/create-product.dto";
 import { UpdateProductDto } from "../products/dto/update-product.dto";
 import { ProductsService } from "../products/products.service";
@@ -119,6 +121,42 @@ export class AdminController {
   @Patch("affiliate/settings")
   patchAffiliateSettings(@Body() dto: UpdateAffiliateSettingsDto) {
     return this.affiliate.updateCommissionPercent(dto.affiliateCommissionPercent);
+  }
+
+  private maskSecret(v: string | null | undefined): string | null {
+    const t = v?.trim();
+    if (!t) return null;
+    if (t.length <= 4) return "••••";
+    return `••••${t.slice(-4)}`;
+  }
+
+  @Get("payment-settings")
+  async getPaymentSettings() {
+    await this.affiliate.ensureSiteSettings();
+    const s = await this.prisma.siteSettings.findUniqueOrThrow({ where: { id: "default" } });
+    return {
+      nowpaymentsApiKeyMasked: this.maskSecret(s.nowpaymentsApiKey),
+      nowpaymentsPublicKeyMasked: this.maskSecret(s.nowpaymentsPublicKey),
+      nowpaymentsSandbox: s.nowpaymentsSandbox,
+      nowpaymentsConfigured: Boolean(s.nowpaymentsApiKey?.trim() && s.nowpaymentsPublicKey?.trim()),
+    };
+  }
+
+  @Patch("payment-settings")
+  async patchPaymentSettings(@Body() dto: UpdatePaymentSettingsDto) {
+    await this.affiliate.ensureSiteSettings();
+    const data: Prisma.SiteSettingsUpdateInput = {};
+    if (dto.nowpaymentsApiKey !== undefined) {
+      data.nowpaymentsApiKey = dto.nowpaymentsApiKey.trim() || null;
+    }
+    if (dto.nowpaymentsPublicKey !== undefined) {
+      data.nowpaymentsPublicKey = dto.nowpaymentsPublicKey.trim() || null;
+    }
+    if (dto.nowpaymentsSandbox !== undefined) {
+      data.nowpaymentsSandbox = dto.nowpaymentsSandbox;
+    }
+    await this.prisma.siteSettings.update({ where: { id: "default" }, data });
+    return this.getPaymentSettings();
   }
 
   @Get("affiliate/payout-requests")
