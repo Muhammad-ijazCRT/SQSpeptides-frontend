@@ -95,3 +95,26 @@ export function productMatchesSizeLabel(p: Product, label: string): boolean {
 export function countProductsWithSize(products: Product[], label: string): number {
   return products.filter((p) => productMatchesSizeLabel(p, label)).length;
 }
+
+/** Parse "5mg", "10ML" for numeric sidebar ordering (mg before ml when values tie). */
+export function parseSizeLabelForSort(label: string): { value: number; unitOrder: number } | null {
+  const m = label.trim().match(/^([\d.]+)\s*(mg|ml)$/i);
+  if (!m) return null;
+  const value = parseFloat(m[1]);
+  if (!Number.isFinite(value)) return null;
+  const unitOrder = m[2].toLowerCase() === "ml" ? 1 : 0;
+  return { value, unitOrder };
+}
+
+export function compareSizeLabels(a: string, b: string): number {
+  const pa = parseSizeLabelForSort(a);
+  const pb = parseSizeLabelForSort(b);
+  if (pa && pb) {
+    if (pa.value !== pb.value) return pa.value - pb.value;
+    if (pa.unitOrder !== pb.unitOrder) return pa.unitOrder - pb.unitOrder;
+    return 0;
+  }
+  if (pa && !pb) return -1;
+  if (!pa && pb) return 1;
+  return a.localeCompare(b);
+}

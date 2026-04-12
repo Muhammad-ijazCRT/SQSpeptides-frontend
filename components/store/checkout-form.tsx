@@ -606,26 +606,6 @@ export function CheckoutForm() {
 
   const zelleAvailable = Boolean(zelleConfig?.enabled);
 
-  const zelleResumeSummary = zelleAwaitingProof ? (
-    <div className="lg:sticky lg:top-24">
-      <div className="rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-[0_4px_24px_-12px_rgba(15,23,42,0.1)] sm:p-5">
-        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500">Zelle payment</h2>
-        <p className="mt-3 text-sm text-neutral-600">Send payment for this order, then submit proof on the left.</p>
-        <p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-neutral-500">Order ID (reference / memo)</p>
-        <p className="mt-1 break-all font-mono text-sm text-black">{zelleAwaitingProof.orderId}</p>
-        <p className="mt-4 text-[10px] font-bold uppercase tracking-wide text-neutral-500">Amount (USD)</p>
-        <p className="mt-1 text-2xl font-bold tabular-nums text-black">${zelleAwaitingProof.amountUsd}</p>
-        <p className="mt-3 text-xs text-neutral-500">Include the order ID in your bank’s note so we can match your payment.</p>
-        <Link
-          href="/products-catalog"
-          className="mt-5 inline-block text-sm font-semibold text-[#b8962e] hover:underline"
-        >
-          Continue shopping
-        </Link>
-      </div>
-    </div>
-  ) : null;
-
   const inputClass =
     "mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-black shadow-sm outline-none transition placeholder:text-neutral-400 focus:border-black focus:ring-1 focus:ring-black";
 
@@ -836,38 +816,33 @@ export function CheckoutForm() {
     </div>
   );
 
+  if (zelleAwaitingProof) {
+    return (
+      <div className="mx-auto w-full max-w-md space-y-4 sm:max-w-lg">
+        {error ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800">{error}</div>
+        ) : null}
+        <ZelleCheckoutPanel
+          orderId={zelleAwaitingProof.orderId}
+          email={zelleAwaitingProof.email}
+          amountUsd={zelleAwaitingProof.amountUsd}
+          config={zelleConfig}
+        />
+        <p className="text-center">
+          <Link
+            href="/products-catalog"
+            className="text-sm font-medium text-neutral-500 transition hover:text-black hover:underline"
+          >
+            Continue shopping
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-12 lg:items-start lg:gap-8">
       <div className="lg:col-span-7 space-y-5">
-        {zelleAwaitingProof ? (
-          <>
-            <section className="rounded-xl border border-violet-200/80 bg-gradient-to-b from-violet-50/50 to-white p-4 shadow-[0_1px_8px_-4px_rgba(15,23,42,0.08)] sm:p-5">
-              <h2 className="text-base font-semibold tracking-tight text-black sm:text-lg">Pay with Zelle</h2>
-              <p className="mt-2 text-sm text-neutral-600">
-                Your order is created. Send the total from the summary using the Zelle details below, then enter your
-                transaction ID and upload a screenshot.
-              </p>
-              <div className="mt-4">
-                <ZelleCheckoutPanel
-                  orderId={zelleAwaitingProof.orderId}
-                  email={zelleAwaitingProof.email}
-                  amountUsd={zelleAwaitingProof.amountUsd}
-                  config={zelleConfig}
-                />
-              </div>
-            </section>
-            {error ? (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800">{error}</div>
-            ) : null}
-            <Link
-              href="/products-catalog"
-              className="inline-block text-xs font-medium text-neutral-600 hover:text-black hover:underline sm:text-sm"
-            >
-              ← Continue shopping
-            </Link>
-          </>
-        ) : (
-          <>
         <section className="rounded-xl border border-neutral-200/90 bg-white p-3 shadow-[0_1px_8px_-4px_rgba(15,23,42,0.08)] sm:p-4">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 pb-2.5">
             <h2 className="text-base font-semibold tracking-tight text-black sm:text-lg">
@@ -1149,11 +1124,9 @@ export function CheckoutForm() {
           ← Continue shopping
         </Link>
         </div>
-          </>
-        )}
       </div>
 
-      <div className="lg:col-span-5 lg:order-2">{zelleAwaitingProof ? zelleResumeSummary : summaryCard}</div>
+      <div className="lg:col-span-5 lg:order-2">{summaryCard}</div>
     </div>
   );
 }

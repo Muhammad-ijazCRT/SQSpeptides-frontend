@@ -12,6 +12,7 @@ import { useToast } from "@/components/store/toast-context";
 import { FILTER_SIZES, type SortKey } from "@/components/store/catalog/catalog-constants";
 import {
   CATALOG_NAV,
+  compareSizeLabels,
   countProductsWithSize,
   isCatalogCategoryId,
   productMatchesCatalogCategory,
@@ -205,6 +206,20 @@ export function ProductCatalogClient({
     [products, activeCategory],
   );
 
+  const sizeFacets = useMemo(() => {
+    return FILTER_SIZES.map((f) => ({
+      label: f.label,
+      count: countProductsWithSize(afterCategory, f.label),
+    }))
+      .filter((x) => x.count > 0)
+      .sort((a, b) => compareSizeLabels(a.label, b.label));
+  }, [afterCategory]);
+
+  useEffect(() => {
+    const available = new Set<string>(sizeFacets.map((f) => f.label));
+    setSelectedSizes((prev) => prev.filter((l) => available.has(l)));
+  }, [sizeFacets]);
+
   const afterSizes = useMemo(() => {
     if (selectedSizes.length === 0) return afterCategory;
     return afterCategory.filter((p) => selectedSizes.some((sz) => productMatchesSizeLabel(p, sz)));
@@ -321,26 +336,28 @@ export function ProductCatalogClient({
               </h2>
               <p className="mt-3 text-xs text-neutral-500">Size / concentration (matches name or slug)</p>
               <ul className="mt-4 space-y-2.5 pr-1 text-sm">
-                {FILTER_SIZES.map((f) => {
-                  const count = countProductsWithSize(afterCategory, f.label);
-                  const id = `f-${f.label.replace(/\s+/g, "-")}`;
-                  return (
-                    <li key={f.label} className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        id={id}
-                        checked={selectedSizes.includes(f.label)}
-                        onChange={() => toggleSizeFilter(f.label)}
-                        disabled={count === 0}
-                        className="h-4 w-4 shrink-0 rounded border-neutral-400 text-black focus:ring-black disabled:opacity-40"
-                      />
-                      <label htmlFor={id} className={`cursor-pointer text-neutral-600 ${count === 0 ? "opacity-50" : ""}`}>
-                        {f.label}{" "}
-                        <span className="text-neutral-400">({count})</span>
-                      </label>
-                    </li>
-                  );
-                })}
+                {sizeFacets.length === 0 ? (
+                  <li className="text-xs text-neutral-500">No size tags match this category.</li>
+                ) : (
+                  sizeFacets.map((f) => {
+                    const id = `f-${f.label.replace(/\s+/g, "-")}`;
+                    return (
+                      <li key={f.label} className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id={id}
+                          checked={selectedSizes.includes(f.label)}
+                          onChange={() => toggleSizeFilter(f.label)}
+                          className="h-4 w-4 shrink-0 rounded border-neutral-400 text-black focus:ring-black"
+                        />
+                        <label htmlFor={id} className="cursor-pointer text-neutral-600">
+                          {f.label}{" "}
+                          <span className="text-neutral-400">({f.count})</span>
+                        </label>
+                      </li>
+                    );
+                  })
+                )}
               </ul>
               {selectedSizes.length > 0 ? (
                 <button
