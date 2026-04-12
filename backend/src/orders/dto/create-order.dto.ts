@@ -81,8 +81,8 @@ export class CreateOrderDto {
   @MaxLength(80)
   couponCode?: string;
 
-  /** Card (Crossmint) checkout vs deferred crypto (NOWPayments invoice). */
+  /** Card (Crossmint) vs crypto (NOWPayments) vs manual Zelle. */
   @IsOptional()
-  @IsIn(["crossmint", "nowpayments"])
-  paymentProvider?: "crossmint" | "nowpayments";
+  @IsIn(["crossmint", "nowpayments", "zelle"])
+  paymentProvider?: "crossmint" | "nowpayments" | "zelle";
 }

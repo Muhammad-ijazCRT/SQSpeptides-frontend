@@ -14,6 +14,10 @@ model SiteSettings {
   nowpaymentsApiKey          String?  @db.Text
   nowpaymentsPublicKey       String?  @db.Text
   nowpaymentsSandbox         Boolean  @default(true)
+  /** Shown on checkout for Zelle (email address). */
+  zelleEmail                 String?  @db.Text
+  /** Shown on checkout for Zelle (phone in +1… format recommended). */
+  zellePhone                 String?  @db.Text
   updatedAt                  DateTime @updatedAt
 }
 
@@ -94,6 +98,11 @@ model Order {
   paymentProvider        String?
   paymentCompletion      String            @default("paid")
   nowpaymentsInvoiceId   String?
+  zelleTransactionId     String?
+  /** Public URL path e.g. /uploads/zelle/…. */
+  zelleProofUrl          String?           @db.Text
+  zelleSubmittedAt       DateTime?
+  zelleRejectionNote     String?           @db.Text
   createdAt              DateTime          @default(now())
   items                  OrderItem[]
   affiliateEarning       AffiliateEarning?

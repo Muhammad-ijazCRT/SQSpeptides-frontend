@@ -26,6 +26,10 @@ function serializeOrder(o: {
   status: string;
   paymentProvider?: string | null;
   paymentCompletion?: string;
+  zelleTransactionId?: string | null;
+  zelleProofUrl?: string | null;
+  zelleSubmittedAt?: Date | null;
+  zelleRejectionNote?: string | null;
   createdAt: Date;
   items: {
     id: string;
@@ -62,6 +66,10 @@ function serializeOrder(o: {
     status: o.status,
     paymentProvider: o.paymentProvider ?? null,
     paymentCompletion: o.paymentCompletion ?? "paid",
+    zelleTransactionId: o.zelleTransactionId ?? null,
+    zelleProofUrl: o.zelleProofUrl ?? null,
+    zelleSubmittedAt: o.zelleSubmittedAt?.toISOString() ?? null,
+    zelleRejectionNote: o.zelleRejectionNote ?? null,
     createdAt: o.createdAt.toISOString(),
     items: o.items.map((i) => ({
       id: i.id,

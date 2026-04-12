@@ -22,4 +22,16 @@ export class UpdatePaymentSettingsDto {
   })
   @IsBoolean()
   nowpaymentsSandbox?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => (value === "" || value == null ? undefined : String(value).trim()))
+  @IsString()
+  @MaxLength(320)
+  zelleEmail?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => (value === "" || value == null ? undefined : String(value).trim()))
+  @IsString()
+  @MaxLength(40)
+  zellePhone?: string;
 }

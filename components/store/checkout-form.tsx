@@ -301,70 +301,6 @@ export function CheckoutForm() {
     }
   }, [clearCart, router, showToast]);
 
-  const startCryptoCheckout = useCallback(async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      if (!prepareSnapshotForPayment()) {
-        setLoading(false);
-        return;
-      }
-      let snap = checkoutSnapshotRef.current;
-      if (!snap?.items?.length) snap = loadPendingSnapshot();
-      if (!snap?.items?.length) {
-        setError(
-          "We could not find your checkout details. Return to checkout from the shop, or contact support with your order reference."
-        );
-        return;
-      }
-      if (!snap.researchUseAttestation || !isResearchUseAttestation(snap.researchUseAttestation)) {
-        setError("Your saved checkout is missing a research-use attestation. Go back to shipping and try again.");
-        return;
-      }
-      const order = await createOrder({
-        email: snap.email,
-        fullName: snap.fullName,
-        addressLine1: snap.addressLine1,
-        city: snap.city,
-        postalCode: snap.postalCode,
-        country: snap.country,
-        researchUseAttestation: snap.researchUseAttestation,
-        items: snap.items,
-        affiliateRef: snap.affiliateRef,
-        couponCode: snap.couponCode,
-        paymentProvider: "nowpayments",
-      });
-      const inv = await fetch("/api/checkout/nowpayments/invoice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: order.id, email: snap.email }),
-      });
-      const invData = (await inv.json().catch(() => ({}))) as {
-        message?: string | string[];
-        invoiceUrl?: string;
-      };
-      if (!inv.ok) {
-        const m = Array.isArray(invData.message)
-          ? invData.message.join(", ")
-          : typeof invData.message === "string"
-            ? invData.message
-            : "Could not start cryptocurrency payment.";
-        throw new Error(m);
-      }
-      const url = typeof invData.invoiceUrl === "string" ? invData.invoiceUrl : "";
-      if (!url) throw new Error("Payment provider did not return a URL.");
-      checkoutSnapshotRef.current = null;
-      clearPendingSnapshot();
-      clearCart();
-      window.location.assign(url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Cryptocurrency checkout failed.");
-      showToast("If an order was created, keep your reference email; contact support if payment cannot continue.", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [clearCart, showToast]);
-
   function validateShipping(): boolean {
     const emailVal = inputTrim(emailRef, email);
     const fullNameVal = inputTrim(fullNameRef, fullName);
@@ -439,6 +375,70 @@ export function CheckoutForm() {
     finalizeOnce.current = false;
     setPayKey((k) => k + 1);
     return true;
+  }
+
+  async function startCryptoCheckout() {
+    setError(null);
+    setLoading(true);
+    try {
+      if (!prepareSnapshotForPayment()) {
+        setLoading(false);
+        return;
+      }
+      let snap = checkoutSnapshotRef.current;
+      if (!snap?.items?.length) snap = loadPendingSnapshot();
+      if (!snap?.items?.length) {
+        setError(
+          "We could not find your checkout details. Return to checkout from the shop, or contact support with your order reference."
+        );
+        return;
+      }
+      if (!snap.researchUseAttestation || !isResearchUseAttestation(snap.researchUseAttestation)) {
+        setError("Your saved checkout is missing a research-use attestation. Go back to shipping and try again.");
+        return;
+      }
+      const order = await createOrder({
+        email: snap.email,
+        fullName: snap.fullName,
+        addressLine1: snap.addressLine1,
+        city: snap.city,
+        postalCode: snap.postalCode,
+        country: snap.country,
+        researchUseAttestation: snap.researchUseAttestation,
+        items: snap.items,
+        affiliateRef: snap.affiliateRef,
+        couponCode: snap.couponCode,
+        paymentProvider: "nowpayments",
+      });
+      const inv = await fetch("/api/checkout/nowpayments/invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id, email: snap.email }),
+      });
+      const invData = (await inv.json().catch(() => ({}))) as {
+        message?: string | string[];
+        invoiceUrl?: string;
+      };
+      if (!inv.ok) {
+        const m = Array.isArray(invData.message)
+          ? invData.message.join(", ")
+          : typeof invData.message === "string"
+            ? invData.message
+            : "Could not start cryptocurrency payment.";
+        throw new Error(m);
+      }
+      const url = typeof invData.invoiceUrl === "string" ? invData.invoiceUrl : "";
+      if (!url) throw new Error("Payment provider did not return a URL.");
+      checkoutSnapshotRef.current = null;
+      clearPendingSnapshot();
+      clearCart();
+      window.location.assign(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Cryptocurrency checkout failed.");
+      showToast("If an order was created, keep your reference email; contact support if payment cannot continue.", "error");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function applyCouponCode() {
