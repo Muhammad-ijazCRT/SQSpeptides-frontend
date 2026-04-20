@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength, ValidateIf } from "class-validator";
+import { IsBoolean, IsEmail, IsInt, IsOptional, IsString, Max, MaxLength, Min, ValidateIf } from "class-validator";
 
 export class UpdatePaymentSettingsDto {
   @IsOptional()
@@ -35,4 +35,47 @@ export class UpdatePaymentSettingsDto {
   @IsString()
   @MaxLength(40)
   zellePhone?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  mailHost?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === "" || value == null) return undefined;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : undefined;
+  })
+  @ValidateIf((_, v) => v != null)
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  mailPort?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === "true" || value === true) return true;
+    if (value === "false" || value === false) return false;
+    return value;
+  })
+  @IsBoolean()
+  mailSecure?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => (value == null ? undefined : String(value).trim()))
+  @IsString()
+  @MaxLength(320)
+  mailUser?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === "string" ? value : value == null ? undefined : String(value)))
+  @IsString()
+  @MaxLength(8000)
+  mailPassword?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(320)
+  mailFrom?: string;
 }

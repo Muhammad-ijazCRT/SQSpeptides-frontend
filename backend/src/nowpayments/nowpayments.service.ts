@@ -264,4 +264,101 @@ export class NowpaymentsService {
 
     return { paymentCompletion: "paid", updated: true };
   }
+
+  /**
+   * Standalone NOWPayments invoice (admin payment links — not tied to an Order).
+   */
+  async createPaymentLinkInvoice(input: {
+    amountUsd: number;
+    orderDescription: string;
+    orderIdForNp: string;
+    successUrl: string;
+    cancelUrl: string;
+  }): Promise<{ invoiceUrl: string; npInvoiceId: string }> {
+    const configured = await this.isConfigured();
+    if (!configured) {
+      throw new BadRequestException("Cryptocurrency checkout is not configured yet (API key and public key required).");
+    }
+
+    const settings = await this.prisma.siteSettings.findUniqueOrThrow({ where: { id: SETTINGS_ID } });
+    const apiKey = settings.nowpaymentsApiKey!.trim();
+
+    const body = {
+      price_amount: input.amountUsd,
+      price_currency: "usd",
+      order_id: input.orderIdForNp.slice(0, 120),
+      order_description: input.orderDescription.slice(0, 200),
+      success_url: input.successUrl,
+      cancel_url: input.cancelUrl,
+    };
+
+    const res = await fetch(`${npBaseUrl(settings.nowpaymentsSandbox)}/invoice`, {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok) {
+      const msg =
+        typeof data.message === "string"
+          ? data.message
+          : typeof data.error === "string"
+            ? data.error
+            : `NOWPayments error (HTTP ${res.status})`;
+      this.log.warn(`Payment-link invoice create failed: ${msg}`);
+      throw new BadRequestException(msg);
+    }
+
+    const invoiceUrl =
+      (typeof data.invoice_url === "string" && data.invoice_url) ||
+      (typeof data.invoiceUrl === "string" && data.invoiceUrl) ||
+      "";
+    if (!invoiceUrl) {
+      this.log.warn(`Unexpected NOWPayments response: ${JSON.stringify(data)}`);
+      throw new BadRequestException("NOWPayments did not return an invoice URL.");
+    }
+
+    const npId = data.id != null ? String(data.id) : "";
+    if (!npId) {
+      throw new BadRequestException("NOWPayments did not return an invoice id.");
+    }
+
+    return { invoiceUrl, npInvoiceId: npId };
+  }
+
+  /** Poll NOWPayments invoice status (same rules as order crypto sync). */
+  async getInvoicePaidStatus(npInvoiceId: string): Promise<{
+    ok: boolean;
+    paid: boolean;
+    payload: Record<string, unknown>;
+    message?: string;
+  }> {
+    const settings = await this.prisma.siteSettings.findUniqueOrThrow({ where: { id: SETTINGS_ID } });
+    const apiKey = settings.nowpaymentsApiKey?.trim();
+    if (!apiKey) {
+      return { ok: false, paid: false, payload: {}, message: "NOWPayments API key is not configured." };
+    }
+
+    const base = npBaseUrl(settings.nowpaymentsSandbox);
+    const invRes = await fetch(`${base}/invoice/${encodeURIComponent(npInvoiceId)}`, {
+      headers: { "x-api-key": apiKey },
+    });
+    const invData = (await invRes.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!invRes.ok) {
+      this.log.warn(`GET payment-link invoice failed HTTP ${invRes.status}: ${JSON.stringify(invData)}`);
+      return {
+        ok: false,
+        paid: false,
+        payload: invData,
+        message: "Could not load invoice status from NOWPayments.",
+      };
+    }
+
+    const paid = await this.resolvePaidFromNowpayments(invData, base, apiKey);
+    return { ok: true, paid, payload: invData };
+  }
 }

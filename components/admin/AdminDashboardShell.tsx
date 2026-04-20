@@ -7,13 +7,14 @@ import { Sidebar, SidebarNav } from "@/components/admin/Sidebar";
 
 function pageTitle(pathname: string): string {
   if (pathname === "/admin/dashboard") return "Dashboard";
+  if (pathname.startsWith("/admin/dashboard/invoices/new")) return "Create payment link";
+  if (pathname.startsWith("/admin/dashboard/history")) return "Recent payment links";
   const segment = pathname.replace("/admin/dashboard/", "").split("/")[0] ?? "";
   const map: Record<string, string> = {
     products: "Products",
     inventory: "Inventory",
     orders: "Orders",
     customers: "Users",
-    invoices: "Invoices",
     settings: "Store settings",
     analytics: "Analytics",
     marketing: "Marketing",

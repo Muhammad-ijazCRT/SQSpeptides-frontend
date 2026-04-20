@@ -145,6 +145,13 @@ export class AdminController {
       zelleEmail: s.zelleEmail?.trim() || null,
       zellePhone: s.zellePhone?.trim() || null,
       zelleConfigured: Boolean(s.zelleEmail?.trim() || s.zellePhone?.trim()),
+      mailHost: s.mailHost?.trim() || null,
+      mailPort: s.mailPort ?? null,
+      mailSecure: s.mailSecure,
+      mailUser: s.mailUser?.trim() || null,
+      mailPasswordMasked: this.maskSecret(s.mailPassword),
+      mailFrom: s.mailFrom?.trim() || null,
+      mailConfigured: Boolean(s.mailHost?.trim() && s.mailFrom?.trim()),
     };
   }
 
@@ -166,6 +173,25 @@ export class AdminController {
     }
     if (dto.zellePhone !== undefined) {
       data.zellePhone = dto.zellePhone.trim() || null;
+    }
+    if (dto.mailHost !== undefined) {
+      data.mailHost = dto.mailHost?.trim() ? dto.mailHost.trim() : null;
+    }
+    if (dto.mailPort !== undefined) {
+      data.mailPort = dto.mailPort;
+    }
+    if (dto.mailSecure !== undefined) {
+      data.mailSecure = dto.mailSecure;
+    }
+    if (dto.mailUser !== undefined) {
+      data.mailUser = dto.mailUser.trim() || null;
+    }
+    if (dto.mailPassword !== undefined) {
+      const p = dto.mailPassword.trim();
+      data.mailPassword = p ? p : null;
+    }
+    if (dto.mailFrom !== undefined) {
+      data.mailFrom = dto.mailFrom?.trim() ? dto.mailFrom.trim() : null;
     }
     await this.prisma.siteSettings.update({ where: { id: "default" }, data });
     return this.getPaymentSettings();

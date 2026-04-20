@@ -9,9 +9,21 @@ type Me = { name?: string; email?: string };
 
 type Notice = { id: string; title: string; detail: string; time: string; unread: boolean; href?: string };
 
+type NoticeWithSort = Notice & { sortKey: number };
+
 const ORDER_NOTIF_ACK_KEY = "sqspeptides_admin_order_notif_ack";
+const INVOICE_NOTIF_ACK_KEY = "sqspeptides_admin_invoice_pay_notif_ack";
 
 type ApiOrderRow = { id: string; email: string; total: number; createdAt: string };
+
+type ApiInvoicePaidRow = {
+  id: string;
+  paidAt: string;
+  amount: number;
+  currency: string;
+  customerEmail: string;
+  gatewayLabel: string;
+};
 
 function initialsFromUser(name: string | undefined, email: string | undefined) {
   const n = (name ?? "").trim();
@@ -36,8 +48,9 @@ export function Navbar({ title, onMenuClick }: NavbarProps) {
   const [userOpen, setUserOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
-  const [orderNotices, setOrderNotices] = useState<Notice[]>([]);
+  const [notices, setNotices] = useState<Notice[]>([]);
   const [ackMs, setAckMs] = useState<number | null>(null);
+  const [invoiceAckMs, setInvoiceAckMs] = useState<number | null>(null);
 
   const loadMe = useCallback(async () => {
     const res = await fetch("/api/auth/admin/me");
@@ -50,40 +63,88 @@ export function Navbar({ title, onMenuClick }: NavbarProps) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    let raw = localStorage.getItem(ORDER_NOTIF_ACK_KEY);
-    if (!raw) {
-      raw = new Date().toISOString();
-      localStorage.setItem(ORDER_NOTIF_ACK_KEY, raw);
+    let rawOrder = localStorage.getItem(ORDER_NOTIF_ACK_KEY);
+    if (!rawOrder) {
+      rawOrder = new Date().toISOString();
+      localStorage.setItem(ORDER_NOTIF_ACK_KEY, rawOrder);
     }
-    setAckMs(new Date(raw).getTime());
+    setAckMs(new Date(rawOrder).getTime());
+
+    let rawInv = localStorage.getItem(INVOICE_NOTIF_ACK_KEY);
+    if (!rawInv) {
+      rawInv = new Date().toISOString();
+      localStorage.setItem(INVOICE_NOTIF_ACK_KEY, rawInv);
+    }
+    setInvoiceAckMs(new Date(rawInv).getTime());
   }, []);
 
   useEffect(() => {
-    if (ackMs == null) return;
-    const threshold = ackMs;
+    if (ackMs == null || invoiceAckMs == null) return;
+    const orderThreshold = ackMs;
+    const invThreshold = invoiceAckMs;
     let cancelled = false;
-    async function loadOrders() {
-      const res = await fetch("/api/admin/orders", { cache: "no-store" });
-      if (!res.ok || cancelled) return;
-      const orders = (await res.json()) as ApiOrderRow[];
-      if (!Array.isArray(orders) || cancelled) return;
-      const notices: Notice[] = orders.slice(0, 10).map((o) => ({
-        id: `order-${o.id}`,
-        title: "New store order",
-        detail: `${o.email} · $${Number(o.total).toFixed(2)}`,
-        time: new Date(o.createdAt).toLocaleString(),
-        unread: new Date(o.createdAt).getTime() > threshold,
-        href: `/admin/dashboard/orders#${o.id}`,
-      }));
-      setOrderNotices(notices);
+    async function loadNotices() {
+      const [orderRes, invRes] = await Promise.all([
+        fetch("/api/admin/orders", { cache: "no-store" }),
+        fetch("/api/admin/payment-invoices/notifications", { cache: "no-store" }),
+      ]);
+      if (cancelled) return;
+
+      const orderParts: NoticeWithSort[] = [];
+      if (orderRes.ok) {
+        const orders = (await orderRes.json()) as ApiOrderRow[];
+        if (Array.isArray(orders)) {
+          for (const o of orders.slice(0, 10)) {
+            const ts = new Date(o.createdAt).getTime();
+            orderParts.push({
+              id: `order-${o.id}`,
+              title: "New store order",
+              detail: `${o.email} · $${Number(o.total).toFixed(2)}`,
+              time: new Date(o.createdAt).toLocaleString(),
+              unread: ts > orderThreshold,
+              href: `/admin/dashboard/orders#${o.id}`,
+              sortKey: ts,
+            });
+          }
+        }
+      }
+
+      const invParts: NoticeWithSort[] = [];
+      if (invRes.ok) {
+        const inv = (await invRes.json()) as ApiInvoicePaidRow[];
+        if (Array.isArray(inv)) {
+          for (const r of inv.slice(0, 12)) {
+            const ts = new Date(r.paidAt).getTime();
+            const amt = new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: r.currency.toUpperCase(),
+            }).format(r.amount);
+            invParts.push({
+              id: `invoice-${r.id}`,
+              title: "Invoice paid",
+              detail: `${r.gatewayLabel} · ${r.customerEmail} · ${amt}`,
+              time: new Date(r.paidAt).toLocaleString(),
+              unread: ts > invThreshold,
+              href: "/admin/dashboard/history",
+              sortKey: ts,
+            });
+          }
+        }
+      }
+
+      const merged = [...orderParts, ...invParts]
+        .sort((a, b) => b.sortKey - a.sortKey)
+        .slice(0, 15)
+        .map(({ sortKey: _s, ...rest }) => rest);
+      setNotices(merged);
     }
-    void loadOrders();
-    const t = setInterval(loadOrders, 45_000);
+    void loadNotices();
+    const t = setInterval(loadNotices, 45_000);
     return () => {
       cancelled = true;
       clearInterval(t);
     };
-  }, [ackMs]);
+  }, [ackMs, invoiceAckMs]);
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
@@ -107,13 +168,16 @@ export function Navbar({ title, onMenuClick }: NavbarProps) {
     if (q) router.push(`/admin/dashboard/products?q=${encodeURIComponent(q)}`);
   }
 
-  const unreadCount = orderNotices.filter((n) => n.unread).length;
+  const unreadCount = notices.filter((n) => n.unread).length;
 
   function markNotificationsRead() {
     const now = Date.now();
-    localStorage.setItem(ORDER_NOTIF_ACK_KEY, new Date(now).toISOString());
+    const iso = new Date(now).toISOString();
+    localStorage.setItem(ORDER_NOTIF_ACK_KEY, iso);
+    localStorage.setItem(INVOICE_NOTIF_ACK_KEY, iso);
     setAckMs(now);
-    setOrderNotices((prev) => prev.map((n) => ({ ...n, unread: false })));
+    setInvoiceAckMs(now);
+    setNotices((prev) => prev.map((n) => ({ ...n, unread: false })));
     setNotifOpen(false);
   }
 
@@ -189,13 +253,13 @@ export function Navbar({ title, onMenuClick }: NavbarProps) {
               <div className="dropdown-menu show border-0 end-0 mt-2 p-0 admin-notif-panel admin-card-elevated">
                 <div className="px-3 py-3 border-bottom">
                   <p className="mb-0 fw-semibold small">Notifications</p>
-                  <p className="mb-0 text-secondary small">Recent storefront orders (refreshes every 45s).</p>
+                  <p className="mb-0 text-secondary small">Orders and paid invoice links (refreshes every 45s).</p>
                 </div>
                 <ul className="list-unstyled mb-0 overflow-auto admin-notif-list">
-                  {orderNotices.length === 0 ? (
-                    <li className="px-3 py-4 text-secondary small">No orders in the system yet.</li>
+                  {notices.length === 0 ? (
+                    <li className="px-3 py-4 text-secondary small">No recent activity.</li>
                   ) : (
-                    orderNotices.map((n) => (
+                    notices.map((n) => (
                       <li key={n.id} className="border-bottom border-light">
                         <Link
                           href={n.href ?? "/admin/dashboard/orders"}

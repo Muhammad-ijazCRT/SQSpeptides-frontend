@@ -20,6 +20,9 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
     () => pathname.startsWith("/admin/dashboard/products") || pathname.startsWith("/admin/dashboard/inventory")
   );
   const [usersOpen, setUsersOpen] = useState(() => pathname.startsWith("/admin/dashboard/customers"));
+  const [invoicesOpen, setInvoicesOpen] = useState(
+    () => pathname.startsWith("/admin/dashboard/invoices") || pathname.startsWith("/admin/dashboard/history")
+  );
 
   const linkClass = useCallback(
     (href: string) => {
@@ -114,10 +117,40 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
           </li>
 
           <li className="nav-item">
-            <Link className={linkClass("/admin/dashboard/invoices")} href="/admin/dashboard/invoices" onClick={onNavigate}>
-              <i className="bi bi-receipt fs-5" aria-hidden />
-              <span>Invoices</span>
-            </Link>
+            <button
+              type="button"
+              className="nav-link w-100 d-flex align-items-center justify-content-between gap-2 text-start border-0 bg-transparent"
+              onClick={() => setInvoicesOpen((v) => !v)}
+              aria-expanded={invoicesOpen}
+            >
+              <span className="d-flex align-items-center gap-2">
+                <i className="bi bi-receipt fs-5" aria-hidden />
+                Invoices
+              </span>
+              <i className={`bi ${invoicesOpen ? "bi-chevron-up" : "bi-chevron-down"} small`} aria-hidden />
+            </button>
+            {invoicesOpen ? (
+              <ul className="nav flex-column mt-1">
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link nav-link-sub ${navActive(pathname, "/admin/dashboard/invoices/new") ? "active" : ""}`}
+                    href="/admin/dashboard/invoices/new"
+                    onClick={onNavigate}
+                  >
+                    Create payment link
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link nav-link-sub ${pathname === "/admin/dashboard/history" || pathname === "/admin/dashboard/history/" ? "active" : ""}`}
+                    href="/admin/dashboard/history"
+                    onClick={onNavigate}
+                  >
+                    Recent payment links
+                  </Link>
+                </li>
+              </ul>
+            ) : null}
           </li>
         </ul>
 

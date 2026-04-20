@@ -55,6 +55,15 @@ const nextConfig: NextConfig = {
       { source: "/favicon.ico", destination: "/logo.png", permanent: false },
     ];
   },
+  /** Serve Zelle proof images from the Nest API (files live next to the API, not on Vercel's read-only FS). */
+  async rewrites() {
+    return [
+      {
+        source: "/uploads/zelle/:path*",
+        destination: `${nextPublicApiUrl}/uploads/zelle/:path*`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
