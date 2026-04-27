@@ -5,8 +5,8 @@
   "scripts": {
     "sync:catalog": "node scripts/sync-catalog-from-products-json.mjs",
     "dev": "next dev --turbopack -p 3000",
-    "dev:api": "npm run dev --prefix backend",
-    "dev:all": "concurrently -k -n next,api -c cyan,magenta \"pnpm dev\" \"pnpm dev:api\"",
+    "dev:api": "pnpm --dir ../SQSpeptides-backend dev",
+    "dev:all": "concurrently -k -n web,nest -c cyan,magenta \"pnpm dev\" \"pnpm dev:api\"",
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "next lint"

@@ -560,10 +560,12 @@ export function CheckoutForm() {
       if (!snap?.items?.length) snap = loadPendingSnapshot();
       if (!snap?.items?.length) {
         setError("We could not find your checkout details. Return to checkout and try again.");
+        setLoading(false);
         return;
       }
       if (!snap.researchUseAttestation || !isResearchUseAttestation(snap.researchUseAttestation)) {
         setError("Your saved checkout is missing a research-use attestation. Go back to shipping and try again.");
+        setLoading(false);
         return;
       }
       const order = await createOrder({
@@ -591,6 +593,7 @@ export function CheckoutForm() {
       window.location.assign(payment.checkoutUrl);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not start PayRam checkout.";
+      console.error("[startPayRamCheckout] failed", err);
       setError(message);
       showToast(`PayRam checkout failed: ${message}`, "error");
     } finally {
