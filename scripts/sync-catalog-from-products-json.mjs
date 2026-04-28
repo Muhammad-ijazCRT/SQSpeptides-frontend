@@ -13,10 +13,6 @@ const bySlug = new Map();
 for (const p of raw) bySlug.set(p.slug, p);
 const prods = [...bySlug.values()].sort((a, b) => a.slug.localeCompare(b.slug));
 
-
-
-
-
 function sanitizeBasename(url) {
   const s = String(url).trim();
   const rest = s.startsWith("/images/")
