@@ -181,12 +181,6 @@ export function StoreHome({ featured, apiError }: Props) {
             <h2 className="text-center text-3xl font-bold text-black md:text-4xl">
               Accurate research is our priority
             </h2>
-            <Link
-              href="/lab-calculator"
-              className="text-sm font-semibold uppercase tracking-widest text-[#b8962e] hover:underline"
-            >
-              Lab calculator →
-            </Link>
           </div>
           <div className="mt-14 grid gap-10 lg:grid-cols-3 lg:items-center">
             <div className="space-y-8">

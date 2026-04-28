@@ -18,7 +18,6 @@ const nav = [
   { href: "/about-us", label: "About Us" },
   { href: "/products-catalog", label: "Product Catalog" },
   { href: "/popular-peptides", label: "Popular Peptides" },
-  { href: "/lab-calculator", label: "Lab Calculator" },
   { href: "/apply-wholesale", label: "Apply for Wholesale" },
   { href: "/#become-affiliate", label: "Become an Affiliate" },
   { href: "/contact-us", label: "Contact Us" },
@@ -82,7 +81,6 @@ export function SiteHeader() {
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     if (href === "/popular-peptides") return pathname === "/popular-peptides";
-    if (href === "/lab-calculator") return pathname === "/lab-calculator";
     if (href.startsWith("/products-catalog"))
       return pathname === "/products-catalog" || pathname.startsWith("/products-catalog/");
     if (href === "/contact-us") return pathname === "/contact-us";
