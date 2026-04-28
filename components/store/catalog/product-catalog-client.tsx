@@ -190,10 +190,47 @@ export function ProductCatalogClient({
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState(qParam);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [healthCheck, setHealthCheck] = useState<{
+    ok: boolean;
+    status: number;
+    resolvedApiUrl: string;
+    healthUrl: string;
+    error?: string;
+  } | null>(null);
 
   useEffect(() => {
     setSearchInput(qParam);
   }, [qParam]);
+
+  useEffect(() => {
+    if (!apiError) return;
+    let cancelled = false;
+    fetch("/api/health/backend", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled) return;
+        setHealthCheck({
+          ok: Boolean(json?.ok),
+          status: Number(json?.status ?? 0),
+          resolvedApiUrl: String(json?.resolvedApiUrl ?? ""),
+          healthUrl: String(json?.healthUrl ?? ""),
+          error: json?.error ? String(json.error) : undefined,
+        });
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setHealthCheck({
+          ok: false,
+          status: 0,
+          resolvedApiUrl: "",
+          healthUrl: "",
+          error: e instanceof Error ? e.message : "Health check failed",
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [apiError]);
 
   const sizesKey = selectedSizes.slice().sort().join(",");
 
@@ -299,9 +336,19 @@ export function ProductCatalogClient({
         </div>
 
         {apiError && (
-          <p className="mt-6 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 md:mt-8">
-            Catalog API unavailable. Start the NestJS backend and set <code className="text-xs">NEXT_PUBLIC_API_URL</code>.
-          </p>
+          <div className="mt-6 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 md:mt-8">
+            <p>
+              Catalog API unavailable. Check backend health at <code className="text-xs">/health</code> and verify{" "}
+              <code className="text-xs">NEXT_PUBLIC_API_URL</code>.
+            </p>
+            {healthCheck && (
+              <p className="mt-2 text-xs text-amber-950">
+                Runtime API URL: <code>{healthCheck.resolvedApiUrl || "(unknown)"}</code> · Health:{" "}
+                {healthCheck.ok ? "UP" : `DOWN (${healthCheck.status || "no status"})`}
+                {healthCheck.error ? ` · ${healthCheck.error}` : ""}
+              </p>
+            )}
+          </div>
         )}
 
         <div className="mt-8 flex flex-col gap-10 lg:mt-12 lg:flex-row lg:items-start lg:gap-14 xl:gap-16">

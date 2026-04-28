@@ -7,6 +7,7 @@ import { NowpaymentsModule } from "./nowpayments/nowpayments.module";
 import { OrdersModule } from "./orders/orders.module";
 import { PaymentInvoicesModule } from "./payment-invoices/payment-invoices.module";
 import { PayramModule } from "./payram/payram.module";
+import { HealthModule } from "./health/health.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { ProductsModule } from "./products/products.module";
 
@@ -22,6 +23,7 @@ import { ProductsModule } from "./products/products.module";
     NowpaymentsModule,
     PaymentInvoicesModule,
     PayramModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
