@@ -3,7 +3,7 @@
  * Local: prefers localhost from env. Deployed: prefers non-localhost URLs and falls back to Railway.
  */
 
-import { RAILWAY_API_ORIGIN } from "@/lib/api/production-api-origin";
+import { RAILWAY_API_ORIGIN, sanitizeApiOriginForCloud } from "@/lib/api/production-api-origin";
 
 const LOCAL_DEFAULT = "http://localhost:3001";
 
@@ -60,7 +60,7 @@ export function getNestBaseUrl(): string {
     : candidates;
 
   for (const raw of ordered) {
-    const normalized = stripTrailingSlashes(raw);
+    const normalized = deployed ? sanitizeApiOriginForCloud(raw) : stripTrailingSlashes(raw);
     if (!normalized) continue;
     if (deployed && isLocalhostOrigin(normalized)) continue;
     if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
@@ -69,7 +69,7 @@ export function getNestBaseUrl(): string {
   }
 
   if (deployed) {
-    return stripTrailingSlashes(RAILWAY_API_ORIGIN);
+    return sanitizeApiOriginForCloud(RAILWAY_API_ORIGIN);
   }
 
   return LOCAL_DEFAULT;

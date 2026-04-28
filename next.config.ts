@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { RAILWAY_API_ORIGIN } from "./lib/api/production-api-origin";
+import { RAILWAY_API_ORIGIN, sanitizeApiOriginForCloud } from "./lib/api/production-api-origin";
 import { getCrossmintEnvMode } from "./lib/crossmint/resolve-env";
 
 const LOCAL_API_ORIGIN = "http://localhost:3001";
@@ -11,6 +11,8 @@ const defaultNextPublicApiUrl =
 const nextPublicApiUrl = (
   process.env.NEXT_PUBLIC_API_URL?.trim() || defaultNextPublicApiUrl
 ).replace(/\/+$/, "");
+const resolvedNextPublicApiUrl =
+  process.env.NODE_ENV === "production" ? sanitizeApiOriginForCloud(nextPublicApiUrl) : nextPublicApiUrl;
 
 const nextConfig: NextConfig = {
   /** Dev: allow both hostname spellings so RSC / HMR / internal fetches are not blocked when switching localhost ↔ 127.0.0.1. */
@@ -21,7 +23,7 @@ const nextConfig: NextConfig = {
     },
   },
   env: {
-    NEXT_PUBLIC_API_URL: nextPublicApiUrl,
+    NEXT_PUBLIC_API_URL: resolvedNextPublicApiUrl,
     /** Ensures production builds use www.crossmint.com + Stellar pubnet USDC when env var is missing but keys are production. */
     NEXT_PUBLIC_CROSSMINT_ENV: getCrossmintEnvMode(),
   },
@@ -60,7 +62,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/uploads/zelle/:path*",
-        destination: `${nextPublicApiUrl}/uploads/zelle/:path*`,
+        destination: `${resolvedNextPublicApiUrl}/uploads/zelle/:path*`,
       },
     ];
   },
