@@ -2,13 +2,46 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  clearCheckoutSuccess,
+  loadCheckoutSuccess,
+  type CheckoutSuccessPayload,
+} from "@/lib/store/checkout-success-storage";
 
 type SyncState = "idle" | "syncing" | "done" | "error";
+
+function AccountCredentialsBlock({ payload }: { payload: CheckoutSuccessPayload }) {
+  if (!payload.accountCreated || !payload.temporaryPassword) return null;
+  return (
+    <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-left">
+      <p className="text-sm font-semibold text-amber-950">Your account was created</p>
+      <p className="mt-2 text-sm text-amber-900">
+        Sign in with the details below. Change your password after your first login.
+      </p>
+      <p className="mt-3 text-sm text-amber-950">
+        <span className="font-medium">Email:</span> {payload.email}
+      </p>
+      <p className="mt-1 text-sm text-amber-950">
+        <span className="font-medium">Temporary password:</span>{" "}
+        <code className="select-all rounded bg-amber-100 px-2 py-0.5 font-mono text-xs">
+          {payload.temporaryPassword}
+        </code>
+      </p>
+    </div>
+  );
+}
 
 export function CryptoCheckoutSuccessClient({ orderId, confirmEmail }: { orderId: string; confirmEmail: string }) {
   const [state, setState] = useState<SyncState>("idle");
   const [paid, setPaid] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [accountInfo, setAccountInfo] = useState<CheckoutSuccessPayload | null>(null);
+
+  useEffect(() => {
+    const data = loadCheckoutSuccess(orderId || undefined);
+    setAccountInfo(data);
+    if (data?.temporaryPassword) clearCheckoutSuccess();
+  }, [orderId]);
 
   useEffect(() => {
     if (!orderId || !confirmEmail) {
@@ -67,7 +100,7 @@ export function CryptoCheckoutSuccessClient({ orderId, confirmEmail }: { orderId
         {state === "syncing"
           ? "Talking to NOWPayments to update your order."
           : paid
-            ? "Your order is marked paid. You can view details in your orders list."
+            ? "Your order is marked paid. Open your order confirmation for full details."
             : "If you completed checkout on NOWPayments, we recheck status when you load this page. Blockchain confirmations can take a few minutes — refresh if needed."}
       </p>
       {orderId ? (
@@ -76,27 +109,25 @@ export function CryptoCheckoutSuccessClient({ orderId, confirmEmail }: { orderId
         </p>
       ) : null}
       {note ? <p className="mt-4 text-sm text-amber-900">{note}</p> : null}
+      {accountInfo ? <AccountCredentialsBlock payload={accountInfo} /> : null}
       {state === "done" && !paid ? (
         <button
           type="button"
-          className="mt-6 text-sm font-semibold text-[#b8962e] hover:underline"
+          className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-neutral-900 px-6 text-sm font-bold text-white hover:bg-neutral-800"
           onClick={() => window.location.reload()}
         >
           Refresh status
         </button>
       ) : null}
-      <div className="mt-10 flex flex-wrap justify-center gap-4">
+      <div className="mt-8 flex flex-wrap justify-center gap-4">
         <Link
-          href="/account/orders"
+          href={orderId ? `/checkout/success?orderId=${encodeURIComponent(orderId)}` : "/checkout/success"}
           className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#D4AF37] px-6 text-sm font-bold text-black hover:bg-[#c9a432]"
         >
-          View orders
+          Order confirmation
         </Link>
-        <Link
-          href="/"
-          className="inline-flex min-h-11 items-center justify-center text-sm font-semibold text-neutral-600 hover:text-black hover:underline"
-        >
-          Back home
+        <Link href="/account/orders" className="inline-flex min-h-11 items-center justify-center text-sm font-semibold text-neutral-700 hover:underline">
+          View orders
         </Link>
       </div>
     </>

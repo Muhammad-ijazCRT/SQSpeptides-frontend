@@ -91,7 +91,7 @@ export function CheckoutPaymentMethodSelector({ value, onChange }: Props) {
         >
           {value === "payram" ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
         </span>
-        <span className="min-w-0 flex-1 text-neutral-900">Pay with Crypto / Onramp (PayRam)</span>
+        <span className="min-w-0 flex-1 text-neutral-900">Pay with Crypto</span>
         <span className="shrink-0 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-900">NEW</span>
       </button>
 

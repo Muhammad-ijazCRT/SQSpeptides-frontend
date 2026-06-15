@@ -5,6 +5,11 @@ import { ProductCard } from "@/components/store/product-card";
 import { FaqSection } from "@/components/store/faq-section";
 import type { Product } from "@/lib/store/types";
 import {
+  isDefaultProductImage,
+  productImageBoxClassName,
+  resolveProductImage,
+} from "@/lib/store/catalog-image";
+import {
   SITE_ADDRESS_SINGLE_LINE,
   SITE_SUPPORT_EMAIL,
   SITE_SUPPORT_PHONE,
@@ -12,6 +17,11 @@ import {
 } from "@/lib/site-business";
 
 type Props = { featured: Product[]; apiError?: boolean };
+
+function pickShowcaseProduct(featured: Product[]): Product | null {
+  if (featured.length === 0) return null;
+  return featured.find((p) => !isDefaultProductImage(resolveProductImage(p))) ?? featured[0] ?? null;
+}
 
 const trustPoints = [
   {
@@ -48,6 +58,10 @@ const valueProps = [
 ];
 
 export function StoreHome({ featured, apiError }: Props) {
+  const showcaseProduct = pickShowcaseProduct(featured);
+  const showcaseImage = showcaseProduct ? resolveProductImage(showcaseProduct) : null;
+  const showcaseAlt = showcaseProduct?.name ?? "Research peptide vial";
+
   return (
     <>
       <section className="relative flex min-h-[min(100dvh,920px)] flex-col items-center justify-center overflow-hidden bg-black px-4 py-24 text-center sm:min-h-[78vh]">
@@ -164,13 +178,17 @@ export function StoreHome({ featured, apiError }: Props) {
               About SQSpeptides
             </Link>
           </div>
-          <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-[#D4AF37]/30">
-            <Image
-              src="/product-vial.svg"
-              alt="SQSpeptides research vial"
-              fill
-              className="object-contain bg-neutral-950 p-8"
-            />
+          <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-[#D4AF37]/30 bg-neutral-950">
+            {showcaseImage ? (
+              <Image
+                src={showcaseImage}
+                alt={showcaseAlt}
+                fill
+                unoptimized
+                className={productImageBoxClassName(showcaseImage, "object-center")}
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
+            ) : null}
           </div>
         </div>
       </section>
@@ -196,8 +214,17 @@ export function StoreHome({ featured, apiError }: Props) {
                 </div>
               ))}
             </div>
-            <div className="relative mx-auto aspect-square w-full max-w-xs">
-              <Image src="/product-vial.svg" alt="" fill className="object-contain" />
+            <div className="relative mx-auto aspect-square w-full max-w-xs overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50">
+              {showcaseImage ? (
+                <Image
+                  src={showcaseImage}
+                  alt={showcaseAlt}
+                  fill
+                  unoptimized
+                  className={productImageBoxClassName(showcaseImage, "object-center")}
+                  sizes="320px"
+                />
+              ) : null}
             </div>
             <div className="space-y-8">
               {valueProps.slice(2, 4).map((v) => (

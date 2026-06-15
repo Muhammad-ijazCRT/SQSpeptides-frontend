@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BusinessAddress } from "@/components/store/business-address";
+import { SITE_BRAND_NAME } from "@/lib/site-business";
 
 export function LegalPageShell({
   title,
@@ -17,6 +18,10 @@ export function LegalPageShell({
       </Link>
       <h1 className="mt-6 text-3xl font-bold tracking-tight text-black">{title}</h1>
       <p className="mt-2 text-sm text-neutral-500">Last updated: {lastUpdated}</p>
+      <p className="mt-4 rounded-lg border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-xs leading-relaxed text-amber-950">
+        {SITE_BRAND_NAME} supplies research-grade peptides and related laboratory materials for qualified in vitro and
+        laboratory research programs. Purchasers must meet our eligibility and attestation requirements at checkout.
+      </p>
       <BusinessAddress variant="inline" className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4" />
       <div className="mt-10 space-y-6 text-sm leading-relaxed text-neutral-700">{children}</div>
       <p className="mt-12 border-t border-neutral-200 pt-8 text-sm text-neutral-600">

@@ -25,4 +25,6 @@ export type OrderCreated = {
   paymentProvider?: string | null;
   paymentCompletion?: string;
   createdAt: string;
+  accountCreated?: boolean;
+  temporaryPassword?: string;
 };

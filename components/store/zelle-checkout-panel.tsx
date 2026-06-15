@@ -100,14 +100,20 @@ export function ZelleCheckoutPanel({ orderId, email, amountUsd, config }: Props)
       <div className="rounded-2xl border border-neutral-200/90 bg-white p-6 shadow-[0_4px_24px_-12px_rgba(15,23,42,0.08)] sm:p-8">
         <p className="text-center text-base font-semibold text-neutral-900">Proof submitted</p>
         <p className="mt-2 text-center text-sm text-neutral-600">
-          Track status in <span className="font-medium text-neutral-800">My orders</span>.
+          We&apos;ll verify your Zelle payment shortly. View your order confirmation for account details.
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center sm:gap-3">
           <Link
-            href="/account/orders"
+            href={`/checkout/success?orderId=${encodeURIComponent(orderId)}`}
             className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-neutral-900 px-5 text-sm font-semibold text-white transition hover:bg-neutral-800 sm:flex-none"
           >
-            View orders
+            View confirmation
+          </Link>
+          <Link
+            href="/account/orders"
+            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 text-sm font-semibold text-neutral-800 transition hover:bg-neutral-50 sm:flex-none"
+          >
+            My orders
           </Link>
           <Link
             href="/products-catalog"

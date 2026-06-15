@@ -18,7 +18,7 @@ export default function AdminLoginPage() {
             <BrandLogo height={44} className="max-h-11" />
           </div>
           <h1 className="text-center text-xl font-bold text-neutral-900">Admin sign in</h1>
-          <p className="mt-2 text-center text-sm text-neutral-600">
+          <p className="mt-2 hidden text-center text-sm text-neutral-600">
             Run <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">pnpm prisma db seed</code> in{" "}
             <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">backend/</code>, then sign in with{" "}
             <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">ADMIN_EMAIL</code> /{" "}

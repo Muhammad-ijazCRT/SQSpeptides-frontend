@@ -64,6 +64,10 @@ const nextConfig: NextConfig = {
         source: "/uploads/zelle/:path*",
         destination: `${resolvedNextPublicApiUrl}/uploads/zelle/:path*`,
       },
+      {
+        source: "/uploads/products/:path*",
+        destination: `${resolvedNextPublicApiUrl}/uploads/products/:path*`,
+      },
     ];
   },
 };

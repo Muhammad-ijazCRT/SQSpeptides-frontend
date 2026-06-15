@@ -54,6 +54,7 @@ export async function POST(request: Request) {
       revalidatePath("/account/affiliate");
       revalidatePath("/admin/dashboard");
       revalidatePath("/admin/dashboard/orders");
+      revalidatePath("/checkout/success");
     });
   }
   return NextResponse.json(data, { status: res.status });

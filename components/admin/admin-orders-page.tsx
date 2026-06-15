@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+const ORDER_STATUSES = ["pending", "shipped", "completed", "cancelled"] as const;
+
 function orderStatusBadgeClass(status: string): string {
   const s = status.toLowerCase();
   if (s === "pending") return "badge rounded-pill badge-status-pending text-capitalize";
   if (s === "shipped") return "badge rounded-pill badge-status-shipped text-capitalize";
   if (s === "completed") return "badge rounded-pill badge-status-completed text-capitalize";
+  if (s === "cancelled") return "badge rounded-pill bg-danger-subtle text-danger-emphasis text-capitalize";
   return "badge rounded-pill bg-secondary-subtle text-secondary-emphasis text-capitalize";
 }
 
@@ -14,7 +17,9 @@ type OrderRow = {
   id: string;
   email: string;
   fullName: string;
+  addressLine1?: string;
   city: string;
+  postalCode?: string;
   country: string;
   total: number;
   status: string;
@@ -24,7 +29,15 @@ type OrderRow = {
   zelleProofUrl?: string | null;
   zelleRejectionNote?: string | null;
   createdAt: string;
-  items: { quantity: number; product: { name: string } }[];
+  items: { quantity: number; price?: number; product: { name: string } }[];
+};
+
+type OrderDetail = OrderRow & {
+  researchUseAttestation?: string;
+  storeCreditUsed?: number;
+  couponDiscountAmount?: number;
+  couponCodeSnapshot?: string | null;
+  customer?: { id: string; email: string; name: string } | null;
 };
 
 type ZelleVerifyModal = {
@@ -42,6 +55,10 @@ export function AdminOrdersPage() {
   const [zelleModal, setZelleModal] = useState<ZelleVerifyModal | null>(null);
   const [zelleRejectNote, setZelleRejectNote] = useState("");
   const [zelleModalSubmitting, setZelleModalSubmitting] = useState(false);
+  const [detailOrder, setDetailOrder] = useState<OrderDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailStatus, setDetailStatus] = useState("");
+  const [detailSaving, setDetailSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -66,6 +83,69 @@ export function AdminOrdersPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const openOrderDetail = useCallback(async (orderId: string) => {
+    setDetailLoading(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}`);
+      const data = (await res.json().catch(() => ({}))) as OrderDetail & { message?: string };
+      if (!res.ok) {
+        throw new Error(typeof data.message === "string" ? data.message : "Could not load order details.");
+      }
+      setDetailOrder(data);
+      setDetailStatus(data.status);
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", `#${orderId}`);
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not load order details.");
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const openFromHash = () => {
+      const hash = window.location.hash.replace(/^#/, "").trim();
+      if (!hash) return;
+      void openOrderDetail(hash);
+    };
+    openFromHash();
+    window.addEventListener("hashchange", openFromHash);
+    return () => window.removeEventListener("hashchange", openFromHash);
+  }, [openOrderDetail]);
+
+  function closeOrderDetail() {
+    setDetailOrder(null);
+    setDetailStatus("");
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  }
+
+  async function saveOrderStatus() {
+    if (!detailOrder || detailStatus === detailOrder.status) return;
+    setDetailSaving(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/admin/orders/${encodeURIComponent(detailOrder.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: detailStatus }),
+      });
+      const data = (await res.json().catch(() => ({}))) as OrderDetail & { message?: string };
+      if (!res.ok) {
+        throw new Error(typeof data.message === "string" ? data.message : "Could not update status.");
+      }
+      setDetailOrder((prev) => (prev ? { ...prev, ...data } : prev));
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not update status.");
+    } finally {
+      setDetailSaving(false);
+    }
+  }
 
   function openZelleModal(o: OrderRow, action: "approve" | "reject") {
     setErr(null);
@@ -105,6 +185,9 @@ export function AdminOrdersPage() {
       setZelleModal(null);
       setZelleRejectNote("");
       await load();
+      if (detailOrder?.id === orderId) {
+        await openOrderDetail(orderId);
+      }
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Zelle action failed.");
     } finally {
@@ -118,14 +201,14 @@ export function AdminOrdersPage() {
       <div className="row align-items-center g-2 mb-4">
         <div className="col-12 col-lg">
           <p className="text-secondary small mb-0">
-            Fulfillment queue and order history. Status updates can be wired to your workflow later.
+            Fulfillment queue and order history. Open an order to view details and update fulfillment status.
           </p>
         </div>
         <div className="col-12 col-lg-auto">
-        <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => void load()}>
-          <i className="bi bi-arrow-clockwise me-1" aria-hidden />
-          Refresh
-        </button>
+          <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => void load()}>
+            <i className="bi bi-arrow-clockwise me-1" aria-hidden />
+            Refresh
+          </button>
         </div>
       </div>
 
@@ -158,9 +241,15 @@ export function AdminOrdersPage() {
               </thead>
               <tbody>
                 {rows.map((o) => (
-                  <tr key={o.id}>
+                  <tr key={o.id} className={detailOrder?.id === o.id ? "table-active" : undefined}>
                     <td className="ps-4">
-                      <span className="font-monospace small text-secondary">{o.id.slice(0, 12)}…</span>
+                      <button
+                        type="button"
+                        className="btn btn-link btn-sm p-0 font-monospace text-secondary text-decoration-none"
+                        onClick={() => void openOrderDetail(o.id)}
+                      >
+                        {o.id.slice(0, 12)}…
+                      </button>
                     </td>
                     <td>
                       <span className="fw-medium text-dark d-block">{o.fullName}</span>
@@ -195,6 +284,11 @@ export function AdminOrdersPage() {
                       ) : o.paymentProvider === "zelle" ? (
                         <>
                           <span className="d-block text-dark">Zelle</span>
+                          <span className="text-capitalize">{o.paymentCompletion ?? "—"}</span>
+                        </>
+                      ) : o.paymentProvider === "payram" ? (
+                        <>
+                          <span className="d-block text-dark">PayRam</span>
                           <span className="text-capitalize">{o.paymentCompletion ?? "—"}</span>
                         </>
                       ) : (
@@ -251,7 +345,16 @@ export function AdminOrdersPage() {
                     <td>
                       <span className={orderStatusBadgeClass(o.status)}>{o.status}</span>
                     </td>
-                    <td className="pe-4 text-secondary small text-nowrap">{new Date(o.createdAt).toLocaleString()}</td>
+                    <td className="pe-4 text-secondary small text-nowrap">
+                      <div>{new Date(o.createdAt).toLocaleString()}</div>
+                      <button
+                        type="button"
+                        className="btn btn-link btn-sm p-0 mt-1 text-decoration-none"
+                        onClick={() => void openOrderDetail(o.id)}
+                      >
+                        View details
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -259,6 +362,148 @@ export function AdminOrdersPage() {
           </div>
         )}
       </div>
+
+      {detailOrder || detailLoading ? (
+        <div
+          className="modal show d-block admin-modal-surface"
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="order-detail-modal-title"
+          style={{ backgroundColor: "rgba(15, 23, 42, 0.55)" }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget && !detailLoading) closeOrderDetail();
+          }}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div className="modal-content rounded-3 border-0 shadow-lg">
+              <div className="modal-header border-0 pb-0 pt-4 px-4">
+                <div>
+                  <p className="text-uppercase text-secondary small fw-semibold mb-1">Order details</p>
+                  <h2 id="order-detail-modal-title" className="modal-title h5 fw-bold mb-0 font-monospace">
+                    {detailOrder?.id ?? "Loading…"}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label="Close"
+                  disabled={detailLoading || detailSaving}
+                  onClick={closeOrderDetail}
+                />
+              </div>
+              <div className="modal-body pt-3 px-4">
+                {detailLoading || !detailOrder ? (
+                  <p className="text-secondary small mb-0">Loading order…</p>
+                ) : (
+                  <>
+                    <div className="row g-3 mb-4">
+                      <div className="col-md-6">
+                        <p className="small text-secondary mb-1">Customer</p>
+                        <p className="mb-0 fw-semibold">{detailOrder.fullName}</p>
+                        <p className="mb-0 small text-secondary">{detailOrder.email}</p>
+                        {detailOrder.customer ? (
+                          <p className="mb-0 mt-1 small text-success">Linked account: {detailOrder.customer.name}</p>
+                        ) : null}
+                      </div>
+                      <div className="col-md-6">
+                        <p className="small text-secondary mb-1">Shipping</p>
+                        <p className="mb-0 small">
+                          {detailOrder.addressLine1}
+                          <br />
+                          {detailOrder.city}, {detailOrder.postalCode} {detailOrder.country}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="small text-secondary mb-2">Line items</p>
+                    <ul className="list-group list-group-flush border rounded-3 mb-4">
+                      {detailOrder.items.map((item, idx) => (
+                        <li key={idx} className="list-group-item d-flex justify-content-between small">
+                          <span>
+                            {item.quantity}× {item.product.name}
+                          </span>
+                          <span className="tabular-nums">
+                            ${((item.price ?? 0) * item.quantity).toFixed(2)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="row g-3 mb-4 small">
+                      <div className="col-sm-4">
+                        <span className="text-secondary d-block">Total</span>
+                        <span className="fw-semibold">${detailOrder.total.toFixed(2)}</span>
+                      </div>
+                      <div className="col-sm-4">
+                        <span className="text-secondary d-block">Payment</span>
+                        <span className="text-capitalize">
+                          {detailOrder.paymentProvider ?? "—"} ({detailOrder.paymentCompletion ?? "—"})
+                        </span>
+                      </div>
+                      <div className="col-sm-4">
+                        <span className="text-secondary d-block">Placed</span>
+                        <span>{new Date(detailOrder.createdAt).toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    <div className="border rounded-3 p-3 bg-light">
+                      <label className="form-label fw-semibold small mb-2" htmlFor="order-status-select">
+                        Fulfillment status
+                      </label>
+                      <div className="d-flex flex-wrap gap-2 align-items-center">
+                        <select
+                          id="order-status-select"
+                          className="form-select form-select-sm w-auto"
+                          value={detailStatus}
+                          disabled={detailSaving}
+                          onChange={(e) => setDetailStatus(e.target.value)}
+                        >
+                          {ORDER_STATUSES.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                        <span className={orderStatusBadgeClass(detailOrder.status)}>{detailOrder.status}</span>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-primary rounded-pill px-3"
+                          disabled={detailSaving || detailStatus === detailOrder.status}
+                          onClick={() => void saveOrderStatus()}
+                        >
+                          {detailSaving ? "Saving…" : "Update status"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {detailOrder.paymentProvider === "zelle" && detailOrder.zelleProofUrl ? (
+                      <div className="mt-3 small">
+                        <a href={detailOrder.zelleProofUrl} target="_blank" rel="noopener noreferrer">
+                          View Zelle proof
+                        </a>
+                        {detailOrder.zelleTransactionId ? (
+                          <p className="mb-0 mt-1 text-secondary">Txn: {detailOrder.zelleTransactionId}</p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </>
+                )}
+              </div>
+              <div className="modal-footer border-0 pt-0 px-4 pb-4">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary rounded-pill px-4"
+                  disabled={detailLoading || detailSaving}
+                  onClick={closeOrderDetail}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {zelleModal ? (
         <div

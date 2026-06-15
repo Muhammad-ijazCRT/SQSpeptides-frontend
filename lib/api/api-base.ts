@@ -20,16 +20,6 @@ function isLocalhostOrigin(url: string): boolean {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
 function isCloudDeploy(): boolean {
   return (
     process.env.VERCEL === "1" ||

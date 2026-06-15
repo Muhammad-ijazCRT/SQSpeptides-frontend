@@ -412,3 +412,30 @@
   background: linear-gradient(180deg, #f0d060 0%, #d4af37 100%);
   color: #0f172a;
 }
+
+/* Product add/edit modal — portaled to document.body (outside .admin-bs-root). */
+.admin-product-modal {
+  z-index: 1060;
+  overflow-y: auto;
+  padding: 0.75rem;
+}
+
+.admin-product-modal .modal-content {
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
+}
+
+.admin-product-modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: min(92vh, 52rem);
+  overflow: hidden;
+}
+
+.admin-product-modal-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}

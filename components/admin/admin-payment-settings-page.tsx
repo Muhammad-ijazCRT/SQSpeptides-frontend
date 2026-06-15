@@ -452,11 +452,15 @@ export function AdminPaymentSettingsPage() {
                   </div>
                   <div className="col-12">
                     <label className="form-label small fw-semibold text-secondary text-uppercase">From (visible to recipients)</label>
+                    <p className="small text-muted mb-1">
+                      Use the same email domain as your SMTP username (e.g. Hostinger). Mismatched From addresses are
+                      auto-corrected to your SMTP login.
+                    </p>
                     <input
                       type="text"
                       autoComplete="off"
                       className={fieldClass}
-                      placeholder="SQSpeptides <billing@yourdomain.com>"
+                      placeholder="SQSpeptides <kyleshop@kyleshop.org>"
                       value={mailFrom}
                       onChange={(e) => setMailFrom(e.target.value)}
                     />

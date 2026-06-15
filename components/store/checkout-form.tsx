@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createOrder } from "@/lib/api/orders";
+import { orderToCheckoutSuccess, saveCheckoutSuccess } from "@/lib/store/checkout-success-storage";
+import type { OrderCreated } from "@/lib/store/types";
 import { useCart } from "@/components/store/cart-context";
 import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 import { isResearchUseAttestation, RESEARCH_USE_ATTESTATION_OPTIONS } from "@/lib/store/research-attestation";
@@ -120,6 +122,11 @@ function clearPendingSnapshot() {
   }
 }
 
+function redirectToCheckoutSuccess(order: OrderCreated, router: ReturnType<typeof useRouter>) {
+  saveCheckoutSuccess(orderToCheckoutSuccess(order));
+  router.replace(`/checkout/success?orderId=${encodeURIComponent(order.id)}`);
+}
+
 export function CheckoutForm() {
   const router = useRouter();
   const { lines, subtotal, clearCart, setQuantity, removeLine } = useCart();
@@ -149,7 +156,6 @@ export function CheckoutForm() {
     email: string;
     amountUsd: string;
   } | null>(null);
-  const [payramMode, setPayramMode] = useState<"crypto" | "onramp">("crypto");
   const finalizeOnce = useRef(false);
   const checkoutSnapshotRef = useRef<CheckoutSnapshot | null>(null);
 
@@ -337,7 +343,7 @@ export function CheckoutForm() {
       checkoutSnapshotRef.current = null;
       clearPendingSnapshot();
       clearCart();
-      router.replace(`/?checkout=success&ref=${encodeURIComponent(order.id)}`);
+      redirectToCheckoutSuccess(order, router);
     } catch (err) {
       finalizeOnce.current = false;
       setPayKey((k) => k + 1);
@@ -477,6 +483,7 @@ export function CheckoutForm() {
       }
       const url = typeof invData.invoiceUrl === "string" ? invData.invoiceUrl : "";
       if (!url) throw new Error("Payment provider did not return a URL.");
+      saveCheckoutSuccess(orderToCheckoutSuccess(order));
       checkoutSnapshotRef.current = null;
       clearPendingSnapshot();
       clearCart();
@@ -528,6 +535,7 @@ export function CheckoutForm() {
         couponCode: snap.couponCode,
         paymentProvider: "zelle",
       });
+      saveCheckoutSuccess(orderToCheckoutSuccess(order));
       checkoutSnapshotRef.current = null;
       clearPendingSnapshot();
       try {
@@ -585,8 +593,8 @@ export function CheckoutForm() {
         amount: Math.max(0, Number(paymentAmountStr)),
         orderId: order.id,
         customerEmail: snap.email,
-        mode: payramMode,
       });
+      saveCheckoutSuccess(orderToCheckoutSuccess(order));
       checkoutSnapshotRef.current = null;
       clearPendingSnapshot();
       clearCart();
@@ -822,36 +830,14 @@ export function CheckoutForm() {
               )}
             </>
           ) : payGateway === "payram" ? (
-            <>
-              <div className="mb-3 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPayramMode("crypto")}
-                  className={`rounded-md border px-3 py-2 text-xs font-semibold ${
-                    payramMode === "crypto" ? "border-[#b8962e] bg-amber-50 text-amber-900" : "border-neutral-300 bg-white text-neutral-700"
-                  }`}
-                >
-                  Crypto
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPayramMode("onramp")}
-                  className={`rounded-md border px-3 py-2 text-xs font-semibold ${
-                    payramMode === "onramp" ? "border-[#b8962e] bg-amber-50 text-amber-900" : "border-neutral-300 bg-white text-neutral-700"
-                  }`}
-                >
-                  Onramp
-                </button>
-              </div>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => void startPayramCheckout()}
-                className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
-              >
-                {loading ? "Preparing…" : `Pay $${paymentAmountStr} with PayRam ${payramMode}`}
-              </button>
-            </>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => void startPayramCheckout()}
+              className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
+            >
+              {loading ? "Preparing…" : `Pay $${paymentAmountStr} with Crypto`}
+            </button>
           ) : payGateway === "zelle" ? (
             <>
               {zelleConfig === null ? (

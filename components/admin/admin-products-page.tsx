@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 type AdminProduct = {
   id: string;
@@ -22,6 +23,12 @@ const emptyForm = {
   imageUrl: "",
   rating: "5",
 };
+
+function displayImageUrl(url: string): string {
+  const s = url.trim();
+  if (s.startsWith("/images/")) return `/products/images/${s.slice("/images/".length)}`;
+  return s;
+}
 
 function formatApiError(data: unknown): string {
   if (data && typeof data === "object") {
@@ -46,6 +53,28 @@ export function AdminProductsPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [formErr, setFormErr] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageInputKey, setImageInputKey] = useState(0);
+  const [portalReady, setPortalReady] = useState(false);
+  const previewObjectUrlRef = useRef<string | null>(null);
+
+  function clearImagePreview() {
+    if (previewObjectUrlRef.current) {
+      URL.revokeObjectURL(previewObjectUrlRef.current);
+      previewObjectUrlRef.current = null;
+    }
+    setImagePreview(null);
+  }
+
+  function resetImageState(existingUrl?: string) {
+    setImageFile(null);
+    setImageInputKey((k) => k + 1);
+    clearImagePreview();
+    if (existingUrl?.trim()) {
+      setImagePreview(displayImageUrl(existingUrl));
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -90,6 +119,7 @@ export function AdminProductsPage() {
     setEditing(null);
     setForm(emptyForm);
     setFormErr(null);
+    resetImageState();
     setModalOpen(true);
   }
 
@@ -104,6 +134,7 @@ export function AdminProductsPage() {
       rating: String(p.rating),
     });
     setFormErr(null);
+    resetImageState(p.imageUrl ?? "");
     setModalOpen(true);
   }
 
@@ -113,6 +144,66 @@ export function AdminProductsPage() {
     setEditing(null);
     setForm(emptyForm);
     setFormErr(null);
+    resetImageState();
+  }
+
+  useEffect(() => {
+    setPortalReady(true);
+    return () => {
+      if (previewObjectUrlRef.current) {
+        URL.revokeObjectURL(previewObjectUrlRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [modalOpen]);
+
+  function removeProductImage() {
+    setImageFile(null);
+    clearImagePreview();
+    setForm((f) => ({ ...f, imageUrl: "" }));
+  }
+
+  function onImageFileChange(file: File | null) {
+    if (!file) return;
+    setImageFile(file);
+    clearImagePreview();
+    const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
+    if (!allowed.has(file.type)) {
+      setFormErr("Use a JPG, PNG, or WebP image.");
+      setImageFile(null);
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setFormErr("Image must be 5 MB or smaller.");
+      setImageFile(null);
+      return;
+    }
+    setFormErr(null);
+    const url = URL.createObjectURL(file);
+    previewObjectUrlRef.current = url;
+    setImagePreview(url);
+  }
+
+  async function uploadProductImage(file: File): Promise<string> {
+    const up = new FormData();
+    up.append("file", file);
+    const res = await fetch("/api/admin/products/upload", { method: "POST", body: up });
+    const data = (await res.json().catch(() => ({}))) as { message?: string | string[]; url?: string };
+    if (!res.ok) {
+      throw new Error(formatApiError(data));
+    }
+    if (!data.url || typeof data.url !== "string") {
+      throw new Error("Upload did not return a file URL.");
+    }
+    return data.url;
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -133,26 +224,31 @@ export function AdminProductsPage() {
       return;
     }
 
-    const createBody = {
-      name: form.name.trim(),
-      ...(form.slug.trim() ? { slug: form.slug.trim() } : {}),
-      ...(form.description.trim() ? { description: form.description.trim() } : {}),
-      price,
-      ...(form.imageUrl.trim() ? { imageUrl: form.imageUrl.trim() } : {}),
-      rating,
-    };
-
-    const patchBody = {
-      name: form.name.trim(),
-      ...(form.slug.trim() ? { slug: form.slug.trim() } : {}),
-      description: form.description.trim(),
-      price,
-      imageUrl: form.imageUrl.trim(),
-      rating,
-    };
-
     setSaving(true);
     try {
+      let imageUrl = form.imageUrl.trim();
+      if (imageFile) {
+        imageUrl = await uploadProductImage(imageFile);
+      }
+
+      const createBody = {
+        name: form.name.trim(),
+        ...(form.slug.trim() ? { slug: form.slug.trim() } : {}),
+        ...(form.description.trim() ? { description: form.description.trim() } : {}),
+        price,
+        ...(imageUrl ? { imageUrl } : {}),
+        rating,
+      };
+
+      const patchBody = {
+        name: form.name.trim(),
+        ...(form.slug.trim() ? { slug: form.slug.trim() } : {}),
+        description: form.description.trim(),
+        price,
+        imageUrl,
+        rating,
+      };
+
       if (editing) {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (editing.slug) headers["x-previous-product-slug"] = editing.slug;
@@ -297,121 +393,195 @@ export function AdminProductsPage() {
         )}
       </div>
 
-      {modalOpen ? (
-        <div className="modal show d-block" tabIndex={-1} role="dialog" aria-modal="true">
-          <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h2 className="modal-title h5 mb-0">{editing ? "Edit product" : "Add product"}</h2>
-                <button type="button" className="btn-close" aria-label="Close" onClick={closeModal} disabled={saving} />
+      {portalReady && modalOpen
+        ? createPortal(
+            <div
+              className="modal show d-block admin-modal-surface admin-product-modal"
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="admin-product-modal-title"
+              style={{ backgroundColor: "rgba(15, 23, 42, 0.55)" }}
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget && !saving) closeModal();
+              }}
+            >
+              <div className="modal-dialog modal-dialog-centered modal-lg my-3 my-md-4">
+                <div className="modal-content rounded-3 border-0 shadow-lg admin-product-modal-content">
+                  <div className="modal-header border-0 flex-shrink-0 px-4 pt-4 pb-0">
+                    <div>
+                      <p className="text-uppercase text-secondary small fw-semibold mb-1">
+                        {editing ? "Update catalog item" : "New catalog item"}
+                      </p>
+                      <h2 id="admin-product-modal-title" className="modal-title h5 fw-bold mb-0">
+                        {editing ? "Edit product" : "Add product"}
+                      </h2>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-close"
+                      aria-label="Close"
+                      onClick={closeModal}
+                      disabled={saving}
+                    />
+                  </div>
+                  <form className="admin-product-modal-form" onSubmit={(e) => void onSubmit(e)}>
+                    <div className="modal-body overflow-auto flex-grow-1 px-4 pt-3 pb-2">
+                      {formErr ? (
+                        <div className="alert alert-danger py-2 small" role="alert">
+                          {formErr}
+                        </div>
+                      ) : null}
+                      <div className="mb-3">
+                        <label className="form-label small fw-semibold" htmlFor="ap-name">
+                          Name <span className="text-danger">*</span>
+                        </label>
+                        <input
+                          id="ap-name"
+                          className="form-control"
+                          value={form.name}
+                          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                          required
+                          maxLength={200}
+                          disabled={saving}
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label small fw-semibold" htmlFor="ap-slug">
+                          Slug
+                        </label>
+                        <input
+                          id="ap-slug"
+                          className="form-control font-monospace"
+                          value={form.slug}
+                          onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+                          placeholder="Leave blank to auto-generate from name"
+                          maxLength={120}
+                          disabled={saving}
+                        />
+                        <p className="form-text small mb-0">URL segment: /products-catalog/your-slug</p>
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label small fw-semibold" htmlFor="ap-desc">
+                          Description
+                        </label>
+                        <textarea
+                          id="ap-desc"
+                          className="form-control"
+                          rows={4}
+                          value={form.description}
+                          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                          maxLength={8000}
+                          disabled={saving}
+                        />
+                      </div>
+                      <div className="row g-3">
+                        <div className="col-sm-6">
+                          <label className="form-label small fw-semibold" htmlFor="ap-price">
+                            Price (USD) <span className="text-danger">*</span>
+                          </label>
+                          <input
+                            id="ap-price"
+                            type="number"
+                            className="form-control"
+                            min={0}
+                            step="0.01"
+                            value={form.price}
+                            onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                            required
+                            disabled={saving}
+                          />
+                        </div>
+                        <div className="col-sm-6">
+                          <label className="form-label small fw-semibold" htmlFor="ap-rating">
+                            Rating (0–5)
+                          </label>
+                          <input
+                            id="ap-rating"
+                            type="number"
+                            className="form-control"
+                            min={0}
+                            max={5}
+                            step="0.1"
+                            value={form.rating}
+                            onChange={(e) => setForm((f) => ({ ...f, rating: e.target.value }))}
+                            disabled={saving}
+                          />
+                        </div>
+                        <div className="col-12">
+                          <label className="form-label small fw-semibold" htmlFor="ap-img">
+                            Product image
+                          </label>
+                          <input
+                            key={imageInputKey}
+                            id="ap-img"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="form-control"
+                            onChange={(e) => onImageFileChange(e.target.files?.[0] ?? null)}
+                            disabled={saving}
+                          />
+                          <p className="form-text small mb-2">
+                            {editing
+                              ? "JPG, PNG, or WebP — max 5 MB. Pick a new file to replace the image, or save without changing it."
+                              : "JPG, PNG, or WebP — max 5 MB. Optional — you can add an image now or later."}
+                          </p>
+                          {imagePreview ? (
+                            <div className="d-flex align-items-center gap-3 rounded-3 border bg-light p-3">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={imagePreview}
+                                alt={editing ? "Current product image" : "Selected product image"}
+                                className="rounded border bg-white object-fit-cover flex-shrink-0"
+                                style={{ width: 88, height: 88 }}
+                              />
+                              <div className="min-w-0">
+                                <p className="small fw-semibold text-dark mb-1">
+                                  {imageFile ? "New image selected" : editing ? "Current image" : "Image preview"}
+                                </p>
+                                <p className="small text-secondary mb-2">
+                                  {imageFile?.name ?? (form.imageUrl ? "Saved on this product" : "")}
+                                </p>
+                                {imageFile || form.imageUrl ? (
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline-secondary"
+                                    disabled={saving}
+                                    onClick={removeProductImage}
+                                  >
+                                    Remove image
+                                  </button>
+                                ) : null}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="modal-footer border-0 flex-shrink-0 px-4 pt-2 pb-4 gap-2">
+                      <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={closeModal} disabled={saving}>
+                        Cancel
+                      </button>
+                      <button type="submit" className="btn btn-primary rounded-pill px-4" disabled={saving}>
+                        {saving ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" aria-hidden />
+                            Saving…
+                          </>
+                        ) : editing ? (
+                          "Save changes"
+                        ) : (
+                          "Create product"
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
-              <form onSubmit={(e) => void onSubmit(e)}>
-                <div className="modal-body">
-                  {formErr ? (
-                    <div className="alert alert-danger py-2 small" role="alert">
-                      {formErr}
-                    </div>
-                  ) : null}
-                  <div className="mb-3">
-                    <label className="form-label small fw-semibold" htmlFor="ap-name">
-                      Name <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      id="ap-name"
-                      className="form-control"
-                      value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                      required
-                      maxLength={200}
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label small fw-semibold" htmlFor="ap-slug">
-                      Slug
-                    </label>
-                    <input
-                      id="ap-slug"
-                      className="form-control font-monospace"
-                      value={form.slug}
-                      onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-                      placeholder="Leave blank to auto-generate from name"
-                      maxLength={120}
-                    />
-                    <p className="form-text small mb-0">URL segment: /products-catalog/your-slug</p>
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label small fw-semibold" htmlFor="ap-desc">
-                      Description
-                    </label>
-                    <textarea
-                      id="ap-desc"
-                      className="form-control"
-                      rows={4}
-                      value={form.description}
-                      onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                      maxLength={8000}
-                    />
-                  </div>
-                  <div className="row g-3">
-                    <div className="col-md-4">
-                      <label className="form-label small fw-semibold" htmlFor="ap-price">
-                        Price (USD) <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        id="ap-price"
-                        type="number"
-                        className="form-control"
-                        min={0}
-                        step="0.01"
-                        value={form.price}
-                        onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label small fw-semibold" htmlFor="ap-rating">
-                        Rating (0–5)
-                      </label>
-                      <input
-                        id="ap-rating"
-                        type="number"
-                        className="form-control"
-                        min={0}
-                        max={5}
-                        step="0.1"
-                        value={form.rating}
-                        onChange={(e) => setForm((f) => ({ ...f, rating: e.target.value }))}
-                      />
-                    </div>
-                    <div className="col-md-12">
-                      <label className="form-label small fw-semibold" htmlFor="ap-img">
-                        Image URL
-                      </label>
-                      <input
-                        id="ap-img"
-                        className="form-control font-monospace small"
-                        value={form.imageUrl}
-                        onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-                        placeholder="https://… or /path from public"
-                        maxLength={2000}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-outline-secondary" onClick={closeModal} disabled={saving}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary" disabled={saving}>
-                    {saving ? "Saving…" : editing ? "Save changes" : "Create product"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      ) : null}
-      {modalOpen ? <div className="modal-backdrop fade show" aria-hidden onClick={closeModal} /> : null}
+            </div>,
+            document.body
+          )
+        : null}
     </>
   );
 }
