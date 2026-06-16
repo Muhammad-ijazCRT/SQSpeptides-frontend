@@ -1,11 +1,14 @@
 import { Suspense } from "react";
 import { ProductCatalogClient } from "@/components/store/catalog/product-catalog-client";
 import { fetchProducts } from "@/lib/api/products";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata = {
+export const metadata = buildPageMetadata({
   title: "Product Catalog",
-  description: "All research peptides — laboratory use only.",
-};
+  description:
+    "Browse research-grade peptides and laboratory supplies. 99.9% purity compounds for qualified professionals — laboratory use only.",
+  path: "/products-catalog",
+});
 
 export const revalidate = 60;
 

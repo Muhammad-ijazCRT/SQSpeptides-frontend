@@ -1,8 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { JsonLd } from "@/components/seo/json-ld";
 import { ProductDetailActions } from "@/components/store/product-detail-actions";
 import { fetchProductBySlug } from "@/lib/api/products";
+import { productJsonLd } from "@/lib/seo/json-ld";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
 
 const detailImageSizes = "(max-width: 1023px) 100vw, (max-width: 1535px) 50vw, 640px";
@@ -28,8 +31,17 @@ export async function generateMetadata({ params }: Props) {
   } catch {
     return { title: "Product | SQSpeptides" };
   }
-  if (!product) return { title: "Product | SQSpeptides" };
-  return { title: `${product.name} | SQSpeptides` };
+  if (!product) return { title: "Product" };
+  const img = resolveProductImage(product);
+  const description =
+    product.description?.trim() ||
+    `${product.name} — 99.9% purity research peptide for laboratory use only. Not for human consumption.`;
+  return buildPageMetadata({
+    title: product.name,
+    description,
+    path: `/products-catalog/${product.slug}`,
+    ogImage: img,
+  });
 }
 
 export default async function ProductDetailPage({ params }: Props) {
@@ -46,6 +58,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
   return (
     <div className="bg-white text-black">
+      <JsonLd data={productJsonLd(product)} />
       <div className="border-b border-[#c9a227] bg-[#c9a227] py-2 text-center text-xs font-bold uppercase tracking-widest text-white">
         For Research Use Only
       </div>

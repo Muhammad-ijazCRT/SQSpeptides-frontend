@@ -54,6 +54,12 @@ const nextConfig: NextConfig = {
     return [
       // `/products` → catalog is handled in `middleware.ts` so `/products/images/*` (public files) is never redirected.
       { source: "/contact", destination: "/contact-us", permanent: true },
+      { source: "/catalog", destination: "/products-catalog", permanent: true },
+      { source: "/shop", destination: "/products-catalog", permanent: true },
+      { source: "/home", destination: "/", permanent: true },
+      { source: "/lab-calculator", destination: "/products-catalog", permanent: true },
+      { source: "/products-catalog/", destination: "/products-catalog", permanent: true },
+      { source: "/about", destination: "/about-us", permanent: true },
       { source: "/favicon.ico", destination: "/logo.png", permanent: false },
     ];
   },

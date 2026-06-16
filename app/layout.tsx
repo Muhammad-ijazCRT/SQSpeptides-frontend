@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { JsonLd } from "@/components/seo/json-ld";
+import { organizationJsonLd, webSiteJsonLd } from "@/lib/seo/json-ld";
+import { rootSiteMetadata } from "@/lib/seo/metadata";
 import "sonner/dist/styles.css";
 import "./globals.css";
 
@@ -13,13 +15,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "SQSpeptides | Research Peptides",
-    template: "%s | SQSpeptides",
-  },
-  description:
-    "Research peptides and lab supplies for qualified professionals. U.S. business with published policies and secure checkout.",
+export const metadata = {
+  ...rootSiteMetadata,
   icons: {
     icon: [{ url: "/logo.png", type: "image/png" }],
     shortcut: "/logo.png",
@@ -51,6 +48,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        <JsonLd data={[organizationJsonLd(), webSiteJsonLd()]} />
         {children}
       </body>
     </html>
