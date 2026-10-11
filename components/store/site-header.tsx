@@ -180,7 +180,9 @@ export function SiteHeader() {
             ) : (
               <Link
                 href={customerAuthed ? "/account/dashboard" : "/account/login"}
-                className="ml-1 hidden rounded-md bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 sm:inline"
+                className={`ml-1 hidden rounded-md px-4 py-2 text-sm font-semibold text-white sm:inline ${
+                  customerAuthed ? "bg-black hover:bg-neutral-800" : "bg-red-600 hover:bg-red-700"
+                }`}
               >
                 {customerAuthed ? "Dashboard" : "Login"}
               </Link>
@@ -268,7 +270,9 @@ export function SiteHeader() {
             ) : (
               <Link
                 href={customerAuthed ? "/account/dashboard" : "/account/login"}
-                className="mt-2 flex w-full items-center justify-center rounded-md bg-black py-2.5 text-sm font-semibold text-white sm:hidden"
+                className={`mt-2 flex w-full items-center justify-center rounded-md py-2.5 text-sm font-semibold text-white sm:hidden ${
+                  customerAuthed ? "bg-black" : "bg-red-600"
+                }`}
               >
                 {customerAuthed ? "Dashboard" : "Login"}
               </Link>
