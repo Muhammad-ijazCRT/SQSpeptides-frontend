@@ -400,7 +400,7 @@ export function CheckoutForm() {
     const researchVal = selectTrim(researchCategoryRef, researchCategory);
 
     const fail = (message: string) => {
-      setError(null);
+      setError(message);
       showToast(message, "error");
       return false;
     };
@@ -455,7 +455,9 @@ export function CheckoutForm() {
   function prepareSnapshotForPayment(): boolean {
     setError(null);
     if (lines.length === 0) {
-      showToast("Your cart is empty.", "error");
+      const msg = "Your cart is empty.";
+      setError(msg);
+      showToast(msg, "error");
       return false;
     }
     if (!validateShipping()) return false;
@@ -463,7 +465,8 @@ export function CheckoutForm() {
     checkoutSnapshotRef.current = snap;
     savePendingSnapshot(snap);
     finalizeOnce.current = false;
-    setPayKey((k) => k + 1);
+    // Do not bump payKey here — remounting CheckoutCrossmint mid-click wipes in-flight
+    // createOrder state and any Crossmint API errors (appears as a silent no-op).
     return true;
   }
 
@@ -905,6 +908,9 @@ export function CheckoutForm() {
               disabled={loading}
               onBeforeStartPayment={prepareSnapshotForPayment}
               onPaymentComplete={() => void finalizeOrder()}
+              onError={(message) => {
+                showToast(message, "error");
+              }}
             />
           ) : (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">

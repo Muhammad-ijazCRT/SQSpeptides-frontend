@@ -61,11 +61,11 @@ export default async function ProductDetailPage({ params }: Props) {
   return (
     <div className="bg-white text-black">
       <JsonLd data={productJsonLd(product)} />
-      <div className="border-b border-[#c9a227] bg-[#c9a227] py-2 text-center text-xs font-bold uppercase tracking-widest text-white">
-        For Research Use Only
-      </div>
-
       <div className="mx-auto max-w-[1480px] px-4 py-10 sm:px-6 lg:px-10 lg:py-16">
+        <div className="border-b border-[#c9a227] bg-[#c9a227] py-2 text-center text-xs font-bold uppercase tracking-widest text-white">
+          For Research Use Only
+        </div>
+
         <Link
           href="/products-catalog"
           className="inline-flex items-center gap-2 text-sm font-semibold text-[#9a7b1a] transition hover:underline sm:text-base"

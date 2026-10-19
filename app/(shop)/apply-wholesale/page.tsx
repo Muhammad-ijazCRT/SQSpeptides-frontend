@@ -2,7 +2,8 @@ import { ApplyWholesaleContent } from "@/components/store/apply-wholesale-conten
 
 export const metadata = {
   title: "Apply for Wholesale",
-  description: "Register a wholesale account with SQSpeptides — laboratory use only.",
+  description:
+    "Apply for SQSpeptides wholesale pricing — volume rates, priority fulfillment, and dedicated support for qualified research laboratories.",
 };
 
 export default function ApplyWholesalePage() {

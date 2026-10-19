@@ -24,9 +24,8 @@ const catalogLinks = [
 const companyLinks = [
   { href: "/about-us", label: "About us" },
   { href: "/contact-us", label: "Contact us" },
-  { href: "/account/dashboard", label: "My account" },
   { href: "/account/orders", label: "Orders & tracking" },
-  { href: "/contact-us", label: "COA / batch docs" },
+  { href: "/coa", label: "COA / batch docs" },
 ] as const;
 
 const legalLinks = [
@@ -77,7 +76,7 @@ export function SiteFooter() {
       />
 
       <div className="relative border-t-2 border-[#D4AF37]">
-        <div className="overflow-hidden bg-[#c9a227] py-2 text-[11px] font-semibold uppercase tracking-wide text-white sm:text-xs">
+        {/* <div className="overflow-hidden bg-[#c9a227] py-2 text-[11px] font-semibold uppercase tracking-wide text-white sm:text-xs">
           <div
             className="flex w-max px-4"
             style={{ animation: "marquee 35s linear infinite" }}
@@ -99,7 +98,7 @@ export function SiteFooter() {
               <span className="text-[#ffb020]">▶</span>
             </span>
           </div>
-        </div>
+        </div> */}
 
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
           <div className="grid gap-10 sm:gap-12 lg:grid-cols-12 lg:gap-10">

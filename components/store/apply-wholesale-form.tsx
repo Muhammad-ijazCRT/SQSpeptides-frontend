@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
-
-const fieldClass =
-  "mt-1.5 w-full rounded border border-neutral-300 bg-white px-3 py-2.5 text-base text-black outline-none transition focus:border-black focus:ring-1 focus:ring-black";
-const labelClass = "block text-sm font-medium text-neutral-700";
+import { useId, useState } from "react";
+import { notify } from "@/lib/notifications/notify";
 
 export function ApplyWholesaleForm() {
   const [payment, setPayment] = useState<"bank" | "credit">("bank");
   const [sent, setSent] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const formId = useId();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -16,109 +16,276 @@ export function ApplyWholesaleForm() {
     const fileInput = form.elements.namedItem("w9") as HTMLInputElement;
     const file = fileInput?.files?.[0];
     if (file && file.size > 5 * 1024 * 1024) {
-      alert("W9 file must be 5MB or smaller.");
+      notify.warning("W9 file must be 5MB or smaller.");
       return;
     }
     setSent(true);
+    notify.success("Thank you — your wholesale application has been received.");
   }
 
+  function fieldShell(name: string) {
+    const active = focused === name;
+    return [
+      "rounded-xl border bg-white transition duration-200",
+      active
+        ? "border-[#C5A02B] shadow-[0_0_0_3px_rgba(197,160,43,0.16)]"
+        : "border-neutral-200 hover:border-neutral-300",
+    ].join(" ");
+  }
+
+  const inputClass =
+    "w-full rounded-xl bg-transparent px-4 py-3.5 text-base text-neutral-950 outline-none placeholder:text-neutral-400";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className={labelClass} htmlFor="ww-name">
-          Your Name
+    <form onSubmit={handleSubmit} className="space-y-5" noValidate={false}>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <label className="block">
+          <span className="mb-2 block text-sm font-semibold text-neutral-900">
+            Your Name <span className="text-red-500">*</span>
+          </span>
+          <div className={fieldShell("name")}>
+            <input
+              id={`${formId}-name`}
+              name="name"
+              type="text"
+              required
+              placeholder="Full name"
+              autoComplete="name"
+              className={inputClass}
+              onFocus={() => setFocused("name")}
+              onBlur={() => setFocused(null)}
+            />
+          </div>
         </label>
-        <input id="ww-name" name="name" type="text" required className={fieldClass} autoComplete="name" />
-      </div>
-      <div>
-        <label className={labelClass} htmlFor="ww-username">
-          Username
+
+        <label className="block">
+          <span className="mb-2 block text-sm font-semibold text-neutral-900">
+            Username <span className="text-red-500">*</span>
+          </span>
+          <div className={fieldShell("username")}>
+            <input
+              id={`${formId}-username`}
+              name="username"
+              type="text"
+              required
+              placeholder="Choose a username"
+              autoComplete="username"
+              className={inputClass}
+              onFocus={() => setFocused("username")}
+              onBlur={() => setFocused(null)}
+            />
+          </div>
         </label>
-        <input id="ww-username" name="username" type="text" required className={fieldClass} autoComplete="username" />
-      </div>
-      <div>
-        <label className={labelClass} htmlFor="ww-account-email">
-          Account Email
-        </label>
-        <input id="ww-account-email" name="accountEmail" type="email" required className={fieldClass} autoComplete="email" />
-      </div>
-      <div>
-        <label className={labelClass} htmlFor="ww-payment-email">
-          Payment Email
-        </label>
-        <input id="ww-payment-email" name="paymentEmail" type="email" required className={fieldClass} autoComplete="email" />
-      </div>
-      <div>
-        <label className={labelClass} htmlFor="ww-website">
-          Website URL
-        </label>
-        <input id="ww-website" name="website" type="url" className={fieldClass} placeholder="https://" />
-      </div>
-      <div>
-        <label className={labelClass} htmlFor="ww-promote">
-          How will you promote us?
-        </label>
-        <textarea
-          id="ww-promote"
-          name="plans"
-          required
-          rows={6}
-          className={`${fieldClass} min-h-[160px] resize-y`}
-        />
       </div>
 
+      <div className="grid gap-5 sm:grid-cols-2">
+        <label className="block">
+          <span className="mb-2 block text-sm font-semibold text-neutral-900">
+            Account Email <span className="text-red-500">*</span>
+          </span>
+          <div className={fieldShell("accountEmail")}>
+            <input
+              id={`${formId}-account-email`}
+              name="accountEmail"
+              type="email"
+              required
+              placeholder="you@lab.example"
+              autoComplete="email"
+              className={inputClass}
+              onFocus={() => setFocused("accountEmail")}
+              onBlur={() => setFocused(null)}
+            />
+          </div>
+        </label>
+
+        <label className="block">
+          <span className="mb-2 block text-sm font-semibold text-neutral-900">
+            Payment Email <span className="text-red-500">*</span>
+          </span>
+          <div className={fieldShell("paymentEmail")}>
+            <input
+              id={`${formId}-payment-email`}
+              name="paymentEmail"
+              type="email"
+              required
+              placeholder="payments@lab.example"
+              autoComplete="email"
+              className={inputClass}
+              onFocus={() => setFocused("paymentEmail")}
+              onBlur={() => setFocused(null)}
+            />
+          </div>
+        </label>
+      </div>
+
+      <label className="block">
+        <span className="mb-2 block text-sm font-semibold text-neutral-900">Website URL</span>
+        <div className={fieldShell("website")}>
+          <input
+            id={`${formId}-website`}
+            name="website"
+            type="url"
+            placeholder="https://"
+            className={inputClass}
+            onFocus={() => setFocused("website")}
+            onBlur={() => setFocused(null)}
+          />
+        </div>
+      </label>
+
+      <label className="block">
+        <span className="mb-2 block text-sm font-semibold text-neutral-900">
+          How will you promote us? <span className="text-red-500">*</span>
+        </span>
+        <div className={fieldShell("plans")}>
+          <textarea
+            id={`${formId}-plans`}
+            name="plans"
+            required
+            rows={6}
+            placeholder="Tell us about your lab, audience, and how you plan to promote SQSpeptides…"
+            className={`${inputClass} min-h-[150px] resize-y`}
+            onFocus={() => setFocused("plans")}
+            onBlur={() => setFocused(null)}
+          />
+        </div>
+      </label>
+
       <fieldset className="space-y-3 border-0 p-0">
-        <legend className={labelClass}>Payment Preference</legend>
-        <label className="flex cursor-pointer items-start gap-3 pt-2">
+        <legend className="mb-3 block text-sm font-semibold text-neutral-900">
+          Payment Preference <span className="text-red-500">*</span>
+        </legend>
+
+        <label
+          className={[
+            "flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition duration-200",
+            payment === "bank"
+              ? "border-[#C5A02B] bg-[#C5A02B]/[0.06] shadow-[0_0_0_3px_rgba(197,160,43,0.12)]"
+              : "border-neutral-200 bg-white hover:border-neutral-300",
+          ].join(" ")}
+        >
           <input
             type="radio"
             name="paymentPreference"
             value="bank"
             checked={payment === "bank"}
             onChange={() => setPayment("bank")}
-            className="mt-1 h-4 w-4 border-neutral-400 text-black focus:ring-black"
+            className="mt-1 h-4 w-4 border-neutral-400 text-[#C5A02B] focus:ring-[#C5A02B]"
           />
-          <span className="text-sm text-neutral-800">Cash / Bank Payment (W9 form required)</span>
+          <span>
+            <span className="block text-sm font-semibold text-neutral-900">
+              Cash / Bank Payment
+            </span>
+            <span className="mt-0.5 block text-xs leading-snug text-neutral-500">
+              W9 form required for payout processing
+            </span>
+          </span>
         </label>
-        <label className="flex cursor-pointer items-start gap-3">
+
+        <label
+          className={[
+            "flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition duration-200",
+            payment === "credit"
+              ? "border-[#C5A02B] bg-[#C5A02B]/[0.06] shadow-[0_0_0_3px_rgba(197,160,43,0.12)]"
+              : "border-neutral-200 bg-white hover:border-neutral-300",
+          ].join(" ")}
+        >
           <input
             type="radio"
             name="paymentPreference"
             value="credit"
             checked={payment === "credit"}
             onChange={() => setPayment("credit")}
-            className="mt-1 h-4 w-4 border-neutral-400 text-black focus:ring-black"
+            className="mt-1 h-4 w-4 border-neutral-400 text-[#C5A02B] focus:ring-[#C5A02B]"
           />
-          <span className="text-sm text-neutral-800">Receive as Store Credit (no W9 needed)</span>
+          <span>
+            <span className="block text-sm font-semibold text-neutral-900">
+              Receive as Store Credit
+            </span>
+            <span className="mt-0.5 block text-xs leading-snug text-neutral-500">
+              No W9 needed — credit applied to future orders
+            </span>
+          </span>
         </label>
       </fieldset>
 
       <div>
-        <label className={labelClass} htmlFor="ww-w9">
-          Upload W9 Form (PDF, JPG, PNG) <span className="font-normal text-neutral-500">Max file size: 5MB</span>
+        <span className="mb-2 block text-sm font-semibold text-neutral-900">
+          Upload W9 Form{" "}
+          <span className="font-normal text-neutral-500">(PDF, JPG, PNG · Max 5MB)</span>
+          {payment === "bank" ? <span className="text-red-500"> *</span> : null}
+        </span>
+        <label
+          htmlFor={`${formId}-w9`}
+          className={[
+            "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-8 text-center transition duration-200",
+            focused === "w9"
+              ? "border-[#C5A02B] bg-[#C5A02B]/[0.04] shadow-[0_0_0_3px_rgba(197,160,43,0.12)]"
+              : "border-neutral-300 bg-neutral-50/80 hover:border-[#C5A02B]/60 hover:bg-[#C5A02B]/[0.03]",
+          ].join(" ")}
+        >
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#C5A02B]/12 text-[#C5A02B]">
+            <UploadIcon />
+          </span>
+          <span className="text-sm font-semibold text-neutral-900">
+            {fileName ? fileName : "Click to upload or drag and drop"}
+          </span>
+          <span className="text-xs text-neutral-500">
+            {payment === "bank"
+              ? "Required for bank / cash payment preference"
+              : "Optional when using store credit"}
+          </span>
+          <input
+            id={`${formId}-w9`}
+            name="w9"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+            required={payment === "bank"}
+            className="sr-only"
+            onFocus={() => setFocused("w9")}
+            onBlur={() => setFocused(null)}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              setFileName(file?.name ?? null);
+            }}
+          />
         </label>
-        <input
-          id="ww-w9"
-          name="w9"
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-          className="mt-2 block w-full text-sm text-neutral-600 file:mr-4 file:rounded-md file:border file:border-neutral-300 file:bg-neutral-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-black hover:file:bg-neutral-100"
-        />
       </div>
 
-      <div className="flex flex-col items-start gap-3 pt-2">
-        <button
-          type="submit"
-          className="rounded-md border border-rose-300 bg-rose-50 px-8 py-2.5 text-sm font-semibold text-rose-600 transition hover:border-rose-400 hover:bg-rose-100 hover:text-rose-700"
-        >
-          Register
-        </button>
-        {sent ? (
-          <p className="text-sm font-medium text-neutral-700" role="status">
-            Thank you — your wholesale application has been received. We will review and respond by email.
-          </p>
-        ) : null}
-      </div>
+      <button
+        type="submit"
+        disabled={sent}
+        className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#C5A02B] to-[#8E701D] px-8 text-sm font-bold text-white shadow-[0_10px_24px_-12px_rgba(142,112,29,0.7)] transition duration-300 hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A02B] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 sm:min-h-[3.25rem] sm:text-[15px]"
+      >
+        <span>{sent ? "Application submitted" : "Submit Application"}</span>
+        {!sent ? <ArrowIcon className="transition duration-300 group-hover:translate-x-0.5" /> : null}
+      </button>
     </form>
+  );
+}
+
+function ArrowIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      aria-hidden
+    >
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+      <path d="M12 16V5M8.5 8.5 12 5l3.5 3.5" />
+      <path d="M4 16.5V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.5" />
+    </svg>
   );
 }

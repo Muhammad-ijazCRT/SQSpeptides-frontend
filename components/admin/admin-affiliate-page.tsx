@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { notify } from "@/lib/notifications/notify";
 
 type Settings = { affiliateCommissionPercent: number };
 
@@ -46,8 +47,6 @@ export function AdminAffiliatePage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [pctDraft, setPctDraft] = useState("10");
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [resolveModal, setResolveModal] = useState<ResolveModal | null>(null);
   const [modalRejectionReason, setModalRejectionReason] = useState("");
@@ -63,7 +62,6 @@ export function AdminAffiliatePage() {
   }, [payouts]);
 
   const load = useCallback(async () => {
-    setErr(null);
     setLoading(true);
     try {
       const [sRes, pRes] = await Promise.all([
@@ -80,7 +78,7 @@ export function AdminAffiliatePage() {
         setPayouts([]);
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed to load");
+      notify.error(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
     }
@@ -91,7 +89,6 @@ export function AdminAffiliatePage() {
   }, [load]);
 
   function openResolveModal(id: string, mode: "paid" | "rejected") {
-    setErr(null);
     setModalRejectionReason("");
     setModalAdminNote("");
     setResolveModal({ id, mode });
@@ -99,9 +96,8 @@ export function AdminAffiliatePage() {
 
   async function submitResolveModal() {
     if (!resolveModal) return;
-    setErr(null);
     if (resolveModal.mode === "rejected" && !modalRejectionReason.trim()) {
-      setErr("Enter a rejection reason — the affiliate will see it on their dashboard.");
+      notify.warning("Enter a rejection reason — the affiliate will see it on their dashboard.");
       return;
     }
     setModalSubmitting(true);
@@ -120,7 +116,7 @@ export function AdminAffiliatePage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr(
+        notify.error(
           typeof data.message === "string"
             ? data.message
             : Array.isArray(data.message)
@@ -130,7 +126,7 @@ export function AdminAffiliatePage() {
         return;
       }
       setResolveModal(null);
-      setMsg(resolveModal.mode === "paid" ? "Marked as paid and balance deducted." : "Request rejected.");
+      notify.success(resolveModal.mode === "paid" ? "Marked as paid and balance deducted." : "Request rejected.");
       await load();
     } finally {
       setModalSubmitting(false);
@@ -139,11 +135,9 @@ export function AdminAffiliatePage() {
 
   async function saveSettings(e: React.FormEvent) {
     e.preventDefault();
-    setMsg(null);
-    setErr(null);
     const n = parseFloat(pctDraft);
     if (!Number.isFinite(n) || n < 10 || n > 100) {
-      setErr("Commission must be between 10% and 100%.");
+      notify.warning("Commission must be between 10% and 100%.");
       return;
     }
     const res = await fetch("/api/admin/affiliate/settings", {
@@ -153,11 +147,11 @@ export function AdminAffiliatePage() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setErr(typeof data.message === "string" ? data.message : "Save failed");
+      notify.error(typeof data.message === "string" ? data.message : "Save failed");
       return;
     }
     setSettings(data as Settings);
-    setMsg("Commission rate saved.");
+    notify.success("Commission rate saved.");
   }
 
   if (loading && !settings) {
@@ -187,17 +181,6 @@ export function AdminAffiliatePage() {
           </p>
         </div>
       </header>
-
-      {err ? (
-        <div className="alert alert-danger border-0 rounded-3 shadow-sm py-3 small mb-3" role="alert">
-          {err}
-        </div>
-      ) : null}
-      {msg ? (
-        <div className="alert alert-success border-0 rounded-3 shadow-sm py-3 small mb-3" role="status">
-          {msg}
-        </div>
-      ) : null}
 
       <div className="row g-3 g-xl-4 mb-4">
         <div className="col-sm-6 col-xl-3">

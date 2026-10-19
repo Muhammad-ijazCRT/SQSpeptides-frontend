@@ -16,12 +16,21 @@ type Props = {
   onPaymentComplete: (info: CheckoutPaymentInfo) => void;
   /** Validate shipping and persist checkout snapshot before opening Crossmint. Return false to block. */
   onBeforeStartPayment?: () => boolean;
+  /** Surface Crossmint API failures to the parent checkout form (toast + banner). */
+  onError?: (message: string) => void;
 };
 
 /** Embedded checkout user must match the linked-wallet identity used for card settlement. */
 const CROSSMINT_CHECKOUT_EMAIL = ONRAMP_RETURNING_EMAIL.trim();
 
-export function CheckoutCrossmint({ clientApiKey, amountUsd, disabled, onPaymentComplete, onBeforeStartPayment }: Props) {
+export function CheckoutCrossmint({
+  clientApiKey,
+  amountUsd,
+  disabled,
+  onPaymentComplete,
+  onBeforeStartPayment,
+  onError,
+}: Props) {
   const completedRef = useRef(false);
 
   const { order, createOrder, orderId, clientSecret } = useCrossmintOnramp({
@@ -31,6 +40,8 @@ export function CheckoutCrossmint({ clientApiKey, amountUsd, disabled, onPayment
 
   const onPaymentCompleteRef = useRef(onPaymentComplete);
   onPaymentCompleteRef.current = onPaymentComplete;
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
 
   const handleMessage = useCallback((event: MessageEvent) => {
     const data = event.data;
@@ -48,6 +59,12 @@ export function CheckoutCrossmint({ clientApiKey, amountUsd, disabled, onPayment
     return () => window.removeEventListener("message", handleMessage);
   }, [orderId, handleMessage]);
 
+  useEffect(() => {
+    if (order.status === "error" && order.error) {
+      onErrorRef.current?.(order.error);
+    }
+  }, [order.status, order.error]);
+
   const apiKey = clientApiKey.trim();
   if (!apiKey) {
     return null;
@@ -56,7 +73,12 @@ export function CheckoutCrossmint({ clientApiKey, amountUsd, disabled, onPayment
   async function startPay() {
     if (onBeforeStartPayment && !onBeforeStartPayment()) return;
     completedRef.current = false;
-    await createOrder(amountUsd);
+    try {
+      await createOrder(amountUsd);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Could not start card payment.";
+      onErrorRef.current?.(message);
+    }
   }
 
   return (
@@ -100,9 +122,6 @@ export function CheckoutCrossmint({ clientApiKey, amountUsd, disabled, onPayment
           </CrossmintProvider>
         </>
       )}
-      {order.status === "error" && order.error ? (
-        <p className="text-center text-sm text-red-600">{order.error}</p>
-      ) : null}
     </div>
   );
 }

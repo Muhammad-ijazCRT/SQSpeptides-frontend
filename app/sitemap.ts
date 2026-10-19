@@ -12,6 +12,7 @@ const STATIC_PATHS: Array<{
   { path: "/popular-peptides", changeFrequency: "weekly", priority: 0.85 },
   { path: "/about-us", changeFrequency: "monthly", priority: 0.7 },
   { path: "/contact-us", changeFrequency: "monthly", priority: 0.7 },
+  { path: "/coa", changeFrequency: "weekly", priority: 0.7 },
   { path: "/apply-wholesale", changeFrequency: "monthly", priority: 0.65 },
   { path: "/privacy-policy", changeFrequency: "yearly", priority: 0.4 },
   { path: "/terms", changeFrequency: "yearly", priority: 0.4 },

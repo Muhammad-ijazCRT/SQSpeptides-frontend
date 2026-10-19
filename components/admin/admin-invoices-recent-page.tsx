@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { invoiceStatusBadgeClass, type InvoiceRow } from "@/components/admin/admin-invoices-types";
+import { notify } from "@/lib/notifications/notify";
 
 function invoiceSearchBlob(r: InvoiceRow): string {
   const amountFormatted = new Intl.NumberFormat("en-US", {
@@ -35,8 +36,6 @@ function invoiceSearchBlob(r: InvoiceRow): string {
 export function AdminInvoicesRecentPage() {
   const [rows, setRows] = useState<InvoiceRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [markModal, setMarkModal] = useState<InvoiceRow | null>(null);
@@ -54,18 +53,17 @@ export function AdminInvoicesRecentPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setErr(null);
     try {
       const res = await fetch("/api/admin/payment-invoices", { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr(typeof data.message === "string" ? data.message : "Could not load invoices.");
+        notify.error(typeof data.message === "string" ? data.message : "Could not load invoices.");
         setRows([]);
         return;
       }
       setRows(Array.isArray(data) ? data : []);
     } catch {
-      setErr("Network error.");
+      notify.error("Network error.");
       setRows([]);
     } finally {
       setLoading(false);
@@ -79,17 +77,15 @@ export function AdminInvoicesRecentPage() {
   async function copyText(text: string) {
     try {
       await navigator.clipboard.writeText(text);
-      setMsg("Copied to clipboard.");
-      setTimeout(() => setMsg(null), 2500);
+      notify.success("Copied to clipboard.");
     } catch {
-      setErr("Could not copy — select the link manually.");
+      notify.error("Could not copy — select the link manually.");
     }
   }
 
   async function submitMarkPaid() {
     if (!markModal) return;
     setMarkBusy(true);
-    setErr(null);
     try {
       const res = await fetch(`/api/admin/payment-invoices/${encodeURIComponent(markModal.id)}/mark-external-paid`, {
         method: "PATCH",
@@ -102,10 +98,10 @@ export function AdminInvoicesRecentPage() {
       }
       setMarkModal(null);
       setMarkNote("");
-      setMsg("Marked as paid. Customer confirmation email was sent if mail is configured.");
+      notify.success("Marked as paid. Customer confirmation email was sent if mail is configured.");
       await load();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Update failed");
+      notify.error(e instanceof Error ? e.message : "Update failed");
     } finally {
       setMarkBusy(false);
     }
@@ -131,17 +127,6 @@ export function AdminInvoicesRecentPage() {
           Refresh
         </button>
       </div>
-
-      {err ? (
-        <div className="alert alert-danger border-0 rounded-3 shadow-sm py-3 small mb-3" role="alert">
-          {err}
-        </div>
-      ) : null}
-      {msg ? (
-        <div className="alert alert-success border-0 rounded-3 shadow-sm py-3 small mb-3" role="status">
-          {msg}
-        </div>
-      ) : null}
 
       <div className="row g-3 g-xl-4 mb-4">
         <div className="col-sm-6 col-lg-4">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { notify } from "@/lib/notifications/notify";
 import type { AffiliateMe } from "./types";
 
 export function useAffiliateMe() {
@@ -14,6 +15,7 @@ export function useAffiliateMe() {
     const res = await fetch("/api/customer/affiliate/me", { cache: "no-store" });
     if (!res.ok) {
       setErr("Could not load affiliate data.");
+      notify.error("Could not load affiliate data.");
       setData(null);
       setLoading(false);
       return;

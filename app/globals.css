@@ -126,6 +126,58 @@
   }
 }
 
+@keyframes about-hero-ken-burns {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.05) translate(-1%, 0.4%);
+  }
+}
+
+@keyframes about-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.about-hero-bg-motion {
+  animation: about-hero-ken-burns 30s ease-in-out infinite alternate;
+}
+
+.about-fade-up {
+  animation: about-fade-up 0.9s ease-out both;
+}
+
+.about-fade-up-delay {
+  animation: about-fade-up 0.9s ease-out 0.12s both;
+}
+
+.about-fade-up-delay-2 {
+  animation: about-fade-up 0.9s ease-out 0.24s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-hero-bg-motion,
+  .about-fade-up,
+  .about-fade-up-delay,
+  .about-fade-up-delay-2 {
+    animation: none;
+  }
+
+  .about-fade-up,
+  .about-fade-up-delay,
+  .about-fade-up-delay-2 {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 
 :root {
   --radius: 0.625rem;
@@ -240,4 +292,155 @@
     transform: scale(1.05);
     transition: opacity 400ms ease-in, transform 400ms ease-in;
   }
+}
+
+/* React-Toastify — shared storefront + admin look */
+.sqs-toast-container {
+  z-index: 10050;
+  width: min(22rem, calc(100vw - 1.5rem));
+  padding: 0.75rem;
+}
+
+.sqs-toast-container .Toastify__toast {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.sqs-toast {
+  border-radius: 0.75rem !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.22) !important;
+  font-size: 0.9375rem !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  min-height: 3.25rem !important;
+  padding: 0.75rem 0.85rem !important;
+  color: #0f172a !important;
+  background: #ffffff !important;
+}
+
+.Toastify__toast-body {
+  margin: 0 !important;
+  padding: 0.15rem 0 !important;
+  align-items: flex-start !important;
+}
+
+.Toastify__progress-bar {
+  height: 3px !important;
+}
+
+.Toastify__toast--success {
+  border-left: 4px solid #16a34a !important;
+}
+
+.Toastify__toast--success .Toastify__progress-bar {
+  background: #16a34a !important;
+}
+
+.Toastify__toast--error {
+  border-left: 4px solid #dc2626 !important;
+}
+
+.Toastify__toast--error .Toastify__progress-bar {
+  background: #dc2626 !important;
+}
+
+.Toastify__toast--warning {
+  border-left: 4px solid #d4af37 !important;
+}
+
+.Toastify__toast--warning .Toastify__progress-bar {
+  background: #c5a02b !important;
+}
+
+.Toastify__toast--info {
+  border-left: 4px solid #2563eb !important;
+}
+
+.Toastify__toast--info .Toastify__progress-bar {
+  background: #2563eb !important;
+}
+
+.Toastify__toast--default {
+  border-left: 4px solid #c5a02b !important;
+}
+
+.Toastify__close-button {
+  opacity: 0.55;
+  align-self: flex-start;
+  margin-top: 0.15rem;
+}
+
+.Toastify__close-button:hover {
+  opacity: 1;
+}
+
+@media (max-width: 480px) {
+  .sqs-toast-container {
+    width: 100vw;
+    left: 0 !important;
+    right: 0 !important;
+    padding: 0.5rem 0.65rem;
+    margin: 0;
+  }
+
+  .sqs-toast {
+    margin-bottom: 0.5rem !important;
+    border-radius: 0.65rem !important;
+  }
+}
+
+/* Dual-thumb catalog price range — track clicks pass through; only thumbs capture */
+.catalog-dual-range {
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+}
+
+.catalog-dual-range::-webkit-slider-runnable-track {
+  height: 0.375rem;
+  background: transparent;
+  border: none;
+}
+
+.catalog-dual-range::-moz-range-track {
+  height: 0.375rem;
+  background: transparent;
+  border: none;
+}
+
+.catalog-dual-range::-webkit-slider-thumb {
+  pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: -0.375rem;
+  border-radius: 9999px;
+  border: 2px solid #fff;
+  background: #d4af37;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.catalog-dual-range::-moz-range-thumb {
+  pointer-events: auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  border: 2px solid #fff;
+  background: #d4af37;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.catalog-dual-range:focus {
+  outline: none;
+}
+
+.catalog-dual-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.35);
+}
+
+.catalog-dual-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.35);
 }

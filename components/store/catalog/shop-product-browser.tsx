@@ -6,6 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/components/store/cart-context";
 import { useToast } from "@/components/store/toast-context";
+import {
+  CatalogFiltersSidebar,
+  CATALOG_PRICE_MAX,
+} from "@/components/store/catalog/catalog-filters-sidebar";
 import { FILTER_SIZES, SHOP_PRODUCTS_PER_PAGE, type SortKey } from "@/components/store/catalog/catalog-constants";
 import { PopularProductBadge } from "@/components/store/catalog/popular-product-badge";
 import {
@@ -151,10 +155,12 @@ export function ShopProductBrowser({
   const activeCategory: CatalogCategoryId = isCatalogCategoryId(catRaw) ? catRaw : "all";
 
   const [sort, setSort] = useState<SortKey>("default");
-  const [maxPrice, setMaxPrice] = useState(5000);
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(CATALOG_PRICE_MAX);
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState(qParam);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     setSearchInput(qParam);
@@ -164,7 +170,7 @@ export function ShopProductBrowser({
 
   useEffect(() => {
     setPage(1);
-  }, [activeCategory, qParam, sizesKey, basePath]);
+  }, [activeCategory, qParam, sizesKey, minPrice, maxPrice, basePath]);
 
   const afterCategory = useMemo(
     () => products.filter((p) => productMatchesCatalogCategory(p, activeCategory)),
@@ -191,10 +197,10 @@ export function ShopProductBrowser({
   }, [afterCategory, selectedSizes]);
 
   const filteredSorted = useMemo(() => {
-    const priced = afterSizes.filter((p) => p.price <= maxPrice);
+    const priced = afterSizes.filter((p) => p.price >= minPrice && p.price <= maxPrice);
     const matched = qParam ? priced.filter((p) => productMatchesQuery(p, qParam)) : priced;
     return sortProducts(matched, sort);
-  }, [afterSizes, maxPrice, sort, qParam]);
+  }, [afterSizes, minPrice, maxPrice, sort, qParam]);
 
   const total = filteredSorted.length;
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
@@ -236,92 +242,66 @@ export function ShopProductBrowser({
     setSelectedSizes((prev) => (prev.includes(label) ? prev.filter((x) => x !== label) : [...prev, label]));
   }
 
+  function clearAllFilters() {
+    setSelectedSizes([]);
+    setMinPrice(0);
+    setMaxPrice(CATALOG_PRICE_MAX);
+    setPage(1);
+  }
+
+  const activeFilterCount =
+    selectedSizes.length + (minPrice > 0 || maxPrice < CATALOG_PRICE_MAX ? 1 : 0);
+
+  const sidebarProps = {
+    products,
+    basePath,
+    activeCategory,
+    hrefWithParams,
+    sizeFacets,
+    selectedSizes,
+    onToggleSize: toggleSizeFilter,
+    minPrice,
+    maxPrice,
+    onMinPriceChange: (v: number) => {
+      setMinPrice(v);
+      setPage(1);
+    },
+    onMaxPriceChange: (v: number) => {
+      setMaxPrice(v);
+      setPage(1);
+    },
+    onClearFilters: clearAllFilters,
+  };
+
   return (
-    <div className={`flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-14 xl:gap-16 ${className}`}>
-      <aside className="w-full shrink-0 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 shadow-sm lg:sticky lg:top-24 lg:z-20 lg:flex lg:h-[calc(100dvh-5.5rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:w-72 lg:flex-col lg:overflow-hidden lg:self-start xl:w-80">
-        <div className="flex max-h-[min(28rem,70vh)] flex-col overflow-y-auto overscroll-contain p-5 sm:p-6 lg:max-h-none lg:flex-1 lg:pr-2">
-          <h2 className="border-b border-black/90 pb-3 text-xs font-bold uppercase tracking-[0.12em] text-black sm:text-sm">
-            Product categories
-          </h2>
-          <ul className="mt-5 space-y-1 text-sm text-neutral-700 sm:text-[15px]">
-            {CATALOG_NAV.map((c) => {
-              const active = activeCategory === c.id;
-              return (
-                <li key={c.id}>
-                  <Link
-                    href={hrefWithParams({ cat: c.id })}
-                    scroll={false}
-                    className={`block rounded-md px-2 py-1.5 transition ${
-                      active ? "bg-black font-semibold text-white" : "hover:bg-neutral-200/80 hover:text-black"
-                    }`}
-                  >
-                    {c.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-
-          <h2 className="mt-8 border-b border-black/90 pb-3 text-xs font-bold uppercase tracking-[0.12em] text-black sm:text-sm">
-            Filter by
-          </h2>
-          <p className="mt-3 text-xs text-neutral-500">Size / concentration (matches name or slug)</p>
-          <ul className="mt-4 space-y-2.5 pr-1 text-sm">
-            {sizeFacets.length === 0 ? (
-              <li className="text-xs text-neutral-500">No size tags match this category.</li>
-            ) : (
-              sizeFacets.map((f) => {
-                const id = `f-${basePath.replace(/\W/g, "")}-${f.label.replace(/\s+/g, "-")}`;
-                return (
-                  <li key={f.label} className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id={id}
-                      checked={selectedSizes.includes(f.label)}
-                      onChange={() => toggleSizeFilter(f.label)}
-                      className="h-4 w-4 shrink-0 rounded border-neutral-400 text-black focus:ring-black"
-                    />
-                    <label htmlFor={id} className="cursor-pointer text-neutral-600">
-                      {f.label} <span className="text-neutral-400">({f.count})</span>
-                    </label>
-                  </li>
-                );
-              })
-            )}
-          </ul>
-          {selectedSizes.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setSelectedSizes([])}
-              className="mt-3 text-xs font-semibold text-black underline decoration-neutral-400 underline-offset-2 hover:decoration-black"
-            >
-              Clear size filters
-            </button>
-          ) : null}
-
-          <div className="mt-8 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-black">Max price</h3>
-            <p className="mt-1 text-xs text-neutral-500">Drag to filter the catalog</p>
-            <input
-              type="range"
-              min={0}
-              max={5000}
-              step={50}
-              value={Math.min(maxPrice, 5000)}
-              onChange={(e) => {
-                setMaxPrice(Number(e.target.value));
-                setPage(1);
-              }}
-              className="mt-4 h-2 w-full cursor-pointer accent-black"
-            />
-            <p className="mt-3 text-base font-semibold tabular-nums text-black">
-              ${maxPrice >= 5000 ? "5000+" : maxPrice.toFixed(0)}
-            </p>
-          </div>
-        </div>
-      </aside>
+    <div className={`flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-10 xl:gap-14 ${className}`}>
+      <CatalogFiltersSidebar {...sidebarProps} variant="desktop" />
+      <CatalogFiltersSidebar
+        {...sidebarProps}
+        variant="drawer"
+        mobileOpen={mobileFiltersOpen}
+        onMobileClose={() => setMobileFiltersOpen(false)}
+      />
 
       <div className="min-w-0 flex-1">
+        <div className="mb-4 flex lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen(true)}
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-sm font-semibold text-neutral-950 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-50 sm:w-auto"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+              <path d="M4 5h16l-6 7.5V19l-4 2v-8.5L4 5Z" strokeLinejoin="round" />
+            </svg>
+            Filters &amp; Categories
+            {activeFilterCount > 0 || activeCategory !== "all" ? (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#D4AF37]/20 px-1.5 text-[11px] font-bold tabular-nums text-[#9a7b1a]">
+                {activeFilterCount + (activeCategory !== "all" ? 1 : 0)}
+              </span>
+            ) : null}
+          </button>
+        </div>
+
         <div className="flex flex-col gap-4 rounded-xl border border-neutral-200/80 bg-neutral-50/40 px-4 py-4 sm:px-5">
           <form
             onSubmit={submitCatalogSearch}

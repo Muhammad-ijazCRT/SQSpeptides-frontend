@@ -134,10 +134,6 @@ export function ProductCatalogClient({
 
   return (
     <div className={`${playfair.variable} bg-white text-black`}>
-      <div className="border-b border-[#c9a227] bg-[#c9a227] py-2 text-center text-xs font-bold uppercase tracking-widest text-white">
-        For Research Use Only
-      </div>
-
       <ShopPageBanner
         brandClassName={heading}
         breadcrumbLabel="Product Catalogue"
@@ -147,6 +143,10 @@ export function ProductCatalogClient({
         primaryCta={{ href: "#catalog", label: "Browse catalog" }}
         secondaryCta={{ href: "/popular-peptides", label: "Popular peptides" }}
       />
+
+      <div className="border-b border-[#c9a227] bg-[#c9a227] py-2 text-center text-xs font-bold uppercase tracking-widest text-white">
+        For Research Use Only
+      </div>
 
       <div id="catalog" className="scroll-mt-24 mx-auto max-w-[1480px] px-4 py-10 sm:px-6 lg:px-10 lg:py-16">
         {apiError && (

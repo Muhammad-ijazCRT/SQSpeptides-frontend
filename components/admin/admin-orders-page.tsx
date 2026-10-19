@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { notify } from "@/lib/notifications/notify";
 
 const ORDER_STATUSES = ["pending", "shipped", "completed", "cancelled"] as const;
 
@@ -50,7 +51,6 @@ type ZelleVerifyModal = {
 export function AdminOrdersPage() {
   const [rows, setRows] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
   const [zelleBusyId, setZelleBusyId] = useState<string | null>(null);
   const [zelleModal, setZelleModal] = useState<ZelleVerifyModal | null>(null);
   const [zelleRejectNote, setZelleRejectNote] = useState("");
@@ -62,18 +62,17 @@ export function AdminOrdersPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setErr(null);
     try {
       const res = await fetch("/api/admin/orders");
       if (!res.ok) {
-        setErr("Could not load orders.");
+        notify.error("Could not load orders.");
         setRows([]);
         return;
       }
       const data = await res.json();
       setRows(Array.isArray(data) ? data : []);
     } catch {
-      setErr("Network error.");
+      notify.error("Network error.");
       setRows([]);
     } finally {
       setLoading(false);
@@ -86,7 +85,6 @@ export function AdminOrdersPage() {
 
   const openOrderDetail = useCallback(async (orderId: string) => {
     setDetailLoading(true);
-    setErr(null);
     try {
       const res = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}`);
       const data = (await res.json().catch(() => ({}))) as OrderDetail & { message?: string };
@@ -99,7 +97,7 @@ export function AdminOrdersPage() {
         window.history.replaceState(null, "", `#${orderId}`);
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Could not load order details.");
+      notify.error(e instanceof Error ? e.message : "Could not load order details.");
     } finally {
       setDetailLoading(false);
     }
@@ -127,7 +125,6 @@ export function AdminOrdersPage() {
   async function saveOrderStatus() {
     if (!detailOrder || detailStatus === detailOrder.status) return;
     setDetailSaving(true);
-    setErr(null);
     try {
       const res = await fetch(`/api/admin/orders/${encodeURIComponent(detailOrder.id)}`, {
         method: "PATCH",
@@ -139,16 +136,16 @@ export function AdminOrdersPage() {
         throw new Error(typeof data.message === "string" ? data.message : "Could not update status.");
       }
       setDetailOrder((prev) => (prev ? { ...prev, ...data } : prev));
+      notify.success("Order status updated.");
       await load();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Could not update status.");
+      notify.error(e instanceof Error ? e.message : "Could not update status.");
     } finally {
       setDetailSaving(false);
     }
   }
 
   function openZelleModal(o: OrderRow, action: "approve" | "reject") {
-    setErr(null);
     setZelleRejectNote("");
     setZelleModal({
       orderId: o.id,
@@ -171,7 +168,6 @@ export function AdminOrdersPage() {
 
     setZelleModalSubmitting(true);
     setZelleBusyId(orderId);
-    setErr(null);
     try {
       const res = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}/zelle`, {
         method: "PATCH",
@@ -184,12 +180,13 @@ export function AdminOrdersPage() {
       }
       setZelleModal(null);
       setZelleRejectNote("");
+      notify.success(action === "approve" ? "Zelle payment approved." : "Zelle payment rejected.");
       await load();
       if (detailOrder?.id === orderId) {
         await openOrderDetail(orderId);
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Zelle action failed.");
+      notify.error(e instanceof Error ? e.message : "Zelle action failed.");
     } finally {
       setZelleBusyId(null);
       setZelleModalSubmitting(false);
@@ -211,12 +208,6 @@ export function AdminOrdersPage() {
           </button>
         </div>
       </div>
-
-      {err ? (
-        <div className="alert alert-danger border-0 admin-card-elevated rounded-3 mb-4" role="alert">
-          {err}
-        </div>
-      ) : null}
 
       <div className="card border-0 admin-card-elevated rounded-3 overflow-hidden bg-white">
         {loading ? (

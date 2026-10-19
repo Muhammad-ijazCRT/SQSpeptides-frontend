@@ -5,8 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CustomerOrder } from "@/lib/api/customer-portal";
 import { fetchMyOrders } from "@/lib/api/customer-portal";
-import { BrandLogo } from "@/components/store/brand-logo";
 import { useCart } from "@/components/store/cart-context";
+import { notify } from "@/lib/notifications/notify";
 
 function isCompletedStatus(s: string) {
   return /^(completed|delivered|shipped|fulfilled)$/i.test(s.trim());
@@ -56,10 +56,8 @@ export function DashboardHome() {
   const { lines: cartLines } = useCart();
   const [orders, setOrders] = useState<CustomerOrder[] | null>(null);
   const [wishCount, setWishCount] = useState<number | null>(null);
-  const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setErr(null);
     try {
       const [o, wRes] = await Promise.all([
         fetchMyOrders(),
@@ -71,7 +69,7 @@ export function DashboardHome() {
         setWishCount(w.length);
       } else setWishCount(0);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed to load dashboard");
+      notify.error(e instanceof Error ? e.message : "Failed to load dashboard");
       setOrders([]);
       setWishCount(0);
     }
@@ -80,6 +78,12 @@ export function DashboardHome() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (welcome) {
+      notify.success("Account created successfully. Welcome!");
+    }
+  }, [welcome]);
 
   const stats = useMemo(() => {
     const list = orders ?? [];
@@ -98,24 +102,6 @@ export function DashboardHome() {
 
   return (
     <div className="space-y-8">
-      {welcome ? (
-        <div
-          className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/90 pl-1 pr-4 py-3 shadow-sm"
-          role="status"
-        >
-          <div className="h-full w-1 self-stretch rounded-full bg-emerald-600" aria-hidden />
-          <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-emerald-900">
-            <span>Account created successfully! Welcome to</span>
-            <BrandLogo height={20} className="max-h-5" />
-            <span>.</span>
-          </p>
-        </div>
-      ) : null}
-
-      {err ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">{err}</p>
-      ) : null}
-
       <h1 className="text-3xl font-bold tracking-tight text-black">My Dashboard</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

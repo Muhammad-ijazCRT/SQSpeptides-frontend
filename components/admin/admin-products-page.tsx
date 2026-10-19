@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ProductDescriptionEditor } from "@/components/admin/product-description-editor";
+import { notify } from "@/lib/notifications/notify";
 
 type AdminProduct = {
   id: string;
@@ -82,7 +83,6 @@ export function AdminProductsPage() {
 
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AdminProduct | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -114,16 +114,15 @@ export function AdminProductsPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setErr(null);
     try {
       const res = await fetch("/api/admin/products", { cache: "no-store" });
       if (res.status === 401) {
-        setErr("Session expired — sign in again.");
+        notify.error("Session expired — sign in again.");
         setProducts([]);
         return;
       }
       if (!res.ok) {
-        setErr("Could not load products.");
+        notify.error("Could not load products.");
         setProducts([]);
         return;
       }
@@ -136,7 +135,7 @@ export function AdminProductsPage() {
         }))
       );
     } catch {
-      setErr("Network error — check API_URL / backend.");
+      notify.error("Network error — check API_URL / backend.");
       setProducts([]);
     } finally {
       setLoading(false);
@@ -183,7 +182,6 @@ export function AdminProductsPage() {
 
   async function toggleSpotlight(p: AdminProduct, next: boolean) {
     setSpotlightBusyId(p.id);
-    setErr(null);
     const prev = products;
     setProducts((list) => list.map((row) => (row.id === p.id ? { ...row, spotlight: next } : row)));
     try {
@@ -197,7 +195,7 @@ export function AdminProductsPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setProducts(prev);
-        setErr(formatApiError(data));
+        notify.error(formatApiError(data));
         return;
       }
       if (data && typeof data === "object" && "spotlight" in data) {
@@ -205,10 +203,11 @@ export function AdminProductsPage() {
           list.map((row) => (row.id === p.id ? { ...row, spotlight: Boolean((data as AdminProduct).spotlight) } : row))
         );
       }
+      notify.success(next ? "Spotlight enabled." : "Spotlight disabled.");
       router.refresh();
     } catch {
       setProducts(prev);
-      setErr("Could not update Spotlight — network error.");
+      notify.error("Could not update Spotlight — network error.");
     } finally {
       setSpotlightBusyId(null);
     }
@@ -352,6 +351,7 @@ export function AdminProductsPage() {
           return;
         }
       }
+      notify.success(editing ? "Product updated." : "Product created.");
       closeModal();
       await load();
       router.refresh();
@@ -366,18 +366,18 @@ export function AdminProductsPage() {
     if (!window.confirm(`Delete “${p.name}”? This cannot be undone if the product has no orders or wishlist links.`)) {
       return;
     }
-    setErr(null);
     try {
       const res = await fetch(`/api/admin/products/${encodeURIComponent(p.id)}`, { method: "DELETE" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr(formatApiError(data));
+        notify.error(formatApiError(data));
         return;
       }
+      notify.success("Product deleted.");
       await load();
       router.refresh();
     } catch {
-      setErr("Delete failed — network error.");
+      notify.error("Delete failed — network error.");
     }
   }
 
@@ -412,12 +412,6 @@ export function AdminProductsPage() {
           </button>
         </div>
       </div>
-
-      {err ? (
-        <div className="alert alert-danger border-0 admin-card-elevated rounded-3 mb-4" role="alert">
-          {err}
-        </div>
-      ) : null}
 
       <div className="card border-0 admin-card-elevated rounded-3 overflow-hidden bg-white">
         {loading ? (

@@ -1,8 +1,9 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import { AppToaster } from "@/components/notifications/app-toaster";
 import { JsonLd } from "@/components/seo/json-ld";
 import { organizationJsonLd, webSiteJsonLd } from "@/lib/seo/json-ld";
 import { rootSiteMetadata } from "@/lib/seo/metadata";
-import "sonner/dist/styles.css";
+import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -50,6 +51,7 @@ export default function RootLayout({
       >
         <JsonLd data={[organizationJsonLd(), webSiteJsonLd()]} />
         {children}
+        <AppToaster />
       </body>
     </html>
   );

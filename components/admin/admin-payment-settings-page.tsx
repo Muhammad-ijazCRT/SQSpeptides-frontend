@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { notify } from "@/lib/notifications/notify";
 
 type PaymentSettings = {
   nowpaymentsApiKeyMasked: string | null;
@@ -41,8 +42,7 @@ export function AdminPaymentSettingsPage() {
   const [shippingInternational, setShippingInternational] = useState("0");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
 
   const applySaved = useCallback((saved: PaymentSettings) => {
     setData(saved);
@@ -62,7 +62,7 @@ export function AdminPaymentSettingsPage() {
   }, []);
 
   const load = useCallback(async () => {
-    setErr(null);
+    setLoadErr(null);
     setLoading(true);
     try {
       const res = await fetch("/api/admin/payment-settings", { cache: "no-store" });
@@ -78,7 +78,9 @@ export function AdminPaymentSettingsPage() {
       }
       applySaved(j);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed to load");
+      const message = e instanceof Error ? e.message : "Failed to load";
+      setLoadErr(message);
+      notify.error(message);
     } finally {
       setLoading(false);
     }
@@ -89,8 +91,6 @@ export function AdminPaymentSettingsPage() {
   }, [load]);
 
   async function patchSettings(body: Record<string, unknown>, successMsg: string) {
-    setErr(null);
-    setMsg(null);
     setSaving(true);
     try {
       const res = await fetch("/api/admin/payment-settings", {
@@ -104,9 +104,9 @@ export function AdminPaymentSettingsPage() {
         throw new Error(m);
       }
       applySaved(j as PaymentSettings);
-      setMsg(successMsg);
+      notify.success(successMsg);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Save failed");
+      notify.error(e instanceof Error ? e.message : "Save failed");
     } finally {
       setSaving(false);
     }
@@ -143,7 +143,7 @@ export function AdminPaymentSettingsPage() {
     const usa = Number.parseFloat(shippingUsa);
     const intl = Number.parseFloat(shippingInternational);
     if (!Number.isFinite(usa) || usa < 0 || !Number.isFinite(intl) || intl < 0) {
-      setErr("Shipping amounts must be zero or positive numbers.");
+      notify.warning("Shipping amounts must be zero or positive numbers.");
       return;
     }
     await patchSettings(
@@ -157,8 +157,6 @@ export function AdminPaymentSettingsPage() {
 
   async function clearSmtpPassword() {
     if (!confirm("Remove the saved SMTP password? You can set a new one after saving.")) return;
-    setErr(null);
-    setMsg(null);
     setSaving(true);
     try {
       const res = await fetch("/api/admin/payment-settings", {
@@ -169,9 +167,9 @@ export function AdminPaymentSettingsPage() {
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error("Could not clear SMTP password.");
       applySaved(j as PaymentSettings);
-      setMsg("SMTP password removed.");
+      notify.success("SMTP password removed.");
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Clear failed");
+      notify.error(e instanceof Error ? e.message : "Clear failed");
     } finally {
       setSaving(false);
     }
@@ -179,8 +177,6 @@ export function AdminPaymentSettingsPage() {
 
   async function clearKeys() {
     if (!confirm("Remove NOWPayments API and public keys? Crypto checkout will stop until you add them again.")) return;
-    setErr(null);
-    setMsg(null);
     setSaving(true);
     try {
       const res = await fetch("/api/admin/payment-settings", {
@@ -195,9 +191,9 @@ export function AdminPaymentSettingsPage() {
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error("Could not clear keys.");
       applySaved(j as PaymentSettings);
-      setMsg("NOWPayments keys removed.");
+      notify.success("NOWPayments keys removed.");
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Clear failed");
+      notify.error(e instanceof Error ? e.message : "Clear failed");
     } finally {
       setSaving(false);
     }
@@ -219,21 +215,10 @@ export function AdminPaymentSettingsPage() {
 
       {loading ? (
         <p className="text-secondary small mt-4">Loading…</p>
-      ) : err && !data ? (
-        <div className="alert alert-danger mt-4">{err}</div>
+      ) : loadErr && !data ? (
+        <div className="alert alert-danger mt-4">{loadErr}</div>
       ) : (
         <div className="mt-4">
-          {err ? (
-            <div className="alert alert-danger mb-3" role="alert">
-              {err}
-            </div>
-          ) : null}
-          {msg ? (
-            <div className="alert alert-success mb-3" role="status">
-              {msg}
-            </div>
-          ) : null}
-
           <ul className="nav nav-tabs nav-fill border-bottom mb-0" role="tablist">
             <li className="nav-item" role="presentation">
               <button

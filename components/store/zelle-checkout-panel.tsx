@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notifications/notify";
 
 export const ZELLE_PENDING_SESSION_KEY = "sqspeptides_zelle_pending_v1";
 
@@ -29,9 +29,9 @@ export function ZelleCheckoutPanel({ orderId, email, amountUsd, config }: Props)
   async function copyRef() {
     try {
       await navigator.clipboard.writeText(orderId);
-      toast.success("Order ID copied", { duration: 2500 });
+      notify.success("Order ID copied", { autoClose: 2500 });
     } catch {
-      toast.error("Could not copy — select and copy the ID manually.", { duration: 4000 });
+      notify.error("Could not copy — select and copy the ID manually.", { autoClose: 4000 });
     }
   }
 
@@ -82,11 +82,10 @@ export function ZelleCheckoutPanel({ orderId, email, amountUsd, config }: Props)
       } catch {
         /* ignore */
       }
-      toast.success("Payment proof received", {
-        description:
-          "We’ll verify your Zelle payment shortly. Your order stays pending until an administrator confirms it. You can track status in My orders.",
-        duration: 7000,
-      });
+      notify.success(
+        "Payment proof received. We’ll verify shortly — track status in My orders.",
+        { autoClose: 7000 }
+      );
       setDone(true);
     } catch (err) {
       setLocalErr(err instanceof Error ? err.message : "Something went wrong.");

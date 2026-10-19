@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { notify } from "@/lib/notifications/notify";
 
 type CouponRow = {
   id: string;
@@ -37,14 +38,11 @@ export function AdminCouponsPage() {
   const [code, setCode] = useState("");
   const [pct, setPct] = useState("10");
   const [maxUses, setMaxUses] = useState("");
-  const [msg, setMsg] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const activeCodes = useMemo(() => coupons.filter((c) => c.active).length, [coupons]);
 
   const load = useCallback(async () => {
-    setErr(null);
     setLoading(true);
     try {
       const [cRes, aRes] = await Promise.all([
@@ -86,7 +84,7 @@ export function AdminCouponsPage() {
         setAnalytics(null);
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed to load");
+      notify.error(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
     }
@@ -98,11 +96,9 @@ export function AdminCouponsPage() {
 
   async function createCoupon(e: React.FormEvent) {
     e.preventDefault();
-    setMsg(null);
-    setErr(null);
     const percentOff = parseFloat(pct);
     if (!Number.isFinite(percentOff) || percentOff <= 0 || percentOff > 100) {
-      setErr("Percent off must be between 0.01 and 100.");
+      notify.warning("Percent off must be between 0.01 and 100.");
       return;
     }
     const body: Record<string, unknown> = {
@@ -112,7 +108,7 @@ export function AdminCouponsPage() {
     };
     const mu = maxUses.trim() ? parseInt(maxUses, 10) : undefined;
     if (mu !== undefined && (!Number.isFinite(mu) || mu < 1)) {
-      setErr("Max uses must be a positive integer or left empty.");
+      notify.warning("Max uses must be a positive integer or left empty.");
       return;
     }
     if (mu !== undefined) body.maxUses = mu;
@@ -124,7 +120,7 @@ export function AdminCouponsPage() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setErr(
+      notify.error(
         typeof data.message === "string"
           ? data.message
           : Array.isArray(data.message)
@@ -135,12 +131,11 @@ export function AdminCouponsPage() {
     }
     setCode("");
     setMaxUses("");
-    setMsg("Coupon created.");
+    notify.success("Coupon created.");
     await load();
   }
 
   async function patchCoupon(id: string, patch: Record<string, unknown>) {
-    setErr(null);
     const res = await fetch(`/api/admin/coupons/${encodeURIComponent(id)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -148,7 +143,7 @@ export function AdminCouponsPage() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setErr(
+      notify.error(
         typeof data.message === "string"
           ? data.message
           : Array.isArray(data.message)
@@ -186,17 +181,6 @@ export function AdminCouponsPage() {
           </p>
         </div>
       </header>
-
-      {err ? (
-        <div className="alert alert-danger border-0 rounded-3 shadow-sm py-3 small mb-3" role="alert">
-          {err}
-        </div>
-      ) : null}
-      {msg ? (
-        <div className="alert alert-success border-0 rounded-3 shadow-sm py-3 small mb-3" role="status">
-          {msg}
-        </div>
-      ) : null}
 
       <div className="row g-3 g-xl-4 mb-4">
         <div className="col-sm-6 col-lg-4">

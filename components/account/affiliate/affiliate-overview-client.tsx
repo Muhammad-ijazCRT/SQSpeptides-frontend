@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useState } from "react";
+import { notify } from "@/lib/notifications/notify";
 import { PAYOUT_NETWORKS } from "./payout-networks";
 import { useAffiliateMe } from "./use-affiliate-me";
 
@@ -35,7 +36,6 @@ export function AffiliateOverviewClient() {
   const [networkOther, setNetworkOther] = useState("");
   const [cryptoAddress, setCryptoAddress] = useState("");
   const [payoutNote, setPayoutNote] = useState("");
-  const [payoutMsg, setPayoutMsg] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -47,20 +47,19 @@ export function AffiliateOverviewClient() {
 
   async function submitPayout(e: React.FormEvent) {
     e.preventDefault();
-    setPayoutMsg(null);
     const amt = parseFloat(payoutAmount);
     if (!Number.isFinite(amt) || amt <= 0) {
-      setPayoutMsg("Enter a valid amount.");
+      notify.warning("Enter a valid amount.");
       return;
     }
     const net = resolvedCryptoNetwork();
     if (!net || net.length < 2) {
-      setPayoutMsg("Select a network or describe it under “Other”.");
+      notify.warning("Select a network or describe it under “Other”.");
       return;
     }
     const addr = cryptoAddress.trim();
     if (addr.length < 10) {
-      setPayoutMsg("Enter a full wallet / payout address.");
+      notify.warning("Enter a full wallet / payout address.");
       return;
     }
     const res = await fetch("/api/customer/affiliate/payout-request", {
@@ -75,7 +74,7 @@ export function AffiliateOverviewClient() {
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setPayoutMsg(typeof body.message === "string" ? body.message : "Request failed");
+      notify.error(typeof body.message === "string" ? body.message : "Request failed");
       return;
     }
     setPayoutAmount("");
@@ -83,7 +82,7 @@ export function AffiliateOverviewClient() {
     setCryptoAddress("");
     setNetworkOther("");
     setNetworkPreset(PAYOUT_NETWORKS[0].value);
-    setPayoutMsg("Withdrawal request sent. Track it under Withdrawal history.");
+    notify.success("Withdrawal request sent. Track it under Withdrawal history.");
     await reload({ silent: true });
   }
 
@@ -93,9 +92,10 @@ export function AffiliateOverviewClient() {
     try {
       await navigator.clipboard.writeText(full);
       setCopied(true);
+      notify.success("Referral link copied", { autoClose: 2500 });
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* ignore */
+      notify.error("Could not copy — select and copy the link manually.");
     }
   }
 
@@ -261,7 +261,6 @@ export function AffiliateOverviewClient() {
               View withdrawal history →
             </Link>
           </div>
-          {payoutMsg ? <p className="text-sm text-neutral-700">{payoutMsg}</p> : null}
         </form>
       </section>
 

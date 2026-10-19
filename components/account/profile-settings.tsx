@@ -13,6 +13,7 @@ import {
   updatePaymentMethod,
   updateProfile,
 } from "@/lib/api/customer-portal";
+import { notify } from "@/lib/notifications/notify";
 
 const cardShell =
   "rounded-2xl bg-white p-6 sm:p-8 shadow-[0_2px_24px_-12px_rgba(15,23,42,0.1)] ring-1 ring-neutral-200/70";
@@ -20,7 +21,6 @@ const cardShell =
 export function ProfileSettings() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [profileMsg, setProfileMsg] = useState<string | null>(null);
   const [addresses, setAddresses] = useState<CustomerAddress[] | null>(null);
   const [cards, setCards] = useState<SavedCard[] | null>(null);
 
@@ -73,18 +73,18 @@ export function ProfileSettings() {
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
-    setProfileMsg(null);
     try {
       await updateProfile(name);
-      setProfileMsg("Profile updated.");
+      notify.success("Profile updated.");
       void loadProfile();
     } catch (err) {
-      setProfileMsg(err instanceof Error ? err.message : "Failed");
+      notify.error(err instanceof Error ? err.message : "Failed");
     }
   }
 
   async function submitAddress(e: React.FormEvent) {
     e.preventDefault();
+    const wasEditing = Boolean(editingAddrId);
     try {
       if (editingAddrId) {
         await updateAddress(editingAddrId, addrForm);
@@ -102,8 +102,9 @@ export function ProfileSettings() {
         isDefault: false,
       });
       setAddresses(await fetchAddresses());
+      notify.success(wasEditing ? "Address updated." : "Address saved.");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed");
+      notify.error(err instanceof Error ? err.message : "Failed");
     }
   }
 
@@ -123,15 +124,16 @@ export function ProfileSettings() {
   async function submitCard(e: React.FormEvent) {
     e.preventDefault();
     if (cardForm.last4.length !== 4) {
-      alert("Last 4 digits required (demo — never store real PANs).");
+      notify.warning("Last 4 digits required (demo — never store real PANs).");
       return;
     }
     try {
       await createPaymentMethod(cardForm);
       setCardForm((c) => ({ ...c, last4: "", isDefault: false }));
       setCards(await fetchPaymentMethods());
+      notify.success("Payment method saved.");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed");
+      notify.error(err instanceof Error ? err.message : "Failed");
     }
   }
 
@@ -174,13 +176,6 @@ export function ProfileSettings() {
             <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Email</span>
             <input className={`${input} cursor-not-allowed bg-neutral-100`} value={email} readOnly />
           </label>
-          {profileMsg ? (
-            <p
-              className={`text-sm sm:col-span-2 ${profileMsg.includes("updated") ? "text-emerald-700" : "text-red-600"}`}
-            >
-              {profileMsg}
-            </p>
-          ) : null}
           <div className="sm:col-span-2">
             <button
               type="submit"

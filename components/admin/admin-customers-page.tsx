@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { notify } from "@/lib/notifications/notify";
 
 type Customer = {
   id: string;
@@ -12,22 +13,20 @@ type Customer = {
 export function AdminCustomersPage() {
   const [rows, setRows] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setErr(null);
     try {
       const res = await fetch("/api/admin/customers");
       if (!res.ok) {
-        setErr("Could not load customers.");
+        notify.error("Could not load customers.");
         setRows([]);
         return;
       }
       const data = await res.json();
       setRows(Array.isArray(data) ? data : []);
     } catch {
-      setErr("Network error.");
+      notify.error("Network error.");
       setRows([]);
     } finally {
       setLoading(false);
@@ -53,12 +52,6 @@ export function AdminCustomersPage() {
         </button>
         </div>
       </div>
-
-      {err ? (
-        <div className="alert alert-danger border-0 admin-card-elevated rounded-3 mb-4" role="alert">
-          {err}
-        </div>
-      ) : null}
 
       <div className="card border-0 admin-card-elevated rounded-3 overflow-hidden bg-white">
         {loading ? (

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { OrdersTable, type OrderTableRow } from "@/components/admin/OrdersTable";
 import { StatCard } from "@/components/admin/StatCard";
+import { notify } from "@/lib/notifications/notify";
 
 type Overview = {
   orderCount: number;
@@ -20,10 +21,8 @@ type Overview = {
 export function AdminDashboardHome() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [orders, setOrders] = useState<OrderTableRow[]>([]);
-  const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setErr(null);
     try {
       const [oRes, ordRes] = await Promise.all([fetch("/api/admin/overview"), fetch("/api/admin/orders")]);
       if (oRes.ok) {
@@ -41,14 +40,14 @@ export function AdminDashboardHome() {
           customersNewToday: Number(data.customersNewToday ?? 0),
         });
       } else {
-        setErr("Could not load overview.");
+        notify.error("Could not load overview.");
       }
       if (ordRes.ok) {
         const list = (await ordRes.json()) as OrderTableRow[];
         setOrders(Array.isArray(list) ? list.slice(0, 8) : []);
       }
     } catch {
-      setErr("Network error — is the API running on port 3001?");
+      notify.error("Network error — is the API running on port 3001?");
     }
   }, []);
 
@@ -60,15 +59,6 @@ export function AdminDashboardHome() {
 
   return (
     <div className="space-y-8">
-      {err ? (
-        <p
-          className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900 shadow-[0_2px_8px_rgba(15,23,42,0.06),0_10px_28px_-8px_rgba(15,23,42,0.12)]"
-          role="alert"
-        >
-          {err}
-        </p>
-      ) : null}
-
       <h1 className="text-3xl font-bold tracking-tight text-black">Dashboard</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

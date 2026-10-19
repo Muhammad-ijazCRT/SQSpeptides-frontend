@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { InvoiceRow } from "@/components/admin/admin-invoices-types";
+import { notify } from "@/lib/notifications/notify";
 
 export function AdminInvoicesCreatePage() {
-  const [msg, setMsg] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
   const [pendingCount, setPendingCount] = useState(0);
@@ -53,8 +52,6 @@ export function AdminInvoicesCreatePage() {
 
   async function createInvoice(e: React.FormEvent) {
     e.preventDefault();
-    setErr(null);
-    setMsg(null);
     setCreating(true);
     try {
       const amt = Number(amount);
@@ -85,7 +82,7 @@ export function AdminInvoicesCreatePage() {
         const m = typeof j.message === "string" ? j.message : Array.isArray(j.message) ? j.message.join(", ") : "Create failed";
         throw new Error(m);
       }
-      setMsg("Payment link created.");
+      notify.success("Payment link created. Open Recent payment links to copy the customer URL.");
       setAmount("");
       setCustomerEmail("");
       setCustomerName("");
@@ -93,7 +90,12 @@ export function AdminInvoicesCreatePage() {
       setExternalUrl("");
       await loadStats();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Create failed");
+      const message = e instanceof Error ? e.message : "Create failed";
+      if (message === "Enter a valid amount.") {
+        notify.warning(message);
+      } else {
+        notify.error(message);
+      }
     } finally {
       setCreating(false);
     }
@@ -101,20 +103,6 @@ export function AdminInvoicesCreatePage() {
 
   return (
     <div className="container-fluid py-2 py-lg-3 px-0 px-sm-1">
-      {err ? (
-        <div className="alert alert-danger border-0 rounded-3 shadow-sm py-3 small mb-3" role="alert">
-          {err}
-        </div>
-      ) : null}
-      {msg ? (
-        <div className="alert alert-success border-0 rounded-3 shadow-sm py-3 small mb-3" role="status">
-          {msg}{" "}
-          <Link href="/admin/dashboard/history" className="alert-link fw-semibold">
-            View recent links
-          </Link>
-        </div>
-      ) : null}
-
       <div className="row g-3 g-xl-4 mb-4">
         <div className="col-sm-6 col-lg-4">
           <div className="card border-0 admin-card-elevated overflow-hidden h-100">
