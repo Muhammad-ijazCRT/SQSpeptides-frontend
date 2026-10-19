@@ -11,6 +11,11 @@ function stripTrailingSlashes(s: string): string {
   return s.replace(/\/+$/, "");
 }
 
+
+
+
+
+
 function isLocalhostOrigin(url: string): boolean {
   try {
     const u = new URL(url);
