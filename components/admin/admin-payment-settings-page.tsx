@@ -17,9 +17,11 @@ type PaymentSettings = {
   mailPasswordMasked: string | null;
   mailFrom: string | null;
   mailConfigured: boolean;
+  shippingUsa: number;
+  shippingInternational: number;
 };
 
-type SettingsTab = "payment" | "smtp";
+type SettingsTab = "payment" | "shipping" | "smtp";
 
 export function AdminPaymentSettingsPage() {
   const [data, setData] = useState<PaymentSettings | null>(null);
@@ -35,6 +37,8 @@ export function AdminPaymentSettingsPage() {
   const [mailUser, setMailUser] = useState("");
   const [mailPassword, setMailPassword] = useState("");
   const [mailFrom, setMailFrom] = useState("");
+  const [shippingUsa, setShippingUsa] = useState("0");
+  const [shippingInternational, setShippingInternational] = useState("0");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -51,6 +55,8 @@ export function AdminPaymentSettingsPage() {
     setMailUser(saved.mailUser ?? "");
     setMailPassword("");
     setMailFrom(saved.mailFrom ?? "");
+    setShippingUsa(String(Number(saved.shippingUsa ?? 0)));
+    setShippingInternational(String(Number(saved.shippingInternational ?? 0)));
     setApiKey("");
     setPublicKey("");
   }, []);
@@ -132,6 +138,23 @@ export function AdminPaymentSettingsPage() {
     await patchSettings(body, "SMTP settings saved.");
   }
 
+  async function saveShipping(e: React.FormEvent) {
+    e.preventDefault();
+    const usa = Number.parseFloat(shippingUsa);
+    const intl = Number.parseFloat(shippingInternational);
+    if (!Number.isFinite(usa) || usa < 0 || !Number.isFinite(intl) || intl < 0) {
+      setErr("Shipping amounts must be zero or positive numbers.");
+      return;
+    }
+    await patchSettings(
+      {
+        shippingUsa: Math.round(usa * 100) / 100,
+        shippingInternational: Math.round(intl * 100) / 100,
+      },
+      "Shipping rates saved."
+    );
+  }
+
   async function clearSmtpPassword() {
     if (!confirm("Remove the saved SMTP password? You can set a new one after saving.")) return;
     setErr(null);
@@ -190,7 +213,8 @@ export function AdminPaymentSettingsPage() {
     <div className="admin-card-elevated rounded-3 border-0 bg-white p-4 p-lg-5">
       <h1 className="h4 fw-bold text-dark mb-1">Store settings</h1>
       <p className="text-secondary small mb-0">
-        Payment gateways and outgoing mail are stored in the database. Each tab has its own save action and only updates that section.
+        Payment gateways, shipping rates, and outgoing mail are stored in the database. Each tab has its own save action and only
+        updates that section.
       </p>
 
       {loading ? (
@@ -222,6 +246,19 @@ export function AdminPaymentSettingsPage() {
               >
                 <i className="bi bi-credit-card-2-front me-2 d-none d-sm-inline" aria-hidden />
                 Payment
+              </button>
+            </li>
+            <li className="nav-item" role="presentation">
+              <button
+                type="button"
+                className={tabBtnClass("shipping")}
+                id="tab-shipping"
+                role="tab"
+                aria-selected={activeTab === "shipping"}
+                onClick={() => setActiveTab("shipping")}
+              >
+                <i className="bi bi-truck me-2 d-none d-sm-inline" aria-hidden />
+                Shipping
               </button>
             </li>
             <li className="nav-item" role="presentation">
@@ -354,6 +391,64 @@ export function AdminPaymentSettingsPage() {
                     onClick={() => void clearKeys()}
                   >
                     Remove NOWPayments keys
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div
+              className={`tab-pane fade ${activeTab === "shipping" ? "show active" : ""}`}
+              role="tabpanel"
+              aria-labelledby="tab-shipping"
+            >
+              <form onSubmit={(e) => void saveShipping(e)} className="mb-0">
+                <p className="small text-secondary mb-4">
+                  Flat shipping amounts shown on checkout based on the customer&apos;s selected country. United States uses the USA
+                  rate; every other country uses the international rate. Amounts are in USD.
+                </p>
+
+                <div className="row g-3">
+                  <div className="col-12 col-lg-6">
+                    <label className="form-label small fw-semibold text-secondary text-uppercase" htmlFor="shipping-usa">
+                      USA / United States shipping (USD)
+                    </label>
+                    <input
+                      id="shipping-usa"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      inputMode="decimal"
+                      className={fieldClass}
+                      value={shippingUsa}
+                      onChange={(e) => setShippingUsa(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="col-12 col-lg-6">
+                    <label
+                      className="form-label small fw-semibold text-secondary text-uppercase"
+                      htmlFor="shipping-international"
+                    >
+                      International shipping (USD)
+                    </label>
+                    <input
+                      id="shipping-international"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      inputMode="decimal"
+                      className={fieldClass}
+                      value={shippingInternational}
+                      onChange={(e) => setShippingInternational(e.target.value)}
+                      required
+                    />
+                    <p className="form-text small mb-0">Applied when the checkout country is not the United States.</p>
+                  </div>
+                </div>
+
+                <div className="pt-4 mt-4 border-top">
+                  <button type="submit" className="btn btn-dark" disabled={saving}>
+                    {saving ? "Saving…" : "Save shipping settings"}
                   </button>
                 </div>
               </form>

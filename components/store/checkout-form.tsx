@@ -22,6 +22,12 @@ import {
   type CheckoutPaymentGateway,
 } from "@/lib/store/checkout-payment-gateway";
 import { AFFILIATE_REF_STORAGE_KEY } from "@/lib/store/site-access-storage";
+import {
+  COUNTRIES,
+  findCountry,
+  isUnitedStatesCountry,
+  type CountryOption,
+} from "@/lib/store/countries";
 
 const CROSSMINT_CLIENT_API_KEY = (process.env.NEXT_PUBLIC_CROSSMINT_CLIENT_SIDE_API_KEY ?? "").trim();
 
@@ -136,7 +142,10 @@ export function CheckoutForm() {
   const [addressLine1, setAddressLine1] = useState("");
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
-  const [country, setCountry] = useState("US");
+  const [country, setCountry] = useState("United States");
+  const [countries] = useState<CountryOption[]>(COUNTRIES);
+  const [shippingUsa, setShippingUsa] = useState(0);
+  const [shippingInternational, setShippingInternational] = useState(0);
   const [researchCategory, setResearchCategory] = useState("");
   const [purchaserTermsAccepted, setPurchaserTermsAccepted] = useState(false);
   const [affiliateBalance, setAffiliateBalance] = useState<number | null>(null);
@@ -179,6 +188,27 @@ export function CheckoutForm() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      try {
+        const res = await fetch("/api/checkout/shipping/config", { cache: "no-store" });
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as { shippingUsa?: number; shippingInternational?: number };
+        if (cancelled) return;
+        setShippingUsa(typeof data.shippingUsa === "number" ? data.shippingUsa : 0);
+        setShippingInternational(
+          typeof data.shippingInternational === "number" ? data.shippingInternational : 0
+        );
+      } catch {
+        /* keep defaults */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
       const me = await fetch("/api/auth/customer/me", { cache: "no-store" });
       if (cancelled || !me.ok) return;
       const p = (await me.json()) as { email?: string; name?: string };
@@ -200,13 +230,14 @@ export function CheckoutForm() {
         setAddressLine1(d.line1);
         setCity(d.city);
         setPostalCode(d.postalCode);
-        setCountry(d.country);
+        const match = findCountry(d.country, countries);
+        setCountry(match?.name ?? d.country);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [countries]);
 
   useEffect(() => {
     let cancelled = false;
@@ -291,12 +322,17 @@ export function CheckoutForm() {
 
   const couponDiscount = appliedCoupon?.discountAmount ?? 0;
   const discountedSubtotal = Math.max(0, Math.round((subtotal - couponDiscount) * 100) / 100);
+  const shippingAmount = Math.round(
+    (isUnitedStatesCountry(country) ? shippingUsa : shippingInternational) * 100
+  ) / 100;
+  const orderTotal = Math.max(0, Math.round((discountedSubtotal + shippingAmount) * 100) / 100);
+  const selectedCountry = findCountry(country, countries);
 
   const creditApplied =
     affiliateBalance != null && affiliateBalance > 0
-      ? Math.min(Math.max(0, storeCreditToUse), affiliateBalance, discountedSubtotal)
+      ? Math.min(Math.max(0, storeCreditToUse), affiliateBalance, orderTotal)
       : 0;
-  const cardDue = Math.max(0, Math.round((discountedSubtotal - creditApplied) * 100) / 100);
+  const cardDue = Math.max(0, Math.round((orderTotal - creditApplied) * 100) / 100);
   const paymentAmountStr = cardDue.toFixed(2);
   const crossmintOk = isCrossmintConfigured();
   const itemCount = lines.reduce((n, l) => n + l.quantity, 0);
@@ -386,7 +422,7 @@ export function CheckoutForm() {
       const msg = validateAffiliateCreditForGateway(
         storeCreditToUse,
         affiliateBalance,
-        discountedSubtotal,
+        orderTotal,
         payGateway
       );
       if (msg) {
@@ -399,7 +435,7 @@ export function CheckoutForm() {
   function captureSnapshot(): CheckoutSnapshot {
     const credit =
       affiliateBalance != null && affiliateBalance > 0
-        ? Math.min(Math.max(0, storeCreditToUse), affiliateBalance, discountedSubtotal)
+        ? Math.min(Math.max(0, storeCreditToUse), affiliateBalance, orderTotal)
         : 0;
     return {
       email: inputTrim(emailRef, email),
@@ -518,7 +554,7 @@ export function CheckoutForm() {
       }
       const cardDueLocal = Math.max(
         0,
-        Math.round((discountedSubtotal - (snap.storeCreditToUse ?? 0)) * 100) / 100
+        Math.round((orderTotal - (snap.storeCreditToUse ?? 0)) * 100) / 100
       );
       const amountStr = cardDueLocal.toFixed(2);
       const order = await createOrder({
@@ -746,11 +782,11 @@ export function CheckoutForm() {
           ) : null}
           <div className="flex justify-between text-neutral-600">
             <span>Shipping</span>
-            <span className="text-neutral-500">Calculated at fulfillment</span>
+            <span className="tabular-nums text-black">${shippingAmount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between border-t border-neutral-200 pt-3 text-base font-bold text-black">
             <span>Total</span>
-            <span className="tabular-nums">${discountedSubtotal.toFixed(2)}</span>
+            <span className="tabular-nums">${orderTotal.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -1067,15 +1103,47 @@ export function CheckoutForm() {
               </label>
               <label className="block sm:col-span-2">
                 <span className="text-sm font-medium text-neutral-800">Country</span>
-                <input
-                  ref={countryRef}
-                  required
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  onInput={(e) => setCountry(e.currentTarget.value)}
-                  className={inputClass}
-                  autoComplete="country-name"
-                />
+                <div className="mt-1 flex items-center gap-2">
+                  {selectedCountry?.flagUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- remote flagcdn URLs; avoid next/image remote config bloat
+                    <img
+                      src={selectedCountry.flagUrl}
+                      alt=""
+                      width={28}
+                      height={20}
+                      className="h-5 w-7 shrink-0 rounded-sm border border-neutral-200 object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <span
+                      className="inline-flex h-5 w-7 shrink-0 items-center justify-center rounded-sm border border-dashed border-neutral-300 bg-neutral-50 text-[10px] text-neutral-400"
+                      aria-hidden
+                    >
+                      —
+                    </span>
+                  )}
+                  <input
+                    ref={countryRef}
+                    required
+                    type="text"
+                    list="country-select"
+                    name="country-select"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    onInput={(e) => setCountry(e.currentTarget.value)}
+                    className={`${inputClass} mt-0 min-w-0 flex-1`}
+                    autoComplete="country-name"
+                    placeholder="Start typing a country…"
+                  />
+                </div>
+                <datalist id="country-select">
+                  {countries.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </datalist>
               </label>
 
               <label className="block sm:col-span-2">
@@ -1112,7 +1180,7 @@ export function CheckoutForm() {
                     <input
                       type="number"
                       min={0}
-                      max={Math.min(affiliateBalance, discountedSubtotal)}
+                      max={Math.min(affiliateBalance, orderTotal)}
                       step="0.01"
                       value={storeCreditToUse === 0 ? "" : storeCreditToUse}
                       onChange={(e) => {
@@ -1126,10 +1194,10 @@ export function CheckoutForm() {
                     type="button"
                     className="mt-1.5 text-xs font-semibold text-[#b8962e] hover:underline"
                     onClick={() =>
-                      setStoreCreditToUse(Math.round(Math.min(affiliateBalance, discountedSubtotal) * 100) / 100)
+                      setStoreCreditToUse(Math.round(Math.min(affiliateBalance, orderTotal) * 100) / 100)
                     }
                   >
-                    Use max (${Math.min(affiliateBalance, discountedSubtotal).toFixed(2)})
+                    Use max (${Math.min(affiliateBalance, orderTotal).toFixed(2)})
                   </button>
                 </div>
               ) : null}
