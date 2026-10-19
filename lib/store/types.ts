@@ -6,6 +6,8 @@ export type Product = {
   price: number;
   imageUrl: string | null;
   rating: number;
+  /** Spotlight products surface on popular / featured storefront areas. */
+  spotlight?: boolean;
 };
 
 export type CartLine = {

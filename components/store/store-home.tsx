@@ -64,7 +64,7 @@ export function StoreHome({ featured, apiError }: Props) {
 
   return (
     <>
-      <section className="relative flex min-h-[min(100dvh,920px)] flex-col items-center justify-center overflow-hidden bg-black px-4 py-24 text-center sm:min-h-[78vh]">
+      <section className="relative flex h-[75dvh] max-h-[75dvh] flex-col items-start justify-center overflow-hidden bg-black px-4 py-8 text-left sm:px-6 md:px-8 lg:items-center lg:px-4 lg:text-center">
         <video
           className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover object-center motion-reduce:hidden"
           autoPlay
@@ -88,7 +88,7 @@ export function StoreHome({ featured, apiError }: Props) {
           }}
         />
         <div className="pointer-events-none absolute inset-0 z-1 bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 256 256%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22 opacity=%220.06%22/%3E%3C/svg%3E')]" />
-        <div className="relative z-10 flex flex-col items-center">
+        <div className="relative z-10 flex w-full max-w-xl flex-col items-start lg:max-w-none lg:items-center">
           <BrandLogo priority height={88} className="mb-6 max-h-[5.5rem] sm:max-h-24 drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)]" />
           <h1 className="text-4xl font-extrabold tracking-tight text-[#D4AF37] sm:text-5xl md:text-6xl">
             PURITY DISCOVERED

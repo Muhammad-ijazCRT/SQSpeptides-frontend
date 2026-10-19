@@ -29,7 +29,7 @@ const hay = (p: Product) => `${p.slug} ${p.name}`.toLowerCase();
 export function productMatchesCatalogCategory(p: Product, id: CatalogCategoryId): boolean {
   if (id === "all") return true;
   const s = hay(p);
-  if (id === "popular") return p.rating >= 4.8;
+  if (id === "popular") return Boolean(p.spotlight);
   if (id === "blend") {
     return p.slug.includes("blend") || p.name.includes("+");
   }

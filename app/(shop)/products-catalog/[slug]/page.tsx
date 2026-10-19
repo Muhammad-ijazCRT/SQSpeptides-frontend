@@ -7,6 +7,7 @@ import { fetchProductBySlug } from "@/lib/api/products";
 import { productJsonLd } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
+import { looksLikeHtml, stripHtml } from "@/lib/store/strip-html";
 
 const detailImageSizes = "(max-width: 1023px) 100vw, (max-width: 1535px) 50vw, 640px";
 
@@ -33,8 +34,9 @@ export async function generateMetadata({ params }: Props) {
   }
   if (!product) return { title: "Product" };
   const img = resolveProductImage(product);
+  const rawDescription = product.description?.trim() || "";
   const description =
-    product.description?.trim() ||
+    (rawDescription ? stripHtml(rawDescription) : "") ||
     `${product.name} — 99.9% purity research peptide for laboratory use only. Not for human consumption.`;
   return buildPageMetadata({
     title: product.name,
@@ -99,7 +101,16 @@ export default async function ProductDetailPage({ params }: Props) {
             <p className="mt-6 text-3xl font-bold tabular-nums tracking-tight text-black sm:text-4xl">${product.price.toFixed(2)}</p>
 
             {product.description ? (
-              <p className="mt-8 text-base leading-relaxed text-neutral-600 sm:text-lg sm:leading-relaxed">{product.description}</p>
+              looksLikeHtml(product.description) ? (
+                <div
+                  className="product-description prose prose-neutral mt-8 max-w-none text-base leading-relaxed text-neutral-600 sm:text-lg sm:leading-relaxed [&_a]:text-[#9a7b1a] [&_a]:underline [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-black [&_h3]:mt-5 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:text-black [&_li]:my-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3 [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
+              ) : (
+                <p className="mt-8 text-base leading-relaxed text-neutral-600 sm:text-lg sm:leading-relaxed">
+                  {product.description}
+                </p>
+              )
             ) : null}
 
             <p className="mt-6 rounded-xl border border-neutral-200/90 bg-neutral-50/80 px-4 py-4 text-sm leading-relaxed text-neutral-600 sm:px-5 sm:text-base sm:leading-relaxed">

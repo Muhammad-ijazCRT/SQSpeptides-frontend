@@ -52,7 +52,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // `/products` → catalog is handled in `middleware.ts` so `/products/images/*` (public files) is never redirected.
+      // `/products` → catalog is handled in `middleware.ts` so `/products/*` static assets are never redirected.
       { source: "/contact", destination: "/contact-us", permanent: true },
       { source: "/catalog", destination: "/products-catalog", permanent: true },
       { source: "/shop", destination: "/products-catalog", permanent: true },

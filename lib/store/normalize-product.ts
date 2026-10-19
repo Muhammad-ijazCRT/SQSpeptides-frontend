@@ -19,6 +19,12 @@ export function normalizeProduct(raw: unknown): Product | null {
       : typeof p.image_url === "string"
         ? p.image_url
         : null;
+  const spotlightRaw = p.spotlight;
+  const spotlight =
+    typeof spotlightRaw === "boolean"
+      ? spotlightRaw
+      : spotlightRaw === "true" || spotlightRaw === 1 || spotlightRaw === "1";
+
   return {
     id,
     slug,
@@ -27,5 +33,6 @@ export function normalizeProduct(raw: unknown): Product | null {
     price,
     imageUrl: img,
     rating: Math.min(5, Math.max(0, rating)),
+    spotlight,
   };
 }

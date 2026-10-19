@@ -26,3 +26,6 @@ export const FILTER_SIZES = [
 ] as const;
 
 export type SortKey = "default" | "popularity" | "latest" | "price-asc" | "price-desc";
+
+/** Shared catalog + popular-peptides product grid page size */
+export const SHOP_PRODUCTS_PER_PAGE = 15;

@@ -10,9 +10,13 @@ function getJwtSecret(): string | null {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Legacy URLs: `/products` and `/products/:slug` → `/products-catalog`, but never touch static files under `public/products/images/`.
+  // Legacy URLs: `/products` and `/products/:slug` → `/products-catalog`, but never touch static files under `public/products/`.
   if (pathname === "/products" || pathname === "/products/") {
     return NextResponse.redirect(new URL("/products-catalog", request.url), 308);
+  }
+  // Allow public assets (e.g. /products/images/*, /products/popular-pepetides/*.png)
+  if (pathname.startsWith("/products/") && /\.(png|jpe?g|gif|webp|svg|avif|ico|mp4|webm)$/i.test(pathname)) {
+    return NextResponse.next();
   }
   if (pathname.startsWith("/products/images")) {
     return NextResponse.next();

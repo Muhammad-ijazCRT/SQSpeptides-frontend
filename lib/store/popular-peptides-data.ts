@@ -7,8 +7,12 @@ export type PopularPeptideProduct = {
   purity: string;
 };
 
+export const POPULAR_PEPTIDES_EYEBROW = "Research-grade · Bench-first";
+
+export const POPULAR_PEPTIDES_HEADLINE = "The molecules that earn a second order";
+
 export const POPULAR_PEPTIDES_INTRO =
-  "Peptide reference materials for non-clinical study of receptor pharmacology and metabolic biochemistry in controlled laboratory systems—not for human or veterinary use.";
+  "Every sharp study starts with a sharp molecule. These are the peptides labs reach for first—tight purity, clear identity, research use only.";
 
 export const CATEGORY_PRODUCTS: PopularPeptideProduct[] = [
   { name: "BPC-157", slug: "bpc-157", price: 75, purity: "99.9% Purity" },
@@ -54,54 +58,39 @@ export const RELATED_PRODUCTS: PopularPeptideProduct[] = [
 ];
 
 export const PRECISION_INTRO =
-  "High-purity research compounds formulated for accuracy, consistency, and laboratory use — without fillers, blends, or unnecessary additives.";
+  "Trends chase headlines. We chase signal. Single-compound reference materials—so your assay reads clean, and your notebook stays honest.";
 
 export const PRECISION_FEATURES = [
   {
-    title: "Purity You Can Trust",
-    subtitle: "Research-grade accuracy",
+    title: "Purity that holds",
+    subtitle: "Research-grade accuracy you can stand behind",
     imageSeed: "lab-purity",
   },
   {
-    title: "Third-Party Lab Tested",
-    subtitle: "Verified purity & quality",
+    title: "Verified before it travels",
+    subtitle: "Third-party checks where documentation applies",
     imageSeed: "lab-testing",
   },
   {
-    title: "Single-compound reference",
-    subtitle: "Defined composition for reproducible assay design",
+    title: "One compound. Clear story.",
+    subtitle: "Defined composition for reproducible design",
     imageSeed: "lab-bio",
   },
-];
-
-export const CATEGORY_NAV = [
-  { label: "Popular Peptides", href: "/popular-peptides", current: true },
-  { label: "Metabolic Research", href: "/products-catalog" },
-  { label: "Longevity & Repair", href: "/products-catalog" },
-  { label: "Cognitive & Neural", href: "/products-catalog" },
-  { label: "Immune & Defense", href: "/products-catalog" },
-  { label: "All Products", href: "/products-catalog" },
-];
-
-export const ATTRIBUTE_FILTERS = [
-  { id: "in-stock", label: "In stock" },
-  { id: "coa", label: "COA available" },
-  { id: "domestic", label: "Domestic fulfillment" },
 ];
 
 /** Factual service highlights (no fabricated customer testimonials). */
 export const POPULAR_TRUST_HIGHLIGHTS = [
   {
-    title: "Published policies",
-    body: "Privacy, terms, refund, and shipping policies are linked in the site footer so you know how orders, data, and payments are handled.",
+    title: "Policies in plain sight",
+    body: "Privacy, terms, refunds, and shipping—linked in the footer, not buried where nobody looks.",
   },
   {
-    title: "Documentation on request",
-    body: "For batch-related questions, email support with your order number and SKU. We confirm what documentation exists for that catalog line.",
+    title: "Docs when you need them",
+    body: "Send your order number and SKU. We confirm what batch documentation exists for that catalog line.",
   },
   {
-    title: "U.S. business address",
-    body: "760 East Main Street, Lewisville, TX 75057 — the same address shown on our Contact page and legal notices.",
+    title: "A real U.S. address",
+    body: "760 East Main Street, Lewisville, TX 75057—the same address on Contact and legal notices.",
   },
 ] as const;
 
@@ -165,14 +154,17 @@ export const FAQ_ITEMS: { q: string; a: string }[] = [
 ];
 
 export const RESEARCH_QUALITY = {
-  title: "Research-Grade Quality You Can Trust",
-  body:
-    "Our peptide products are handled in controlled laboratory environments and developed with a strong focus on precision, consistency, and research integrity. Every step reflects our commitment to high-quality standards suitable for professional research use.",
+  title: "From vial to verification",
+  body: "We treat every peptide like evidence. Controlled handling, careful checks, and a clear research-only lane—so your work stays clean from unboxing to write-up.",
   bullets: [
-    "Research-grade handling in controlled laboratory settings",
-    "Precision testing using advanced analytical instruments",
-    "Clean, controlled environments to ensure consistency",
-    "Batch-level quality checks for reliability",
-    "Designed strictly for research purposes",
+    "Handled for research integrity, not hype",
+    "Analytical focus on consistency batch to batch",
+    "Labeled for the lab—never for clinical use",
+    "Domestic fulfillment to protect transit integrity",
+    "Strictly for laboratory and analytical study",
   ],
 };
+
+export const RELATED_INTRO = "Next vials that keep the same story going—purity first, research only.";
+
+export const FAQ_SUBTITLE = "Short answers. Clear rules. No guesswork on research use.";

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ProductDescriptionEditor } from "@/components/admin/product-description-editor";
 
 type AdminProduct = {
   id: string;
@@ -13,6 +14,7 @@ type AdminProduct = {
   price: number;
   imageUrl: string | null;
   rating: number;
+  spotlight: boolean;
 };
 
 const emptyForm = {
@@ -22,7 +24,40 @@ const emptyForm = {
   price: "",
   imageUrl: "",
   rating: "5",
+  spotlight: false,
 };
+
+function SpotlightSwitch({
+  checked,
+  disabled,
+  busy,
+  onChange,
+  id,
+  labelledBy,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  busy?: boolean;
+  onChange: (next: boolean) => void;
+  id?: string;
+  labelledBy?: string;
+}) {
+  return (
+    <label className={`admin-spotlight-switch${busy ? " is-busy" : ""}`} htmlFor={id}>
+      <input
+        id={id}
+        type="checkbox"
+        role="switch"
+        checked={checked}
+        disabled={disabled || busy}
+        aria-labelledby={labelledBy}
+        aria-busy={busy || undefined}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span className="admin-spotlight-switch-track" aria-hidden />
+    </label>
+  );
+}
 
 function displayImageUrl(url: string): string {
   const s = url.trim();
@@ -57,6 +92,7 @@ export function AdminProductsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageInputKey, setImageInputKey] = useState(0);
   const [portalReady, setPortalReady] = useState(false);
+  const [spotlightBusyId, setSpotlightBusyId] = useState<string | null>(null);
   const previewObjectUrlRef = useRef<string | null>(null);
 
   function clearImagePreview() {
@@ -92,7 +128,13 @@ export function AdminProductsPage() {
         return;
       }
       const data = await res.json();
-      setProducts(Array.isArray(data) ? data : []);
+      const rows = Array.isArray(data) ? data : [];
+      setProducts(
+        rows.map((p: AdminProduct) => ({
+          ...p,
+          spotlight: Boolean(p.spotlight),
+        }))
+      );
     } catch {
       setErr("Network error — check API_URL / backend.");
       setProducts([]);
@@ -132,10 +174,44 @@ export function AdminProductsPage() {
       price: String(p.price),
       imageUrl: p.imageUrl ?? "",
       rating: String(p.rating),
+      spotlight: Boolean(p.spotlight),
     });
     setFormErr(null);
     resetImageState(p.imageUrl ?? "");
     setModalOpen(true);
+  }
+
+  async function toggleSpotlight(p: AdminProduct, next: boolean) {
+    setSpotlightBusyId(p.id);
+    setErr(null);
+    const prev = products;
+    setProducts((list) => list.map((row) => (row.id === p.id ? { ...row, spotlight: next } : row)));
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (p.slug) headers["x-previous-product-slug"] = p.slug;
+      const res = await fetch(`/api/admin/products/${encodeURIComponent(p.id)}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ spotlight: next }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setProducts(prev);
+        setErr(formatApiError(data));
+        return;
+      }
+      if (data && typeof data === "object" && "spotlight" in data) {
+        setProducts((list) =>
+          list.map((row) => (row.id === p.id ? { ...row, spotlight: Boolean((data as AdminProduct).spotlight) } : row))
+        );
+      }
+      router.refresh();
+    } catch {
+      setProducts(prev);
+      setErr("Could not update Spotlight — network error.");
+    } finally {
+      setSpotlightBusyId(null);
+    }
   }
 
   function closeModal() {
@@ -238,6 +314,7 @@ export function AdminProductsPage() {
         price,
         ...(imageUrl ? { imageUrl } : {}),
         rating,
+        spotlight: form.spotlight,
       };
 
       const patchBody = {
@@ -247,6 +324,7 @@ export function AdminProductsPage() {
         price,
         imageUrl,
         rating,
+        spotlight: form.spotlight,
       };
 
       if (editing) {
@@ -355,6 +433,9 @@ export function AdminProductsPage() {
                   <th>Slug</th>
                   <th>Price</th>
                   <th>Rating</th>
+                  <th className="text-center" title="Spotlight products for popular / featured surfaces">
+                    Spotlight
+                  </th>
                   <th className="pe-4 text-end">Actions</th>
                 </tr>
               </thead>
@@ -367,6 +448,16 @@ export function AdminProductsPage() {
                     </td>
                     <td className="fw-semibold">${Number(p.price).toFixed(2)}</td>
                     <td className="text-secondary small">{Number(p.rating).toFixed(1)}</td>
+                    <td className="text-center">
+                      <div className="d-inline-flex align-items-center justify-content-center">
+                        <SpotlightSwitch
+                          id={`spotlight-${p.id}`}
+                          checked={Boolean(p.spotlight)}
+                          busy={spotlightBusyId === p.id}
+                          onChange={(next) => void toggleSpotlight(p, next)}
+                        />
+                      </div>
+                    </td>
                     <td className="pe-4 text-end">
                       <div className="d-inline-flex flex-wrap gap-1 justify-content-end">
                         <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => openEdit(p)}>
@@ -465,15 +556,16 @@ export function AdminProductsPage() {
                         <label className="form-label small fw-semibold" htmlFor="ap-desc">
                           Description
                         </label>
-                        <textarea
+                        <ProductDescriptionEditor
                           id="ap-desc"
-                          className="form-control"
-                          rows={4}
                           value={form.description}
-                          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                          maxLength={8000}
+                          onChange={(html) => setForm((f) => ({ ...f, description: html }))}
                           disabled={saving}
+                          placeholder="Headings, paragraphs, links, and lists for this product…"
                         />
+                        <p className="form-text small mb-0">
+                          Full Quill editor — headings, lists, links, colors, alignment, and more.
+                        </p>
                       </div>
                       <div className="row g-3">
                         <div className="col-sm-6">
@@ -507,6 +599,25 @@ export function AdminProductsPage() {
                             onChange={(e) => setForm((f) => ({ ...f, rating: e.target.value }))}
                             disabled={saving}
                           />
+                        </div>
+                        <div className="col-12">
+                          <div className="d-flex align-items-center justify-content-between gap-3 rounded-3 border bg-light px-3 py-3">
+                            <div className="min-w-0">
+                              <p id="ap-spotlight-label" className="small fw-semibold text-dark mb-1">
+                                Spotlight
+                              </p>
+                              <p className="small text-secondary mb-0">
+                                Mark this product for popular / featured storefront placement.
+                              </p>
+                            </div>
+                            <SpotlightSwitch
+                              id="ap-spotlight"
+                              checked={form.spotlight}
+                              disabled={saving}
+                              labelledBy="ap-spotlight-label"
+                              onChange={(next) => setForm((f) => ({ ...f, spotlight: next }))}
+                            />
+                          </div>
                         </div>
                         <div className="col-12">
                           <label className="form-label small fw-semibold" htmlFor="ap-img">
