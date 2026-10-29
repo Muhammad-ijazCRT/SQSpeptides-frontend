@@ -46,7 +46,7 @@ type CheckoutSnapshot = {
   postalCode: string;
   country: string;
   researchUseAttestation: string;
-  items: { productId: string; quantity: number }[];
+  items: { productId: string; slug?: string; quantity: number }[];
   storeCreditToUse?: number;
   affiliateRef?: string;
   couponCode?: string;
@@ -87,13 +87,13 @@ function validateAffiliateCreditForGateway(
 ): string | null {
   if (gateway === "crypto" || gateway === "zelle") {
     if (credit > 0) {
-      return "Zelle and cryptocurrency checkout cannot use affiliate balance. Set the balance to zero or choose Pay with card.";
+      return "Zelle and Crypto (NOWPayments) checkout cannot use affiliate balance. Set the balance to zero or choose Credit / Debit Card.";
     }
     return null;
   }
   if (gateway === "payram") {
     if (credit > 0) {
-      return "PayRam checkout cannot use affiliate balance. Set the balance to zero or choose Pay with card.";
+      return "Card to Crypto (PayRam) checkout cannot use affiliate balance. Set the balance to zero or choose Credit / Debit Card.";
     }
     return null;
   }
@@ -445,7 +445,11 @@ export function CheckoutForm() {
       postalCode: inputTrim(postalCodeRef, postalCode),
       country: inputTrim(countryRef, country),
       researchUseAttestation: selectTrim(researchCategoryRef, researchCategory),
-      items: lines.map((l) => ({ productId: l.product.id, quantity: l.quantity })),
+      items: lines.map((l) => ({
+        productId: l.product.slug || l.product.id,
+        slug: l.product.slug,
+        quantity: l.quantity,
+      })),
       storeCreditToUse: credit > 0 ? Math.round(credit * 100) / 100 : undefined,
       affiliateRef: readAffiliateRefFromStorage(),
       couponCode: appliedCoupon?.code,
@@ -481,55 +485,88 @@ export function CheckoutForm() {
       let snap = checkoutSnapshotRef.current;
       if (!snap?.items?.length) snap = loadPendingSnapshot();
       if (!snap?.items?.length) {
-        setError(
-          "We could not find your checkout details. Return to checkout from the shop, or contact support with your order reference."
-        );
+        const msg = "We could not find your checkout details. Return to checkout from the shop, or contact support with your order reference.";
+        setError(msg);
+        showToast(msg, "error");
+        setLoading(false);
         return;
       }
       if (!snap.researchUseAttestation || !isResearchUseAttestation(snap.researchUseAttestation)) {
-        setError("Your saved checkout is missing a research-use attestation. Go back to shipping and try again.");
+        const msg = "Your saved checkout is missing a research-use attestation. Go back to shipping and try again.";
+        setError(msg);
+        showToast(msg, "error");
+        setLoading(false);
         return;
       }
-      const order = await createOrder({
-        email: snap.email,
-        fullName: snap.fullName,
-        addressLine1: snap.addressLine1,
-        city: snap.city,
-        postalCode: snap.postalCode,
-        country: snap.country,
-        researchUseAttestation: snap.researchUseAttestation,
-        items: snap.items,
-        affiliateRef: snap.affiliateRef,
-        couponCode: snap.couponCode,
-        paymentProvider: "nowpayments",
-      });
-      const inv = await fetch("/api/checkout/nowpayments/invoice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: order.id, email: snap.email }),
-      });
-      const invData = (await inv.json().catch(() => ({}))) as {
-        message?: string | string[];
-        invoiceUrl?: string;
-      };
-      if (!inv.ok) {
-        const m = Array.isArray(invData.message)
-          ? invData.message.join(", ")
-          : typeof invData.message === "string"
-            ? invData.message
-            : "Could not start cryptocurrency payment.";
-        throw new Error(m);
+
+      let order: OrderCreated;
+      try {
+        order = await createOrder({
+          email: snap.email,
+          fullName: snap.fullName,
+          addressLine1: snap.addressLine1,
+          city: snap.city,
+          postalCode: snap.postalCode,
+          country: snap.country,
+          researchUseAttestation: snap.researchUseAttestation,
+          items: snap.items,
+          affiliateRef: snap.affiliateRef,
+          couponCode: snap.couponCode,
+          paymentProvider: "nowpayments",
+        });
+      } catch (orderErr) {
+        const msg = orderErr instanceof Error ? orderErr.message : "Could not create order.";
+        setError(msg);
+        showToast(msg, "error");
+        setLoading(false);
+        return;
       }
+
+      let invData: { message?: string | string[]; invoiceUrl?: string };
+      try {
+        const inv = await fetch("/api/checkout/nowpayments/invoice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: order.id, email: snap.email }),
+        });
+        invData = (await inv.json().catch(() => ({}))) as {
+          message?: string | string[];
+          invoiceUrl?: string;
+        };
+        if (!inv.ok) {
+          const m = Array.isArray(invData.message)
+            ? invData.message.join(", ")
+            : typeof invData.message === "string"
+              ? invData.message
+              : "Could not start cryptocurrency payment.";
+          throw new Error(m);
+        }
+      } catch (invErr) {
+        const msg = invErr instanceof Error ? invErr.message : "Could not create NOWPayments invoice.";
+        setError(msg);
+        showToast(`Order #${order.id.slice(0, 8)} created, but crypto payment failed: ${msg}`, "error");
+        setLoading(false);
+        return;
+      }
+
       const url = typeof invData.invoiceUrl === "string" ? invData.invoiceUrl : "";
-      if (!url) throw new Error("Payment provider did not return a URL.");
+      if (!url) {
+        const msg = "NOWPayments did not return a valid payment URL.";
+        setError(msg);
+        showToast(msg, "error");
+        setLoading(false);
+        return;
+      }
+
       saveCheckoutSuccess(orderToCheckoutSuccess(order));
       checkoutSnapshotRef.current = null;
       clearPendingSnapshot();
       clearCart();
       window.location.assign(url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cryptocurrency checkout failed.");
-      showToast("If an order was created, keep your reference email; contact support if payment cannot continue.", "error");
+      const msg = err instanceof Error ? err.message : "Cryptocurrency checkout failed.";
+      setError(msg);
+      showToast(msg, "error");
     } finally {
       setLoading(false);
     }
@@ -546,13 +583,17 @@ export function CheckoutForm() {
       let snap = checkoutSnapshotRef.current;
       if (!snap?.items?.length) snap = loadPendingSnapshot();
       if (!snap?.items?.length) {
-        setError(
-          "We could not find your checkout details. Return to checkout from the shop, or contact support with your order reference."
-        );
+        const msg = "We could not find your checkout details. Return to checkout from the shop, or contact support with your order reference.";
+        setError(msg);
+        showToast(msg, "error");
+        setLoading(false);
         return;
       }
       if (!snap.researchUseAttestation || !isResearchUseAttestation(snap.researchUseAttestation)) {
-        setError("Your saved checkout is missing a research-use attestation. Go back to shipping and try again.");
+        const msg = "Your saved checkout is missing a research-use attestation. Go back to shipping and try again.";
+        setError(msg);
+        showToast(msg, "error");
+        setLoading(false);
         return;
       }
       const cardDueLocal = Math.max(
@@ -560,20 +601,30 @@ export function CheckoutForm() {
         Math.round((orderTotal - (snap.storeCreditToUse ?? 0)) * 100) / 100
       );
       const amountStr = cardDueLocal.toFixed(2);
-      const order = await createOrder({
-        email: snap.email,
-        fullName: snap.fullName,
-        addressLine1: snap.addressLine1,
-        city: snap.city,
-        postalCode: snap.postalCode,
-        country: snap.country,
-        researchUseAttestation: snap.researchUseAttestation,
-        items: snap.items,
-        affiliateRef: snap.affiliateRef,
-        storeCreditToUse: snap.storeCreditToUse,
-        couponCode: snap.couponCode,
-        paymentProvider: "zelle",
-      });
+      let order: OrderCreated;
+      try {
+        order = await createOrder({
+          email: snap.email,
+          fullName: snap.fullName,
+          addressLine1: snap.addressLine1,
+          city: snap.city,
+          postalCode: snap.postalCode,
+          country: snap.country,
+          researchUseAttestation: snap.researchUseAttestation,
+          items: snap.items,
+          affiliateRef: snap.affiliateRef,
+          storeCreditToUse: snap.storeCreditToUse,
+          couponCode: snap.couponCode,
+          paymentProvider: "zelle",
+        });
+      } catch (orderErr) {
+        const msg = orderErr instanceof Error ? orderErr.message : "Could not create Zelle order.";
+        setError(msg);
+        showToast(msg, "error");
+        setLoading(false);
+        return;
+      }
+
       saveCheckoutSuccess(orderToCheckoutSuccess(order));
       checkoutSnapshotRef.current = null;
       clearPendingSnapshot();
@@ -587,9 +638,11 @@ export function CheckoutForm() {
       }
       setZelleAwaitingProof({ orderId: order.id, email: snap.email, amountUsd: amountStr });
       clearCart();
-      showToast("Order created. Send your Zelle payment and submit proof below.", "success");
+      showToast("Order created! Send your Zelle payment and submit proof below.", "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create Zelle order.");
+      const msg = err instanceof Error ? err.message : "Could not create Zelle order.";
+      setError(msg);
+      showToast(msg, "error");
     } finally {
       setLoading(false);
     }
@@ -606,33 +659,58 @@ export function CheckoutForm() {
       let snap = checkoutSnapshotRef.current;
       if (!snap?.items?.length) snap = loadPendingSnapshot();
       if (!snap?.items?.length) {
-        setError("We could not find your checkout details. Return to checkout and try again.");
+        const msg = "We could not find your checkout details. Return to checkout and try again.";
+        setError(msg);
+        showToast(msg, "error");
         setLoading(false);
         return;
       }
       if (!snap.researchUseAttestation || !isResearchUseAttestation(snap.researchUseAttestation)) {
-        setError("Your saved checkout is missing a research-use attestation. Go back to shipping and try again.");
+        const msg = "Your saved checkout is missing a research-use attestation. Go back to shipping and try again.";
+        setError(msg);
+        showToast(msg, "error");
         setLoading(false);
         return;
       }
-      const order = await createOrder({
-        email: snap.email,
-        fullName: snap.fullName,
-        addressLine1: snap.addressLine1,
-        city: snap.city,
-        postalCode: snap.postalCode,
-        country: snap.country,
-        researchUseAttestation: snap.researchUseAttestation,
-        items: snap.items,
-        affiliateRef: snap.affiliateRef,
-        couponCode: snap.couponCode,
-        paymentProvider: "payram",
-      });
-      const payment = await createPayramCheckout({
-        amount: Math.max(0, Number(paymentAmountStr)),
-        orderId: order.id,
-        customerEmail: snap.email,
-      });
+
+      let order: OrderCreated;
+      try {
+        order = await createOrder({
+          email: snap.email,
+          fullName: snap.fullName,
+          addressLine1: snap.addressLine1,
+          city: snap.city,
+          postalCode: snap.postalCode,
+          country: snap.country,
+          researchUseAttestation: snap.researchUseAttestation,
+          items: snap.items,
+          affiliateRef: snap.affiliateRef,
+          couponCode: snap.couponCode,
+          paymentProvider: "payram",
+        });
+      } catch (orderErr) {
+        const msg = orderErr instanceof Error ? orderErr.message : "Could not create order.";
+        setError(msg);
+        showToast(msg, "error");
+        setLoading(false);
+        return;
+      }
+
+      let payment: { checkoutUrl: string; referenceId?: string };
+      try {
+        payment = await createPayramCheckout({
+          amount: Math.max(0, Number(paymentAmountStr)),
+          orderId: order.id,
+          customerEmail: snap.email,
+        });
+      } catch (payErr) {
+        const msg = payErr instanceof Error ? payErr.message : "PayRam checkout session failed.";
+        setError(msg);
+        showToast(`PayRam checkout failed: ${msg}`, "error");
+        setLoading(false);
+        return;
+      }
+
       saveCheckoutSuccess(orderToCheckoutSuccess(order));
       checkoutSnapshotRef.current = null;
       clearPendingSnapshot();
@@ -642,7 +720,7 @@ export function CheckoutForm() {
       const message = err instanceof Error ? err.message : "Could not start PayRam checkout.";
       console.error("[startPayRamCheckout] failed", err);
       setError(message);
-      showToast(`PayRam checkout failed: ${message}`, "error");
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -663,7 +741,11 @@ export function CheckoutForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: raw,
-          items: lines.map((l) => ({ productId: l.product.id, quantity: l.quantity })),
+          items: lines.map((l) => ({
+            productId: l.product.slug || l.product.id,
+            slug: l.product.slug,
+            quantity: l.quantity,
+          })),
         }),
       });
       const data = (await res.json()) as { valid?: boolean; message?: string } & Partial<AppliedCoupon>;
@@ -864,7 +946,7 @@ export function CheckoutForm() {
                   onClick={() => void startCryptoCheckout()}
                   className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
                 >
-                  {loading ? "Preparing…" : `Pay $${paymentAmountStr} with crypto`}
+                  {loading ? "Preparing…" : `Pay ${paymentAmountStr} with Crypto (NOWPayments)`}
                 </button>
               )}
             </>
@@ -875,7 +957,7 @@ export function CheckoutForm() {
               onClick={() => void startPayramCheckout()}
               className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
             >
-              {loading ? "Preparing…" : `Pay $${paymentAmountStr} with Crypto`}
+              {loading ? "Preparing…" : `Pay ${paymentAmountStr} with PayRam`}
             </button>
           ) : payGateway === "zelle" ? (
             <>

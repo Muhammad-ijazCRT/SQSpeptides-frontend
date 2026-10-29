@@ -18,9 +18,9 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
           <AffiliateRefCapture />
         </Suspense>
         <AgeResearchVerification />
-        <div className="flex min-h-screen flex-col bg-white text-black">
+        <div className="flex min-h-screen w-full max-w-full flex-col overflow-x-hidden bg-white text-black">
           <SiteHeader />
-          <main className="flex-1">{children}</main>
+          <main className="w-full max-w-full flex-1">{children}</main>
           <SiteFooter />
         </div>
       </ToastProvider>

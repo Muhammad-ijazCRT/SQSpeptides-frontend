@@ -24,6 +24,13 @@ function describeFetchFailure(err: unknown): string {
   return `Could not reach Crossmint (${detail}). Check VPN/firewall, DNS, and that ${crossmintBaseUrl()} is reachable from this machine.`;
 }
 
+function sanitizeCrossmintErrorMessage(msg: string): string {
+  if (msg.toLowerCase().includes("api key") && msg.toLowerCase().includes("deleted")) {
+    return "The Card payment API key was previously revoked or deleted in the Crossmint developer console. Please update CROSSMINT_SERVER_SIDE_API_KEY in the environment.";
+  }
+  return msg;
+}
+
 export async function linkWallet(
   email: string,
   walletAddress: string
@@ -62,7 +69,7 @@ export async function linkWallet(
     } catch {
       /* non-JSON error body */
     }
-    return { error: message } as ApiErrorResponse;
+    return { error: sanitizeCrossmintErrorMessage(message) } as ApiErrorResponse;
   }
 }
 
@@ -116,8 +123,9 @@ export async function createCrossmintOrder(
   }
   if (!res.ok) {
     const body = data as { message?: string; error?: string };
+    const rawMsg = body?.message || body?.error || `Order creation failed (HTTP ${res.status}).`;
     return {
-      error: body?.message || body?.error || `Order creation failed (HTTP ${res.status}).`,
+      error: sanitizeCrossmintErrorMessage(rawMsg),
     } as ApiErrorResponse;
   }
   return data as CreateOrderResponse;

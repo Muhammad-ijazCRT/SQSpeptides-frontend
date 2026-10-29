@@ -27,9 +27,11 @@ export async function middleware(request: NextRequest) {
   }
 
   const secret = getJwtSecret();
+  const isAccountAuthPage = pathname === "/account/login" || pathname === "/account/signup";
+  const isAccountProtected = pathname.startsWith("/account/") && !isAccountAuthPage;
 
   if (!secret) {
-    if (pathname.startsWith("/admin/dashboard") || pathname.startsWith("/account/dashboard")) {
+    if (pathname.startsWith("/admin/dashboard") || isAccountProtected) {
       return new NextResponse("Set JWT_SECRET in .env (must match the API server).", { status: 500 });
     }
     return NextResponse.next();
@@ -46,10 +48,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith("/account/dashboard")) {
+  if (isAccountProtected) {
     const ok = await verifyTokenRole(customerToken, secret, "CUSTOMER");
     if (!ok) {
-      return NextResponse.redirect(new URL("/account/login", request.url));
+      const loginUrl = new URL("/account/login", request.url);
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
     }
     return NextResponse.next();
   }
@@ -61,7 +65,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname === "/account/login" || pathname === "/account/signup") {
+  if (isAccountAuthPage) {
     if (await verifyTokenRole(customerToken, secret, "CUSTOMER")) {
       return NextResponse.redirect(new URL("/account/dashboard", request.url));
     }
@@ -77,8 +81,6 @@ export const config = {
     "/products/:path*",
     "/admin/dashboard/:path*",
     "/admin/login",
-    "/account/dashboard/:path*",
-    "/account/login",
-    "/account/signup",
+    "/account/:path*",
   ],
 };

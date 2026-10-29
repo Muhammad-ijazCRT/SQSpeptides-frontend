@@ -1,3 +1,14 @@
+export type Category = {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  sortOrder?: number;
+  productCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type Product = {
   id: string;
   slug: string;
@@ -8,6 +19,8 @@ export type Product = {
   rating: number;
   /** Spotlight products surface on popular / featured storefront areas. */
   spotlight?: boolean;
+  categoryId?: string | null;
+  category?: { id: string; name: string; slug: string } | null;
 };
 
 export type CartLine = {

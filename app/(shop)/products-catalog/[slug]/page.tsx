@@ -1,26 +1,14 @@
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/seo/json-ld";
-import { ProductDetailActions } from "@/components/store/product-detail-actions";
-import { fetchProductBySlug } from "@/lib/api/products";
+import { ProductDetailShell } from "@/components/store/product-detail/product-detail-shell";
+import { fetchProductBySlug, fetchProducts } from "@/lib/api/products";
 import { productJsonLd } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { productImageBoxClassName, resolveProductImage } from "@/lib/store/catalog-image";
-import { looksLikeHtml, stripHtml } from "@/lib/store/strip-html";
+import { resolveProductImage } from "@/lib/store/catalog-image";
+import { stripHtml } from "@/lib/store/strip-html";
+import type { Product } from "@/lib/store/types";
 
-const detailImageSizes = "(max-width: 1023px) 100vw, (max-width: 1535px) 50vw, 640px";
-
-function Stars({ rating }: { rating: number }) {
-  const full = Math.round(Math.min(5, Math.max(0, rating)));
-  return (
-    <div className="flex gap-0.5 text-[#D4AF37]" aria-label={`${rating} out of 5 stars`}>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <span key={i}>{i < full ? "★" : "☆"}</span>
-      ))}
-    </div>
-  );
-}
+export const revalidate = 60;
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -48,7 +36,7 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function ProductDetailPage({ params }: Props) {
   const { slug } = await params;
-  let product: Awaited<ReturnType<typeof fetchProductBySlug>> = null;
+  let product: Product | null = null;
   try {
     product = await fetchProductBySlug(slug);
   } catch {
@@ -56,71 +44,33 @@ export default async function ProductDetailPage({ params }: Props) {
   }
   if (!product) notFound();
 
-  const img = resolveProductImage(product);
+  let allProducts: Product[] = [];
+  try {
+    allProducts = await fetchProducts();
+  } catch {
+    allProducts = [];
+  }
+
+  // Filter related products (exclude current, prefer matching category or spotlighted)
+  const related = allProducts
+    .filter((p) => p.id !== product!.id && p.slug !== product!.slug)
+    .sort((a, b) => {
+      // Prioritize same category if exists
+      if (product!.categoryId) {
+        if (a.categoryId === product!.categoryId && b.categoryId !== product!.categoryId) return -1;
+        if (b.categoryId === product!.categoryId && a.categoryId !== product!.categoryId) return 1;
+      }
+      // Then prioritize spotlight
+      if (a.spotlight && !b.spotlight) return -1;
+      if (!a.spotlight && b.spotlight) return 1;
+      return b.rating - a.rating;
+    })
+    .slice(0, 4);
 
   return (
-    <div className="bg-white text-black">
+    <>
       <JsonLd data={productJsonLd(product)} />
-      <div className="mx-auto max-w-[1480px] px-4 py-10 sm:px-6 lg:px-10 lg:py-16">
-        <div className="border-b border-[#c9a227] bg-[#c9a227] py-2 text-center text-xs font-bold uppercase tracking-widest text-white">
-          For Research Use Only
-        </div>
-
-        <Link
-          href="/products-catalog"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#9a7b1a] transition hover:underline sm:text-base"
-        >
-          ← Back to catalog
-        </Link>
-
-        <div className="mt-8 grid gap-12 lg:mt-12 lg:grid-cols-2 lg:items-start lg:gap-16 xl:gap-20">
-          <div className="mx-auto w-full max-w-xl lg:mx-0 lg:max-w-none">
-            <div className="overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)] ring-1 ring-neutral-200/90 transition duration-300 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)]">
-              <div className="relative aspect-[4/5] w-full overflow-hidden bg-gradient-to-b from-neutral-100 to-neutral-50 sm:aspect-square">
-                <Image
-                  src={img}
-                  alt={product.name}
-                  fill
-                  className={productImageBoxClassName(img)}
-                  priority
-                  sizes={detailImageSizes}
-                  unoptimized
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="min-w-0 lg:pt-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500 sm:text-sm">99.9% Purity</p>
-            <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-black sm:text-4xl lg:text-[2.65rem] lg:leading-tight">
-              {product.name}
-            </h1>
-            <div className="mt-3">
-              <Stars rating={product.rating} />
-            </div>
-            <p className="mt-6 text-3xl font-bold tabular-nums tracking-tight text-black sm:text-4xl">${product.price.toFixed(2)}</p>
-
-            {product.description ? (
-              looksLikeHtml(product.description) ? (
-                <div
-                  className="product-description prose prose-neutral mt-8 max-w-none text-base leading-relaxed text-neutral-600 sm:text-lg sm:leading-relaxed [&_a]:text-[#9a7b1a] [&_a]:underline [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-black [&_h3]:mt-5 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:text-black [&_li]:my-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3 [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5"
-                  dangerouslySetInnerHTML={{ __html: product.description }}
-                />
-              ) : (
-                <p className="mt-8 text-base leading-relaxed text-neutral-600 sm:text-lg sm:leading-relaxed">
-                  {product.description}
-                </p>
-              )
-            ) : null}
-
-            <p className="mt-6 rounded-xl border border-neutral-200/90 bg-neutral-50/80 px-4 py-4 text-sm leading-relaxed text-neutral-600 sm:px-5 sm:text-base sm:leading-relaxed">
-              Supplied for laboratory and non-clinical research use only. Not intended for human or veterinary use.
-            </p>
-
-            <ProductDetailActions product={product} />
-          </div>
-        </div>
-      </div>
-    </div>
+      <ProductDetailShell product={product} relatedProducts={related} />
+    </>
   );
 }

@@ -30,6 +30,10 @@ export function productMatchesCatalogCategory(p: Product, id: CatalogCategoryId)
   if (id === "all") return true;
   const s = hay(p);
   if (id === "popular") return Boolean(p.spotlight);
+  // Match via database relation if category is linked
+  if (p.category?.slug) {
+    return p.category.slug.toLowerCase() === id.toLowerCase();
+  }
   if (id === "blend") {
     return p.slug.includes("blend") || p.name.includes("+");
   }

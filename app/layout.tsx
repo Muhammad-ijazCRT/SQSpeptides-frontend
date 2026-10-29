@@ -1,3 +1,4 @@
+import type { Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppToaster } from "@/components/notifications/app-toaster";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -16,6 +17,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata = {
   ...rootSiteMetadata,
   icons: {
@@ -31,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="w-full max-w-full overflow-x-hidden" suppressHydrationWarning>
       <head>
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-J4XVEEMHMQ" />
         <script
@@ -46,7 +53,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased w-full max-w-full overflow-x-hidden`}
         suppressHydrationWarning
       >
         <JsonLd data={[organizationJsonLd(), webSiteJsonLd()]} />

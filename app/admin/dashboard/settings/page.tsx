@@ -1,5 +1,5 @@
-import { AdminPaymentSettingsPage } from "@/components/admin/admin-payment-settings-page";
+import { redirect } from "next/navigation";
 
 export default function AdminSettingsRoutePage() {
-  return <AdminPaymentSettingsPage />;
+  redirect("/admin/dashboard/settings/payment-gateways");
 }

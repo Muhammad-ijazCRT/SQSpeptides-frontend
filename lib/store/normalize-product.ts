@@ -25,6 +25,17 @@ export function normalizeProduct(raw: unknown): Product | null {
       ? spotlightRaw
       : spotlightRaw === "true" || spotlightRaw === 1 || spotlightRaw === "1";
 
+  const categoryId = typeof p.categoryId === "string" ? p.categoryId : null;
+  const categoryRaw = p.category as Record<string, unknown> | null | undefined;
+  const category =
+    categoryRaw && typeof categoryRaw.id === "string" && typeof categoryRaw.name === "string"
+      ? {
+          id: categoryRaw.id,
+          name: categoryRaw.name,
+          slug: typeof categoryRaw.slug === "string" ? categoryRaw.slug : "",
+        }
+      : null;
+
   return {
     id,
     slug,
@@ -34,5 +45,7 @@ export function normalizeProduct(raw: unknown): Product | null {
     imageUrl: img,
     rating: Math.min(5, Math.max(0, rating)),
     spotlight,
+    categoryId,
+    category,
   };
 }

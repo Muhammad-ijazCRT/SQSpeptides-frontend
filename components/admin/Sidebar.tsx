@@ -17,11 +17,14 @@ type SidebarNavProps = {
 export function SidebarNav({ onNavigate }: SidebarNavProps) {
   const pathname = usePathname();
   const [productsOpen, setProductsOpen] = useState(
-    () => pathname.startsWith("/admin/dashboard/products") || pathname.startsWith("/admin/dashboard/inventory")
+    () => pathname.startsWith("/admin/dashboard/products") || pathname.startsWith("/admin/dashboard/categories") || pathname.startsWith("/admin/dashboard/inventory")
   );
   const [usersOpen, setUsersOpen] = useState(() => pathname.startsWith("/admin/dashboard/customers"));
   const [invoicesOpen, setInvoicesOpen] = useState(
     () => pathname.startsWith("/admin/dashboard/invoices") || pathname.startsWith("/admin/dashboard/history")
+  );
+  const [settingsOpen, setSettingsOpen] = useState(
+    () => pathname.startsWith("/admin/dashboard/settings")
   );
 
   const linkClass = useCallback(
@@ -169,19 +172,63 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
             </Link>
           </li>
           <li className="nav-item">
-            <Link className={linkClass("/admin/dashboard/settings")} href="/admin/dashboard/settings" onClick={onNavigate}>
-              <i className="bi bi-gear fs-5" aria-hidden />
-              <span>Store settings</span>
-            </Link>
+            <button
+              type="button"
+              className="nav-link w-100 d-flex align-items-center justify-content-between gap-2 text-start border-0 bg-transparent"
+              onClick={() => setSettingsOpen((v) => !v)}
+              aria-expanded={settingsOpen}
+            >
+              <span className="d-flex align-items-center gap-2">
+                <i className="bi bi-gear fs-5" aria-hidden />
+                Settings
+              </span>
+              <i className={`bi ${settingsOpen ? "bi-chevron-up" : "bi-chevron-down"} small`} aria-hidden />
+            </button>
+            {settingsOpen ? (
+              <ul className="nav flex-column mt-1">
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link nav-link-sub ${
+                      navActive(pathname, "/admin/dashboard/settings/payment-gateways") ||
+                      navActive(pathname, "/admin/dashboard/settings/payment")
+                        ? "active"
+                        : ""
+                    }`}
+                    href="/admin/dashboard/settings/payment-gateways"
+                    onClick={onNavigate}
+                  >
+                    Payment Settings
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link nav-link-sub ${navActive(pathname, "/admin/dashboard/settings/shipping") ? "active" : ""}`}
+                    href="/admin/dashboard/settings/shipping"
+                    onClick={onNavigate}
+                  >
+                    Shipping Settings
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link nav-link-sub ${navActive(pathname, "/admin/dashboard/settings/smtp") ? "active" : ""}`}
+                    href="/admin/dashboard/settings/smtp"
+                    onClick={onNavigate}
+                  >
+                    SMTP Settings
+                  </Link>
+                </li>
+              </ul>
+            ) : null}
           </li>
         </ul>
       </nav>
 
       <div className="p-2 border-top border-secondary border-opacity-25 mt-auto">
-        <Link href="/" className="nav-link d-flex align-items-center gap-2" onClick={onNavigate}>
+        <a href="/" className="nav-link d-flex align-items-center gap-2">
           <i className="bi bi-arrow-left" aria-hidden />
           <span>Back to store</span>
-        </Link>
+        </a>
       </div>
     </div>
   );

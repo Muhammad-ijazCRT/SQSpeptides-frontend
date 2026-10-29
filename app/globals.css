@@ -444,3 +444,58 @@
 .catalog-dual-range:focus-visible::-moz-range-thumb {
   box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.35);
 }
+
+
+/* Floating Ambient Glow Motion for Store Footer */
+@keyframes footer-float-1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(35px, -25px) scale(1.1);
+  }
+  66% {
+    transform: translate(-25px, 20px) scale(0.95);
+  }
+}
+
+@keyframes footer-float-2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-30px, 30px) scale(0.92);
+  }
+  66% {
+    transform: translate(25px, -20px) scale(1.08);
+  }
+}
+
+@keyframes footer-float-3 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(20px, 25px) scale(1.05);
+  }
+}
+
+.footer-float-orb-1 {
+  animation: footer-float-1 18s ease-in-out infinite alternate;
+}
+
+.footer-float-orb-2 {
+  animation: footer-float-2 22s ease-in-out infinite alternate;
+}
+
+.footer-float-orb-3 {
+  animation: footer-float-3 16s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-float-orb-1,
+  .footer-float-orb-2,
+  .footer-float-orb-3 {
+    animation: none;
+  }
+}

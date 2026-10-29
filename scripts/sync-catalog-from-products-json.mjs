@@ -6,7 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 const jsonPath = path.join(root, "products.json");
 const imgDir = path.join(root, "public", "products", "images");
-const catalogOut = path.join(root, "backend", "prisma", "catalog-products.ts");
+const catalogOut = path.join(root, "..", "backend", "prisma", "catalog-products.ts");
 
 const raw = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
 const bySlug = new Map();

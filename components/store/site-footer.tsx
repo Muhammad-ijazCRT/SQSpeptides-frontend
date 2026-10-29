@@ -3,9 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BrandLogo } from "@/components/store/brand-logo";
-import { BusinessAddress } from "@/components/store/business-address";
-import { LinktreeLinks } from "@/components/store/linktree-links";
-import { NewsletterForm } from "@/components/store/newsletter-form";
+import { BackToTop } from "@/components/store/back-to-top";
+import { NewsletterSection } from "@/components/store/newsletter-section";
 import { SITE_BRAND_NAME, SITE_BUSINESS_TAGLINE } from "@/lib/site-business";
 
 const paymentMethods = [
@@ -44,15 +43,22 @@ function FooterNavColumn({
 }) {
   return (
     <div>
-      <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.2em] text-[#D4AF37]">{title}</h3>
-      <ul className="space-y-2.5">
+      <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#D4AF37]">
+        {title}
+      </h3>
+      <ul className="space-y-3">
         {links.map((item) => (
           <li key={`${item.href}-${item.label}`}>
             <Link
               href={item.href}
-              className="text-sm text-white/65 transition-colors hover:text-white"
+              className="group inline-flex items-center gap-1.5 text-sm font-medium text-neutral-100 transition-all duration-200 hover:text-white"
             >
-              {item.label}
+              <span className="text-[#D4AF37] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                ›
+              </span>
+              <span className="transition-transform duration-200 group-hover:translate-x-0.5">
+                {item.label}
+              </span>
             </Link>
           </li>
         ))}
@@ -65,113 +71,123 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative overflow-hidden bg-neutral-950 text-white">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-80"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 40% at 0% 0%, rgba(212,175,55,0.14), transparent 55%), radial-gradient(ellipse 50% 35% at 100% 100%, rgba(212,175,55,0.08), transparent 50%)",
-        }}
-      />
+    <>
+      {/* 1. COMBINED PRE-FOOTER SECTION (Corporate Info + Compact Newsletter) */}
+      <NewsletterSection />
 
-      <div className="relative border-t-2 border-[#D4AF37]">
-        {/* <div className="overflow-hidden bg-[#c9a227] py-2 text-[11px] font-semibold uppercase tracking-wide text-white sm:text-xs">
-          <div
-            className="flex w-max px-4"
-            style={{ animation: "marquee 35s linear infinite" }}
-          >
-            <span className="flex shrink-0 items-center gap-4 pr-8">
-              <span>NOT FOR HUMAN OR VETERINARY USE — FOR LABORATORY RESEARCH ONLY</span>
-              <span className="text-[#ffb020]" aria-hidden>
-                ▶
-              </span>
-              <span>RESEARCH CATALOG OFFER IS ACTIVE!</span>
-              <span className="text-[#ffb020]" aria-hidden>
-                ▶
-              </span>
-            </span>
-            <span className="flex shrink-0 items-center gap-4 pr-8" aria-hidden>
-              <span>NOT FOR HUMAN OR VETERINARY USE — FOR LABORATORY RESEARCH ONLY</span>
-              <span className="text-[#ffb020]">▶</span>
-              <span>RESEARCH CATALOG OFFER IS ACTIVE!</span>
-              <span className="text-[#ffb020]">▶</span>
-            </span>
-          </div>
-        </div> */}
+      {/* 2. THE MAIN STORE FOOTER WITH FLOATING COLORS LIKE THE HOME HERO */}
+      <footer className="relative w-full max-w-full overflow-hidden bg-black text-white">
+        {/* Ambient radial color gradients matching homepage hero */}
+        <div
+          className="pointer-events-none absolute inset-0 z-0 opacity-90"
+          aria-hidden
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212,175,55,0.32), transparent), radial-gradient(ellipse 60% 40% at 100% 50%, rgba(212,175,55,0.18), transparent), radial-gradient(ellipse 50% 50% at 0% 80%, rgba(212,175,55,0.14), transparent)",
+          }}
+        />
 
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
-          <div className="grid gap-10 sm:gap-12 lg:grid-cols-12 lg:gap-10">
-            <div className="lg:col-span-5">
-              <Link href="/" className="inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950">
-                <BrandLogo height={40} className="max-h-10" />
-              </Link>
-              <p className="mt-4 max-w-md text-sm leading-relaxed text-white/60">{SITE_BUSINESS_TAGLINE}</p>
-              <div className="mt-6 border-l-2 border-[#D4AF37]/50 pl-4">
-                <BusinessAddress variant="footer" />
-              </div>
-              {/* <div className="mt-8">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#D4AF37]">Social &amp; links</p>
-                <LinktreeLinks variant="footer" />
-              </div> */}
-            </div>
+        {/* Floating animated ambient color orbs like hero section */}
+        <div
+          className="pointer-events-none absolute -top-24 -left-24 z-0 h-96 w-96 rounded-full bg-[#D4AF37]/20 blur-3xl footer-float-orb-1"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute -bottom-28 -right-28 z-0 h-96 w-96 rounded-full bg-amber-500/15 blur-3xl footer-float-orb-2"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute top-1/2 left-1/3 z-0 h-72 w-72 -translate-y-1/2 rounded-full bg-[#e5c34d]/10 blur-3xl footer-float-orb-3"
+          aria-hidden
+        />
 
-            <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 sm:gap-6 lg:col-span-7 lg:gap-8">
-              <FooterNavColumn title="Catalog" links={catalogLinks} />
-              <FooterNavColumn title="Company" links={companyLinks} />
-              <div className="col-span-2 sm:col-span-1">
-                <FooterNavColumn title="Legal" links={legalLinks} />
-              </div>
-            </div>
-          </div>
+        {/* Hero subtle fractal noise texture overlay */}
+        <div
+          className="pointer-events-none absolute inset-0 z-0 opacity-[0.05] bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 256 256%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22 opacity=%220.06%22/%3E%3C/svg%3E')]"
+          aria-hidden
+        />
 
-          <div className="mt-12 grid gap-6 rounded-xl border border-[#D4AF37]/25 bg-gradient-to-br from-[#D4AF37]/10 via-white/[0.03] to-transparent p-6 sm:mt-14 sm:p-8 lg:grid-cols-[1.2fr_1fr] lg:items-center lg:gap-10">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#D4AF37]">Stay informed</p>
-              <h3 className="mt-2 text-lg font-bold tracking-tight text-white sm:text-xl">
-                Research updates for your inbox
-              </h3>
-              <p className="mt-2 max-w-md text-sm leading-relaxed text-white/55">
-                Catalog notices and fulfillment updates for qualified laboratories—no clinical or dosing content.
-              </p>
-            </div>
-            <div>
-              <NewsletterForm />
-            </div>
-          </div>
-
-          <div className="mt-10 flex flex-col gap-5 border-t border-white/10 pt-8 sm:mt-12 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-            <div className="space-y-1.5">
-              <p className="text-sm text-white/50">
-                © {year}{" "}
-                <span className="font-semibold text-white/85">{SITE_BRAND_NAME}</span>
-                . All rights reserved.
-              </p>
-              <p className="text-xs text-white/35">
-                Products are for laboratory research by qualified professionals only.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Payments</span>
-              {paymentMethods.map((method) => (
-                <span
-                  key={method.src}
-                  className="inline-flex items-center justify-center overflow-hidden rounded border border-white/15 bg-white p-0.5 shadow-sm"
+        {/* Top Gold Border & Content Container */}
+        <div className="relative z-10 border-t-2 border-[#D4AF37]">
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+            <div className="grid gap-10 sm:gap-12 lg:grid-cols-12 lg:gap-12">
+              {/* Brand and Value Highlights */}
+              <div className="lg:col-span-5">
+                <Link
+                  href="/"
+                  className="inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
-                  <Image
-                    src={method.src}
-                    alt={method.alt}
-                    width={method.width}
-                    height={method.height}
-                    className="h-[28px] w-auto object-contain"
-                  />
+                  <BrandLogo height={42} className="max-h-11" />
+                </Link>
+                <p className="mt-3.5 max-w-md text-sm font-medium leading-relaxed text-neutral-100">
+                  {SITE_BUSINESS_TAGLINE}
+                </p>
+
+                {/* Laboratory Standards Pill Badges */}
+                <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold text-neutral-100">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/15 px-3 py-1 text-white">
+                    <span className="text-[#D4AF37] font-bold">✓</span> Documented Lot Purity
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/15 px-3 py-1 text-white">
+                    <span className="text-[#D4AF37] font-bold">✓</span> Fast U.S. Dispatch
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/15 px-3 py-1 text-white">
+                    <span className="text-[#D4AF37] font-bold">✓</span> Research Traceability
+                  </span>
+                </div>
+              </div>
+
+              {/* Navigation Link Columns */}
+              <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 sm:gap-8 lg:col-span-7 lg:gap-10">
+                <FooterNavColumn title="Catalog" links={catalogLinks} />
+                <FooterNavColumn title="Company" links={companyLinks} />
+                <div className="col-span-2 sm:col-span-1">
+                  <FooterNavColumn title="Legal & Policy" links={legalLinks} />
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Copyright & Payment Badges */}
+            <div className="mt-12 flex flex-col gap-6 border-t border-white/10 pt-8 sm:mt-16 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-neutral-100">
+                  © {year} <span className="font-bold text-white">{SITE_BRAND_NAME}</span>. All rights reserved.
+                </p>
+                <p className="text-xs font-normal text-neutral-300">
+                  All compounds are supplied exclusively for qualified laboratory research. Not for human or veterinary use.
+                </p>
+              </div>
+
+              {/* Yellow/Gold-Bordered Payment Method Badges */}
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-[#D4AF37]">
+                  Payments
                 </span>
-              ))}
+                <div className="flex items-center gap-2">
+                  {paymentMethods.map((method) => (
+                    <span
+                      key={method.src}
+                      className="inline-flex items-center justify-center overflow-hidden rounded-lg border-2 border-[#D4AF37] bg-white p-1 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-[0_0_12px_rgba(212,175,55,0.4)]"
+                      title={method.alt}
+                    >
+                      <Image
+                        src={method.src}
+                        alt={method.alt}
+                        width={method.width}
+                        height={method.height}
+                        className="h-[24px] w-auto object-contain"
+                      />
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </footer>
+      </footer>
+
+      {/* 3. FIXED CIRCULAR BACK TO TOP BUTTON (Appears when scrolled > 110% viewport height) */}
+      <BackToTop />
+    </>
   );
 }

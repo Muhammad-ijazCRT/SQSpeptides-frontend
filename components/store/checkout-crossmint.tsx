@@ -81,6 +81,10 @@ export function CheckoutCrossmint({
     }
   }
 
+  const crossmintBaseUrl = isCrossmintProduction()
+    ? "https://www.crossmint.com"
+    : "https://staging.crossmint.com";
+
   return (
     <div className="space-y-4">
       {orderId == null ? (
@@ -97,15 +101,15 @@ export function CheckoutCrossmint({
             onClick={() => void startPay()}
             className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#f0c14b] px-4 text-sm font-bold text-[#111] shadow-[0_2px_0_0_#c9a227] transition hover:bg-[#f2ca5c] disabled:cursor-wait disabled:opacity-50"
           >
-            {order.status === "creating-order" ? "Preparing secure checkout…" : "Pay with card"}
+            {order.status === "creating-order" ? "Preparing secure checkout…" : `Pay $${amountUsd} with Card`}
           </button>
         </>
       ) : (
         <>
           {!isCrossmintProduction() ? (
-            <p className="text-center text-[11px] text-neutral-400">Test: 4242 4242 4242 4242</p>
+            <p className="text-center text-[11px] text-neutral-400">Sandbox Test Card: 4242 4242 4242 4242</p>
           ) : null}
-          <CrossmintProvider apiKey={apiKey}>
+          <CrossmintProvider apiKey={apiKey} overrideBaseUrl={crossmintBaseUrl}>
             <div className="mx-auto w-full max-w-[450px]">
               <CrossmintEmbeddedCheckout
                 orderId={orderId}

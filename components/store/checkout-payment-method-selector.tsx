@@ -7,7 +7,7 @@ type Props = {
   onChange: (g: CheckoutPaymentGateway) => void;
 };
 
-/** Compact gateway toggles — no provider names or long copy (fits under order total). */
+/** Sleek, modern, and concise payment method selector for checkout. */
 export function CheckoutPaymentMethodSelector({ value, onChange }: Props) {
   const base =
     "flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition sm:py-3";
@@ -16,6 +16,7 @@ export function CheckoutPaymentMethodSelector({ value, onChange }: Props) {
 
   return (
     <div className="space-y-2" role="radiogroup" aria-label="Payment method">
+      {/* 1. Credit / Debit Card */}
       <button
         type="button"
         role="radio"
@@ -31,9 +32,13 @@ export function CheckoutPaymentMethodSelector({ value, onChange }: Props) {
         >
           {value === "crossmint" ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
         </span>
-        <span className="min-w-0 flex-1 text-neutral-900">Pay with card</span>
+        <span className="min-w-0 flex-1 text-neutral-900">Pay with Card Crossmint</span>
+        <span className="shrink-0 rounded bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold text-neutral-700">
+          Card
+        </span>
       </button>
 
+      {/* 2. Crypto (NOWPayments) */}
       <button
         type="button"
         role="radio"
@@ -49,14 +54,14 @@ export function CheckoutPaymentMethodSelector({ value, onChange }: Props) {
         >
           {value === "crypto" ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
         </span>
-        <span className="min-w-0 flex-1 text-neutral-900">Pay with cryptocurrency</span>
-        <span className="flex shrink-0 items-center gap-2">
+        <span className="min-w-0 flex-1 text-neutral-900">Pay with Crypto (NOWPayments)</span>
+        <span className="flex shrink-0 items-center gap-1.5">
           <span className="rounded-full bg-emerald-600/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-800">
             Popular
           </span>
-          <svg
+          {/* <svg
             viewBox="0 0 24 24"
-            className="h-6 w-6 shrink-0"
+            className="h-5 w-5 shrink-0"
             xmlns="http://www.w3.org/2000/svg"
             aria-hidden
           >
@@ -72,10 +77,11 @@ export function CheckoutPaymentMethodSelector({ value, onChange }: Props) {
             >
               ₿
             </text>
-          </svg>
+          </svg> */}
         </span>
       </button>
 
+      {/* 3. Card to Crypto (PayRam) */}
       <button
         type="button"
         role="radio"
@@ -91,10 +97,13 @@ export function CheckoutPaymentMethodSelector({ value, onChange }: Props) {
         >
           {value === "payram" ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
         </span>
-        <span className="min-w-0 flex-1 text-neutral-900">Pay with Crypto</span>
-        <span className="shrink-0 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-900">NEW</span>
+        <span className="min-w-0 flex-1 text-neutral-900">Pay with Card (PayRam)</span>
+        <span className="shrink-0 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-900">
+          Fast
+        </span>
       </button>
 
+      {/* 4. Zelle Pay */}
       <button
         type="button"
         role="radio"
@@ -111,7 +120,7 @@ export function CheckoutPaymentMethodSelector({ value, onChange }: Props) {
           {value === "zelle" ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
         </span>
         <span className="min-w-0 flex-1 text-neutral-900">Pay with Zelle</span>
-        <span className="shrink-0 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-900" aria-hidden>
+        <span className="shrink-0 rounded bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-900" aria-hidden>
           Z
         </span>
       </button>

@@ -134,7 +134,7 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white">
+    <header className="sticky top-0 z-50 w-full max-w-full bg-white">
       <div
         className="bg-black px-3 py-2 text-center text-[11px] font-semibold leading-snug text-white sm:text-xs sm:leading-normal"
         role="status"
@@ -281,9 +281,9 @@ export function SiteHeader() {
         )}
       </div>
 
-      <div className="overflow-hidden bg-[#c9a227] py-2 text-[11px] font-semibold uppercase tracking-wide text-white sm:text-xs">
+      <div className="w-full max-w-full overflow-hidden bg-[#c9a227] py-2 text-[11px] font-semibold uppercase tracking-wide text-white sm:text-xs">
         <div
-          className="flex w-max px-4"
+          className="flex w-max px-4 select-none"
           style={{ animation: "marquee 35s linear infinite" }}
         >
           <span className="flex shrink-0 items-center gap-4 pr-8">

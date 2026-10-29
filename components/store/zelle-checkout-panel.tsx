@@ -29,7 +29,7 @@ export function ZelleCheckoutPanel({ orderId, email, amountUsd, config }: Props)
   async function copyRef() {
     try {
       await navigator.clipboard.writeText(orderId);
-      notify.success("Order ID copied", { autoClose: 2500 });
+      notify.success("Order ID copied to clipboard", { autoClose: 2500 });
     } catch {
       notify.error("Could not copy — select and copy the ID manually.", { autoClose: 4000 });
     }
@@ -39,11 +39,15 @@ export function ZelleCheckoutPanel({ orderId, email, amountUsd, config }: Props)
     e.preventDefault();
     setLocalErr(null);
     if (!txnId.trim()) {
-      setLocalErr("Enter the Zelle transaction ID or confirmation from your bank.");
+      const msg = "Enter the Zelle transaction ID or confirmation from your bank.";
+      setLocalErr(msg);
+      notify.error(msg, { autoClose: 4000 });
       return;
     }
     if (!file) {
-      setLocalErr("Upload a screenshot of your Zelle payment.");
+      const msg = "Upload a screenshot of your Zelle payment receipt.";
+      setLocalErr(msg);
+      notify.error(msg, { autoClose: 4000 });
       return;
     }
     setSubmitting(true);
@@ -88,7 +92,9 @@ export function ZelleCheckoutPanel({ orderId, email, amountUsd, config }: Props)
       );
       setDone(true);
     } catch (err) {
-      setLocalErr(err instanceof Error ? err.message : "Something went wrong.");
+      const msg = err instanceof Error ? err.message : "Something went wrong.";
+      setLocalErr(msg);
+      notify.error(msg, { autoClose: 4500 });
     } finally {
       setSubmitting(false);
     }
@@ -130,7 +136,7 @@ export function ZelleCheckoutPanel({ orderId, email, amountUsd, config }: Props)
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200/90 bg-white shadow-[0_4px_24px_-12px_rgba(15,23,42,0.08)]">
       <div className="border-b border-neutral-100 bg-neutral-50/80 px-5 py-4 sm:px-6">
-        <h2 className="text-lg font-semibold tracking-tight text-black">Pay with Zelle</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-black">Zelle Pay Instructions</h2>
         <p className="mt-1 text-sm text-neutral-600">
           Send the exact amount, put the order ID in your bank’s memo, then upload proof below.
         </p>
@@ -164,13 +170,13 @@ export function ZelleCheckoutPanel({ orderId, email, amountUsd, config }: Props)
           <ul className="mt-2 space-y-1 text-sm text-neutral-800">
             {config?.zelleEmail ? (
               <li>
-                <span className="text-neutral-500">Email</span>{" "}
+                <span className="text-neutral-500">Email:</span>{" "}
                 <span className="font-medium text-black">{config.zelleEmail}</span>
               </li>
             ) : null}
             {config?.zellePhone ? (
               <li>
-                <span className="text-neutral-500">Phone</span>{" "}
+                <span className="text-neutral-500">Phone:</span>{" "}
                 <span className="font-medium text-black">{config.zellePhone}</span>
               </li>
             ) : null}

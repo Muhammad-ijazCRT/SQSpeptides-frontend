@@ -10,7 +10,7 @@ export type CheckoutPayload = {
   postalCode: string;
   country: string;
   researchUseAttestation: string;
-  items: { productId: string; quantity: number }[];
+  items: { productId: string; slug?: string; quantity: number }[];
   affiliateRef?: string;
   storeCreditToUse?: number;
   couponCode?: string;

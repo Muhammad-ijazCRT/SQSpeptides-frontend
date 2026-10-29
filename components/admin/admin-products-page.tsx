@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ProductDescriptionEditor } from "@/components/admin/product-description-editor";
+import { fetchAdminCategories } from "@/lib/api/categories";
 import { notify } from "@/lib/notifications/notify";
+import type { Category } from "@/lib/store/types";
 
 type AdminProduct = {
   id: string;
@@ -16,6 +18,12 @@ type AdminProduct = {
   imageUrl: string | null;
   rating: number;
   spotlight: boolean;
+  categoryId?: string | null;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
 };
 
 const emptyForm = {
@@ -26,6 +34,7 @@ const emptyForm = {
   imageUrl: "",
   rating: "5",
   spotlight: false,
+  categoryId: "",
 };
 
 function SpotlightSwitch({
@@ -82,6 +91,7 @@ export function AdminProductsPage() {
   const qParam = searchParams.get("q")?.trim().toLowerCase() ?? "";
 
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AdminProduct | null>(null);
@@ -115,7 +125,11 @@ export function AdminProductsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/products", { cache: "no-store" });
+      const [res, catList] = await Promise.all([
+        fetch("/api/admin/products", { cache: "no-store" }),
+        fetchAdminCategories().catch(() => [] as Category[]),
+      ]);
+      setCategories(catList);
       if (res.status === 401) {
         notify.error("Session expired — sign in again.");
         setProducts([]);
@@ -174,6 +188,7 @@ export function AdminProductsPage() {
       imageUrl: p.imageUrl ?? "",
       rating: String(p.rating),
       spotlight: Boolean(p.spotlight),
+      categoryId: p.categoryId ?? p.category?.id ?? "",
     });
     setFormErr(null);
     resetImageState(p.imageUrl ?? "");
@@ -306,6 +321,8 @@ export function AdminProductsPage() {
         imageUrl = await uploadProductImage(imageFile);
       }
 
+      const categoryIdVal = form.categoryId.trim() ? form.categoryId.trim() : null;
+
       const createBody = {
         name: form.name.trim(),
         ...(form.slug.trim() ? { slug: form.slug.trim() } : {}),
@@ -314,6 +331,7 @@ export function AdminProductsPage() {
         ...(imageUrl ? { imageUrl } : {}),
         rating,
         spotlight: form.spotlight,
+        categoryId: categoryIdVal,
       };
 
       const patchBody = {
@@ -324,6 +342,7 @@ export function AdminProductsPage() {
         imageUrl,
         rating,
         spotlight: form.spotlight,
+        categoryId: categoryIdVal,
       };
 
       if (editing) {
@@ -425,6 +444,7 @@ export function AdminProductsPage() {
                 <tr>
                   <th className="ps-4">Product</th>
                   <th>Slug</th>
+                  <th>Category</th>
                   <th>Price</th>
                   <th>Rating</th>
                   <th className="text-center" title="Spotlight products for popular / featured surfaces">
@@ -439,6 +459,13 @@ export function AdminProductsPage() {
                     <td className="ps-4 fw-medium text-dark">{p.name}</td>
                     <td>
                       <span className="font-monospace small text-secondary">{p.slug}</span>
+                    </td>
+                    <td>
+                      {p.category?.name ? (
+                        <span className="badge bg-light text-dark border fw-normal">{p.category.name}</span>
+                      ) : (
+                        <span className="text-muted small">—</span>
+                      )}
                     </td>
                     <td className="fw-semibold">${Number(p.price).toFixed(2)}</td>
                     <td className="text-secondary small">{Number(p.rating).toFixed(1)}</td>
@@ -545,6 +572,32 @@ export function AdminProductsPage() {
                           disabled={saving}
                         />
                         <p className="form-text small mb-0">URL segment: /products-catalog/your-slug</p>
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label small fw-semibold" htmlFor="ap-category">
+                          Category
+                        </label>
+                        <select
+                          id="ap-category"
+                          className="form-select"
+                          value={form.categoryId}
+                          onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
+                          disabled={saving}
+                        >
+                          <option value="">No category (Unassigned)</option>
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="form-text small mb-0">
+                          Assign this product to a category, or manage them in{" "}
+                          <Link href="/admin/dashboard/categories" className="fw-semibold text-dark">
+                            Categories
+                          </Link>
+                          .
+                        </p>
                       </div>
                       <div className="mb-3">
                         <label className="form-label small fw-semibold" htmlFor="ap-desc">
